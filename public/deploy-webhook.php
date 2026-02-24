@@ -5,7 +5,7 @@
  *
  * Triggered by GitHub Actions after FTP upload of archives.
  * Uses PHP native PharData for extraction (exec() disabled on shared hosting).
- * Artisan commands are run via SSH in the workflow instead.
+ * Runs artisan commands via Artisan::call() (no exec needed).
  *
  * Protected by DEPLOY_TOKEN in .env
  */
@@ -142,8 +142,50 @@ if (!is_link($storageLink)) {
     echo "==> Storage link already exists.\n";
 }
 
-// Note: Artisan commands (migrate, cache) are run via SSH in the workflow
-echo "\n==> Note: Artisan commands should be run via SSH.\n";
+// Step 4: Run artisan commands via Laravel bootstrap (no exec needed)
+if ($allSuccess && file_exists($appPath . '/vendor/autoload.php')) {
+    echo "\n==> Running artisan commands...\n";
+
+    try {
+        require $appPath . '/vendor/autoload.php';
+
+        /** @var \Illuminate\Foundation\Application $app */
+        $app = require $appPath . '/bootstrap/app.php';
+        $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+        $kernel->bootstrap();
+
+        $commands = [
+            'migrate'     => ['--force' => true],
+            'config:cache' => [],
+            'route:cache'  => [],
+            'view:cache'   => [],
+            'event:cache'  => [],
+        ];
+
+        foreach ($commands as $cmd => $params) {
+            echo "    php artisan {$cmd}... ";
+            try {
+                $exitCode = \Illuminate\Support\Facades\Artisan::call($cmd, $params);
+                $output = \Illuminate\Support\Facades\Artisan::output();
+                echo $exitCode === 0 ? "OK\n" : "FAILED (exit: {$exitCode})\n";
+                if (!empty(trim($output))) {
+                    echo "    " . str_replace("\n", "\n    ", trim($output)) . "\n";
+                }
+            } catch (Exception $e) {
+                echo "ERROR: " . $e->getMessage() . "\n";
+            }
+        }
+
+        echo "==> Artisan commands completed.\n";
+    } catch (Exception $e) {
+        echo "==> ERROR bootstrapping Laravel: " . $e->getMessage() . "\n";
+        $allSuccess = false;
+    }
+} else if (!$allSuccess) {
+    echo "\n==> Skipping artisan commands due to extraction errors.\n";
+} else {
+    echo "\n==> WARNING: vendor/autoload.php not found, skipping artisan commands.\n";
+}
 
 if (!$allSuccess) {
     http_response_code(500);
