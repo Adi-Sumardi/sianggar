@@ -4,10 +4,8 @@
  * Deploy Webhook
  *
  * Triggered by GitHub Actions after FTP upload of archives.
- * 1. Extracts deploy-app.tar.gz to ../sianggar/
- * 2. Extracts deploy-public.tar.gz to ../public_html/
- * 3. Runs artisan commands (migrate, cache)
- * 4. Cleans up archive files
+ * Uses PHP native PharData for extraction (exec() disabled on shared hosting).
+ * Artisan commands are run via SSH in the workflow instead.
  *
  * Protected by DEPLOY_TOKEN in .env
  */
@@ -16,7 +14,6 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 set_time_limit(300);
 
-// Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit('Method Not Allowed');
@@ -35,8 +32,8 @@ echo "==> Public path: {$publicPath}\n\n";
 
 // Ensure app directory exists
 if (!is_dir($appPath)) {
-    echo "==> Creating app directory...\n";
     mkdir($appPath, 0755, true);
+    echo "==> Created app directory.\n";
 }
 
 if (!file_exists($envFile)) {
@@ -65,27 +62,52 @@ if (!hash_equals($expectedToken, $providedToken)) {
 
 $allSuccess = true;
 
+/**
+ * Extract a .tar.gz archive using PHP native PharData.
+ * Falls back to exec('tar') if PharData fails.
+ */
+function extractArchive(string $archivePath, string $destPath): bool
+{
+    echo "    Size: " . round(filesize($archivePath) / 1024 / 1024, 2) . " MB\n";
+
+    // Try PharData (PHP native, no exec needed)
+    try {
+        $phar = new PharData($archivePath);
+        $phar->extractTo($destPath, null, true);
+        echo "    Extracted via PharData.\n";
+        return true;
+    } catch (Exception $e) {
+        echo "    PharData failed: " . $e->getMessage() . "\n";
+    }
+
+    // Fallback: try exec if available
+    if (function_exists('exec')) {
+        $cmd = "tar xzf " . escapeshellarg($archivePath) . " -C " . escapeshellarg($destPath) . " 2>&1";
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+        if (!empty($output)) {
+            echo "    " . implode("\n    ", $output) . "\n";
+        }
+        if ($exitCode === 0) {
+            echo "    Extracted via tar command.\n";
+            return true;
+        }
+        echo "    tar command failed (exit: {$exitCode})\n";
+    }
+
+    return false;
+}
+
 // Step 1: Extract app archive
 $appArchive = $publicPath . '/deploy-app.tar.gz';
-echo "==> Looking for app archive: {$appArchive}\n";
-echo "    Exists: " . (file_exists($appArchive) ? 'yes' : 'no') . "\n";
-echo "    Size: " . (file_exists($appArchive) ? round(filesize($appArchive) / 1024 / 1024, 2) . ' MB' : 'N/A') . "\n";
-
 if (file_exists($appArchive)) {
     echo "==> Extracting app archive...\n";
-    $cmd = "tar xzf " . escapeshellarg($appArchive) . " -C " . escapeshellarg($appPath) . " 2>&1";
-    echo "    CMD: {$cmd}\n";
-    $output = [];
-    $exitCode = 0;
-    exec($cmd, $output, $exitCode);
-    if (!empty($output)) {
-        echo "    Output: " . implode("\n    ", $output) . "\n";
-    }
-    if ($exitCode === 0) {
+    if (extractArchive($appArchive, $appPath)) {
         echo "    App extracted successfully.\n\n";
         unlink($appArchive);
     } else {
-        echo "    ERROR: App extraction failed (exit: {$exitCode})\n\n";
+        echo "    ERROR: App extraction failed.\n\n";
         $allSuccess = false;
     }
 } else {
@@ -94,66 +116,20 @@ if (file_exists($appArchive)) {
 
 // Step 2: Extract public archive
 $publicArchive = $publicPath . '/deploy-public.tar.gz';
-echo "==> Looking for public archive: {$publicArchive}\n";
-echo "    Exists: " . (file_exists($publicArchive) ? 'yes' : 'no') . "\n";
-
 if (file_exists($publicArchive)) {
     echo "==> Extracting public archive...\n";
-    $cmd = "tar xzf " . escapeshellarg($publicArchive) . " -C " . escapeshellarg($publicPath) . " 2>&1";
-    $output = [];
-    $exitCode = 0;
-    exec($cmd, $output, $exitCode);
-    if (!empty($output)) {
-        echo "    Output: " . implode("\n    ", $output) . "\n";
-    }
-    if ($exitCode === 0) {
+    if (extractArchive($publicArchive, $publicPath)) {
         echo "    Public files extracted successfully.\n\n";
         unlink($publicArchive);
     } else {
-        echo "    ERROR: Public extraction failed (exit: {$exitCode})\n\n";
+        echo "    ERROR: Public extraction failed.\n\n";
         $allSuccess = false;
     }
 } else {
     echo "==> WARNING: deploy-public.tar.gz not found, skipping.\n\n";
 }
 
-// Step 3: Detect PHP version
-echo "==> PHP version check:\n";
-$phpVersion = [];
-exec('php -v 2>&1', $phpVersion);
-echo "    " . ($phpVersion[0] ?? 'unknown') . "\n\n";
-
-// Step 4: Run artisan commands
-if (!chdir($appPath)) {
-    echo "ERROR: Cannot chdir to {$appPath}\n";
-    http_response_code(500);
-    exit;
-}
-echo "==> Working directory: " . getcwd() . "\n\n";
-
-$commands = [
-    'php artisan migrate --force',
-    'php artisan config:cache',
-    'php artisan route:cache',
-    'php artisan view:cache',
-    'php artisan event:cache',
-];
-
-foreach ($commands as $cmd) {
-    $cmdOutput = [];
-    $exitCode = 0;
-    exec($cmd . ' 2>&1', $cmdOutput, $exitCode);
-
-    echo "$ {$cmd}\n";
-    echo implode("\n", $cmdOutput) . "\n";
-    echo "Exit: {$exitCode}\n\n";
-
-    if ($exitCode !== 0) {
-        $allSuccess = false;
-    }
-}
-
-// Step 5: Create storage link if not exists
+// Step 3: Create storage link if not exists
 $storageLink = $publicPath . '/storage';
 if (!is_link($storageLink)) {
     $target = $appPath . '/storage/app/public';
@@ -165,6 +141,9 @@ if (!is_link($storageLink)) {
 } else {
     echo "==> Storage link already exists.\n";
 }
+
+// Note: Artisan commands (migrate, cache) are run via SSH in the workflow
+echo "\n==> Note: Artisan commands should be run via SSH.\n";
 
 if (!$allSuccess) {
     http_response_code(500);

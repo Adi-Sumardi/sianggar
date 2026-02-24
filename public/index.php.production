@@ -20,4 +20,7 @@ require $appPath.'/vendor/autoload.php';
 /** @var Application $app */
 $app = require_once $appPath.'/bootstrap/app.php';
 
+// Shared hosting: public_html is the actual public directory, not sianggar/public
+$app->usePublicPath(__DIR__);
+
 $app->handleRequest(Request::capture());
