@@ -60,6 +60,7 @@ jobs:
           lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
           set ftp:ssl-allow yes
           set ftp:ssl-force no
+          set ssl:verify-certificate no
           set ftp:passive-mode yes
           set net:timeout 60
           set net:max-retries 5
