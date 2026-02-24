@@ -90,15 +90,34 @@ if (file_exists($publicArchive)) {
     echo "==> WARNING: deploy-public.tar.gz not found, skipping extraction.\n\n";
 }
 
-// Step 3: Run artisan commands
+// Step 3: Find PHP 8.4 binary (Hostinger CLI defaults to older version)
+$phpBin = 'php';
+$phpCandidates = [
+    '/usr/bin/php8.4',
+    '/opt/alt/php84/usr/bin/php',
+    '/usr/local/php8.4/bin/php',
+    '/opt/cpanel/ea-php84/root/usr/bin/php',
+];
+foreach ($phpCandidates as $candidate) {
+    if (file_exists($candidate)) {
+        $phpBin = $candidate;
+        break;
+    }
+}
+echo "==> Using PHP binary: {$phpBin}\n";
+exec($phpBin . ' -v 2>&1', $phpVersion);
+echo "    " . ($phpVersion[0] ?? 'unknown') . "\n\n";
+$phpVersion = [];
+
+// Step 4: Run artisan commands
 chdir($appPath);
 
 $commands = [
-    'php artisan migrate --force',
-    'php artisan config:cache',
-    'php artisan route:cache',
-    'php artisan view:cache',
-    'php artisan event:cache',
+    $phpBin . ' artisan migrate --force',
+    $phpBin . ' artisan config:cache',
+    $phpBin . ' artisan route:cache',
+    $phpBin . ' artisan view:cache',
+    $phpBin . ' artisan event:cache',
 ];
 
 foreach ($commands as $cmd) {
@@ -115,7 +134,7 @@ foreach ($commands as $cmd) {
     }
 }
 
-// Step 4: Create storage link if not exists
+// Step 5: Create storage link if not exists
 $storageLink = $publicPath . '/storage';
 if (!is_link($storageLink)) {
     $target = $appPath . '/storage/app/public';
