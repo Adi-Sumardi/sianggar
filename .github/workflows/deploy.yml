@@ -52,7 +52,7 @@ jobs:
           password: ${{ secrets.HOSTINGER_PASSWORD }}
           port: ${{ secrets.HOSTINGER_PORT }}
           source: "app/,bootstrap/,config/,database/,lang/,resources/,routes/,storage/,vendor/,artisan,composer.json,composer.lock,deploy.sh"
-          target: /home/u300093989/sianggar
+          target: /home/u300093989/domains/sianggar.yapinet.id/sianggar
           overwrite: true
           strip_components: 0
 
@@ -65,7 +65,7 @@ jobs:
           password: ${{ secrets.HOSTINGER_PASSWORD }}
           port: ${{ secrets.HOSTINGER_PORT }}
           source: "public/"
-          target: /home/u300093989/public_html
+          target: /home/u300093989/domains/sianggar.yapinet.id/public_html
           overwrite: true
           strip_components: 1
 
@@ -78,5 +78,5 @@ jobs:
           password: ${{ secrets.HOSTINGER_PASSWORD }}
           port: ${{ secrets.HOSTINGER_PORT }}
           script: |
-            chmod +x /home/u300093989/sianggar/deploy.sh
-            bash /home/u300093989/sianggar/deploy.sh
+            chmod +x /home/u300093989/domains/sianggar.yapinet.id/sianggar/deploy.sh
+            bash /home/u300093989/domains/sianggar.yapinet.id/sianggar/deploy.sh
