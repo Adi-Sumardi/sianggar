@@ -29,9 +29,9 @@ class ProkerImport implements ToCollection, WithHeadingRow
         foreach ($rows as $index => $row) {
             $rowNum = $index + 2; // heading row + 0-indexed
 
-            $kodeStrategi = trim((string) ($row['kode_strategi'] ?? ''));
-            $kodeIndikator = trim((string) ($row['kode_indikator'] ?? ''));
-            $kodeProker = trim((string) ($row['kode_proker'] ?? ''));
+            $kodeStrategi = str_replace(',', '.', trim((string) ($row['kode_strategi'] ?? '')));
+            $kodeIndikator = str_replace(',', '.', trim((string) ($row['kode_indikator'] ?? '')));
+            $kodeProker = str_replace(',', '.', trim((string) ($row['kode_proker'] ?? '')));
             $namaProker = trim((string) ($row['nama_proker'] ?? ''));
             $keterangan = trim((string) ($row['keterangan'] ?? '')) ?: null;
 

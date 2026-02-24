@@ -6,11 +6,13 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class KegiatanImportTemplate implements FromArray, WithHeadings, WithStyles, ShouldAutoSize
+class KegiatanImportTemplate implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnFormatting
 {
     public function array(): array
     {
@@ -29,6 +31,16 @@ class KegiatanImportTemplate implements FromArray, WithHeadings, WithStyles, Sho
             'Nama Kegiatan',
             'Jenis Kegiatan',
             'Keterangan',
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'A' => NumberFormat::FORMAT_TEXT,
+            'B' => NumberFormat::FORMAT_TEXT,
+            'C' => NumberFormat::FORMAT_TEXT,
+            'D' => NumberFormat::FORMAT_TEXT,
         ];
     }
 

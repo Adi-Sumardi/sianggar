@@ -30,10 +30,10 @@ class KegiatanImport implements ToCollection, WithHeadingRow
         foreach ($rows as $index => $row) {
             $rowNum = $index + 2;
 
-            $kodeStrategi = trim((string) ($row['kode_strategi'] ?? ''));
-            $kodeIndikator = trim((string) ($row['kode_indikator'] ?? ''));
-            $kodeProker = trim((string) ($row['kode_proker'] ?? ''));
-            $kodeKegiatan = trim((string) ($row['kode_kegiatan'] ?? ''));
+            $kodeStrategi = str_replace(',', '.', trim((string) ($row['kode_strategi'] ?? '')));
+            $kodeIndikator = str_replace(',', '.', trim((string) ($row['kode_indikator'] ?? '')));
+            $kodeProker = str_replace(',', '.', trim((string) ($row['kode_proker'] ?? '')));
+            $kodeKegiatan = str_replace(',', '.', trim((string) ($row['kode_kegiatan'] ?? '')));
             $namaKegiatan = trim((string) ($row['nama_kegiatan'] ?? ''));
             $jenisKegiatan = strtolower(trim((string) ($row['jenis_kegiatan'] ?? ''))) ?: 'non-unggulan';
             $keterangan = trim((string) ($row['keterangan'] ?? '')) ?: null;

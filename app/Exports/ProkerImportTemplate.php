@@ -6,11 +6,13 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProkerImportTemplate implements FromArray, WithHeadings, WithStyles, ShouldAutoSize
+class ProkerImportTemplate implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnFormatting
 {
     public function array(): array
     {
@@ -27,6 +29,15 @@ class ProkerImportTemplate implements FromArray, WithHeadings, WithStyles, Shoul
             'Kode Proker',
             'Nama Proker',
             'Keterangan',
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'A' => NumberFormat::FORMAT_TEXT,
+            'B' => NumberFormat::FORMAT_TEXT,
+            'C' => NumberFormat::FORMAT_TEXT,
         ];
     }
 
