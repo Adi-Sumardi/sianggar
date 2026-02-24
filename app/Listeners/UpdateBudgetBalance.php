@@ -44,19 +44,23 @@ class UpdateBudgetBalance implements ShouldQueue
                     continue;
                 }
 
-                // Increase the amount used
+                // Increase the amount used and recalculate balance
                 $currentSaldoDigunakan = (float) ($detailMataAnggaran->saldo_dipakai ?? 0);
                 $amount = (float) $detail->jumlah;
+                $newSaldoDigunakan = $currentSaldoDigunakan + $amount;
+                $anggaranAwal = (float) ($detailMataAnggaran->anggaran_awal ?? 0);
 
                 $detailMataAnggaran->update([
-                    'saldo_dipakai' => $currentSaldoDigunakan + $amount,
+                    'saldo_dipakai' => $newSaldoDigunakan,
+                    'balance' => $anggaranAwal - $newSaldoDigunakan,
                 ]);
 
                 Log::info('Budget balance updated', [
                     'detail_mata_anggaran_id' => $detailMataAnggaran->id,
                     'pengajuan_id' => $pengajuan->id,
                     'amount_added' => $amount,
-                    'new_saldo_dipakai' => $currentSaldoDigunakan + $amount,
+                    'new_saldo_dipakai' => $newSaldoDigunakan,
+                    'new_balance' => $anggaranAwal - $newSaldoDigunakan,
                 ]);
             }
         });

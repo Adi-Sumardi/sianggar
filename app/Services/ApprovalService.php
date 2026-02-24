@@ -222,6 +222,9 @@ class ApprovalService
                 'current_approval_stage' => null,
             ]);
 
+            // Dispatch event to update budget balance
+            \App\Events\ProposalFullyApproved::dispatch($pengajuan);
+
             // Notify the creator that proposal is fully approved
             $this->notifyCreatorOfApproval($pengajuan, $approver, $stage, isFullyApproved: true);
         }

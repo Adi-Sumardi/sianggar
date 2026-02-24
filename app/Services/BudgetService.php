@@ -6,11 +6,8 @@ namespace App\Services;
 
 use App\Models\DetailMataAnggaran;
 use App\Models\DetailPengajuan;
-use App\Models\MataAnggaran;
-use App\Models\PengajuanAnggaran;
 use App\Models\RealisasiAnggaran;
 use App\Models\Unit;
-use Illuminate\Support\Facades\DB;
 
 class BudgetService
 {
@@ -32,13 +29,13 @@ class BudgetService
         $totalRealisasi = RealisasiAnggaran::where('detail_mata_anggaran_id', $detail->id)
             ->sum('jumlah');
 
-        $anggaranAwal = (float) $detail->anggaran;
+        $anggaranAwal = (float) $detail->anggaran_awal;
         $balance = $anggaranAwal - (float) $totalUsed;
 
         $detail->update([
-            'terpakai' => $totalUsed,
-            'saldo' => $balance,
-            'realisasi' => $totalRealisasi,
+            'saldo_dipakai' => $totalUsed,
+            'balance' => $balance,
+            'realisasi_year' => $totalRealisasi,
         ]);
     }
 
