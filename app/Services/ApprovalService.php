@@ -12,6 +12,7 @@ use App\Enums\ReferenceType;
 use App\Enums\UserRole;
 use App\Models\AmountEditLog;
 use App\Models\Approval;
+use App\Models\DetailMataAnggaran;
 use App\Models\Discussion;
 use App\Models\FinanceValidation;
 use App\Models\PengajuanAnggaran;
@@ -54,6 +55,9 @@ class ApprovalService
             'stage_order' => 1,
             'status' => ApprovalStatus::Pending->value,
         ]);
+
+        // Reserve budget immediately (bank-like debit)
+        $this->reserveBudget($pengajuan);
 
         // Notify approvers at initial stage
         $this->notifyApproversForStage($pengajuan, $initialStage);
@@ -112,6 +116,9 @@ class ApprovalService
             'status_revisi' => null,
         ]);
 
+        // Re-reserve budget with (possibly updated) amounts
+        $this->reserveBudget($pengajuan);
+
         // Notify approvers at the revision stage
         $this->notifyApproversForStage($pengajuan, $targetStage);
     }
@@ -148,6 +155,9 @@ class ApprovalService
             'stage_order' => 1,
             'status' => ApprovalStatus::Pending->value,
         ]);
+
+        // Re-reserve budget with (possibly updated) amounts
+        $this->reserveBudget($pengajuan);
 
         // Notify approvers at initial stage
         $this->notifyApproversForStage($pengajuan, $initialStage);
@@ -307,6 +317,9 @@ class ApprovalService
             'revision_requested_stage' => $currentStage, // Save for return after revision
         ]);
 
+        // Return reserved budget so user can adjust amounts during revision
+        $this->releaseBudget($pengajuan);
+
         // Notify the creator that revision is needed
         $this->notifyCreatorOfRevision($pengajuan, $approver, $notes);
 
@@ -335,6 +348,9 @@ class ApprovalService
             'status_proses' => ProposalStatus::Rejected->value,
             'current_approval_stage' => null,
         ]);
+
+        // Return reserved budget (bank-like credit)
+        $this->releaseBudget($pengajuan);
 
         // Notify the creator that proposal is rejected
         $this->notifyCreatorOfRejection($pengajuan, $approver, $notes);
@@ -684,6 +700,70 @@ class ApprovalService
     // =========================================================================
     // Private Helpers
     // =========================================================================
+
+    /**
+     * Reserve budget for all detail items of a pengajuan (bank-like debit).
+     * Called on submit / resubmit so the balance is immediately reduced.
+     */
+    private function reserveBudget(PengajuanAnggaran $pengajuan): void
+    {
+        $pengajuan->loadMissing('detailPengajuans');
+
+        DB::transaction(function () use ($pengajuan) {
+            foreach ($pengajuan->detailPengajuans as $detail) {
+                if (! $detail->detail_mata_anggaran_id) {
+                    continue;
+                }
+
+                /** @var DetailMataAnggaran|null $dma */
+                $dma = DetailMataAnggaran::find($detail->detail_mata_anggaran_id);
+                if (! $dma) {
+                    continue;
+                }
+
+                $amount = (float) $detail->jumlah;
+                $newSaldoDigunakan = (float) ($dma->saldo_dipakai ?? 0) + $amount;
+                $anggaranAwal = (float) ($dma->anggaran_awal ?? 0);
+
+                $dma->update([
+                    'saldo_dipakai' => $newSaldoDigunakan,
+                    'balance' => $anggaranAwal - $newSaldoDigunakan,
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Release previously reserved budget (bank-like credit).
+     * Called on reject / revision-request so the balance is restored.
+     */
+    private function releaseBudget(PengajuanAnggaran $pengajuan): void
+    {
+        $pengajuan->loadMissing('detailPengajuans');
+
+        DB::transaction(function () use ($pengajuan) {
+            foreach ($pengajuan->detailPengajuans as $detail) {
+                if (! $detail->detail_mata_anggaran_id) {
+                    continue;
+                }
+
+                /** @var DetailMataAnggaran|null $dma */
+                $dma = DetailMataAnggaran::find($detail->detail_mata_anggaran_id);
+                if (! $dma) {
+                    continue;
+                }
+
+                $amount = (float) $detail->jumlah;
+                $newSaldoDigunakan = max(0, (float) ($dma->saldo_dipakai ?? 0) - $amount);
+                $anggaranAwal = (float) ($dma->anggaran_awal ?? 0);
+
+                $dma->update([
+                    'saldo_dipakai' => $newSaldoDigunakan,
+                    'balance' => $anggaranAwal - $newSaldoDigunakan,
+                ]);
+            }
+        });
+    }
 
     /**
      * Generate voucher number with format: 001/02/2026 (sequential/month/year).

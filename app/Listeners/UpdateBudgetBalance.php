@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Listeners;
 
 use App\Events\ProposalFullyApproved;
-use App\Models\DetailMataAnggaran;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class UpdateBudgetBalance implements ShouldQueue
@@ -20,50 +18,16 @@ class UpdateBudgetBalance implements ShouldQueue
     /**
      * Handle the ProposalFullyApproved event.
      *
-     * Update the detail_mata_anggaran records by increasing saldo_dipakai
-     * and recalculating the balance based on the approved pengajuan details.
+     * Budget is already reserved at submit time (bank-like system).
+     * This listener only logs the confirmation — no additional deduction needed.
      */
     public function handle(ProposalFullyApproved $event): void
     {
-        $pengajuan = $event->pengajuan->load('detailPengajuans');
+        $pengajuan = $event->pengajuan;
 
-        DB::transaction(function () use ($pengajuan) {
-            foreach ($pengajuan->detailPengajuans as $detail) {
-                if (! $detail->detail_mata_anggaran_id) {
-                    continue;
-                }
-
-                /** @var DetailMataAnggaran|null $detailMataAnggaran */
-                $detailMataAnggaran = DetailMataAnggaran::find($detail->detail_mata_anggaran_id);
-
-                if (! $detailMataAnggaran) {
-                    Log::warning('DetailMataAnggaran not found', [
-                        'detail_mata_anggaran_id' => $detail->detail_mata_anggaran_id,
-                        'pengajuan_id' => $pengajuan->id,
-                    ]);
-
-                    continue;
-                }
-
-                // Increase the amount used and recalculate balance
-                $currentSaldoDigunakan = (float) ($detailMataAnggaran->saldo_dipakai ?? 0);
-                $amount = (float) $detail->jumlah;
-                $newSaldoDigunakan = $currentSaldoDigunakan + $amount;
-                $anggaranAwal = (float) ($detailMataAnggaran->anggaran_awal ?? 0);
-
-                $detailMataAnggaran->update([
-                    'saldo_dipakai' => $newSaldoDigunakan,
-                    'balance' => $anggaranAwal - $newSaldoDigunakan,
-                ]);
-
-                Log::info('Budget balance updated', [
-                    'detail_mata_anggaran_id' => $detailMataAnggaran->id,
-                    'pengajuan_id' => $pengajuan->id,
-                    'amount_added' => $amount,
-                    'new_saldo_dipakai' => $newSaldoDigunakan,
-                    'new_balance' => $anggaranAwal - $newSaldoDigunakan,
-                ]);
-            }
-        });
+        Log::info('Proposal fully approved — budget already reserved at submission', [
+            'pengajuan_id' => $pengajuan->id,
+            'jumlah_total' => $pengajuan->jumlah_pengajuan_total,
+        ]);
     }
 }
