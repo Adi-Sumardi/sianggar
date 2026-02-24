@@ -12,16 +12,15 @@ use App\Models\Unit;
 class BudgetService
 {
     /**
-     * Recalculate balance for a detail mata anggaran after changes
-     * (e.g., after a proposal is approved or an LPJ is submitted)
+     * Recalculate balance for a detail mata anggaran after changes.
+     * Counts ALL active (non-draft, non-rejected) pengajuan as reserved.
      */
     public function recalculateBalance(DetailMataAnggaran $detail): void
     {
-        // Sum all approved pengajuan amounts linked to this detail mata anggaran
+        // Sum all active pengajuan amounts (bank-like: reserved on submit)
         $totalUsed = DetailPengajuan::where('detail_mata_anggaran_id', $detail->id)
             ->whereHas('pengajuanAnggaran', function ($q) {
-                $q->where('status_proses', 'approved')
-                    ->orWhere('status_proses', 'paid');
+                $q->whereNotIn('status_proses', ['draft', 'rejected']);
             })
             ->sum('jumlah');
 
@@ -50,10 +49,10 @@ class BudgetService
             ->where('tahun', $tahun)
             ->get();
 
-        $totalAnggaran = $details->sum('anggaran');
-        $totalDipakai = $details->sum('terpakai');
-        $totalBalance = $details->sum('saldo');
-        $totalRealisasi = $details->sum('realisasi');
+        $totalAnggaran = $details->sum('anggaran_awal');
+        $totalDipakai = $details->sum('saldo_dipakai');
+        $totalBalance = $details->sum('balance');
+        $totalRealisasi = $details->sum('realisasi_year');
 
         return [
             'total_anggaran' => (float) $totalAnggaran,
@@ -79,10 +78,10 @@ class BudgetService
         foreach ($units as $unit) {
             $details = $unit->detailMataAnggarans;
 
-            $totalAnggaran = (float) $details->sum('anggaran');
-            $totalDipakai = (float) $details->sum('terpakai');
-            $totalBalance = (float) $details->sum('saldo');
-            $totalRealisasi = (float) $details->sum('realisasi');
+            $totalAnggaran = (float) $details->sum('anggaran_awal');
+            $totalDipakai = (float) $details->sum('saldo_dipakai');
+            $totalBalance = (float) $details->sum('balance');
+            $totalRealisasi = (float) $details->sum('realisasi_year');
 
             $persentaseRealisasi = $totalAnggaran > 0
                 ? round(($totalRealisasi / $totalAnggaran) * 100, 2)
@@ -109,6 +108,6 @@ class BudgetService
     public function getTotalBudget(string $tahun): float
     {
         return (float) DetailMataAnggaran::where('tahun', $tahun)
-            ->sum('anggaran');
+            ->sum('anggaran_awal');
     }
 }
