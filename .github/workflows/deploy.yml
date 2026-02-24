@@ -62,9 +62,10 @@ jobs:
           set ftp:ssl-force no
           set ssl:verify-certificate no
           set ftp:passive-mode yes
-          set net:timeout 60
-          set net:max-retries 5
+          set net:timeout 120
+          set net:max-retries 10
           set net:reconnect-interval-base 5
+          set net:reconnect-interval-multiplier 2
           put public/deploy-webhook.php
           put deploy-app.tar.gz
           put deploy-public.tar.gz
