@@ -43,40 +43,63 @@ jobs:
       - name: Prepare production index.php
         run: cp public/index.php.production public/index.php
 
-      # 7. Upload app files to server (excluding public/, node_modules/, .git/, tests/, .env)
-      - name: Deploy app files via SCP
-        uses: appleboy/scp-action@v0.1.7
+      # 7. Deploy app files via FTP to ~/domains/sianggar.yapinet.id/sianggar/
+      - name: Deploy app files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          host: ${{ secrets.HOSTINGER_HOST }}
+          server: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          source: "app/,bootstrap/,config/,database/,lang/,resources/,routes/,storage/,vendor/,artisan,composer.json,composer.lock,deploy.sh"
-          target: /home/u300093989/domains/sianggar.yapinet.id/sianggar
-          overwrite: true
-          strip_components: 0
+          port: 21
+          protocol: ftp
+          server-dir: ./domains/sianggar.yapinet.id/sianggar/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            public/**
+            tests/**
+            .env
+            .env.*
+            .github/**
+            README.md
+            vite.config.*
+            tsconfig.*
+            postcss.config.*
+            tailwind.config.*
+            eslint.config.*
+            package.json
+            package-lock.json
+            phpunit.xml
 
-      # 8. Upload public files to public_html
-      - name: Deploy public files via SCP
-        uses: appleboy/scp-action@v0.1.7
+      # 8. Deploy public files via FTP to ~/domains/sianggar.yapinet.id/public_html/
+      - name: Deploy public files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          host: ${{ secrets.HOSTINGER_HOST }}
+          server: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          source: "public/"
-          target: /home/u300093989/domains/sianggar.yapinet.id/public_html
-          overwrite: true
-          strip_components: 1
+          port: 21
+          protocol: ftp
+          local-dir: ./public/
+          server-dir: ./domains/sianggar.yapinet.id/public_html/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            index.php.production
 
-      # 9. Run post-deploy commands via SSH
-      - name: Run deploy script
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USERNAME }}
-          password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          script: |
-            chmod +x /home/u300093989/domains/sianggar.yapinet.id/sianggar/deploy.sh
-            bash /home/u300093989/domains/sianggar.yapinet.id/sianggar/deploy.sh
+      # 9. Trigger deploy commands via HTTPS webhook
+      - name: Run post-deploy commands
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://sianggar.yapinet.id/deploy-webhook.php" \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --max-time 120)
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "Deploy webhook failed with HTTP $http_code"
+            exit 1
+          fi
