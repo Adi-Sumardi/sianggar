@@ -21,6 +21,7 @@ export default function EmailCreate() {
     const navigate = useNavigate();
 
     const [namaSurat, setNamaSurat] = useState('');
+    const [noSurat, setNoSurat] = useState('');
     const [selectedRecipients, setSelectedRecipients] = useState<EmailRecipientOption[]>([]);
     const [tanggalSurat, setTanggalSurat] = useState(new Date().toISOString().split('T')[0]);
     const [isiSurat, setIsiSurat] = useState('');
@@ -80,6 +81,7 @@ export default function EmailCreate() {
         try {
             await createEmail.mutateAsync({
                 name_surat: namaSurat,
+                ...(noSurat.trim() && { no_surat: noSurat.trim() }),
                 tgl_surat: tanggalSurat,
                 isi_surat: isiSurat,
                 recipients,
@@ -139,19 +141,20 @@ export default function EmailCreate() {
                                     />
                                 </div>
 
-                                {/* No Surat (auto-generated) */}
+                                {/* No Surat (optional, auto-generated if empty) */}
                                 <div>
                                     <label className="mb-1.5 block text-sm font-medium text-slate-700">
                                         No. Surat
                                     </label>
                                     <input
                                         type="text"
-                                        value="(Auto-generate)"
-                                        disabled
-                                        className="block w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-500 shadow-sm"
+                                        value={noSurat}
+                                        onChange={(e) => setNoSurat(e.target.value)}
+                                        placeholder="Kosongkan untuk auto-generate"
+                                        className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                     />
                                     <p className="mt-1 text-xs text-slate-400">
-                                        Nomor surat digenerate otomatis oleh sistem
+                                        Isi nomor surat manual atau kosongkan untuk generate otomatis
                                     </p>
                                 </div>
 

@@ -14,7 +14,6 @@ use App\Models\EmailReply;
 use App\Models\User;
 use App\Notifications\NewEmailReplyNotification;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
 
 class EmailReplyController extends Controller
 {
@@ -39,14 +38,13 @@ class EmailReplyController extends Controller
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
                 $path = $file->store('email-replies/' . $reply->id, 'public');
-                $url = Storage::disk('public')->url($path);
 
                 Attachment::create([
                     'attachable_type' => EmailReply::class,
                     'attachable_id' => $reply->id,
                     'uploaded_by' => $user->id,
                     'file_name' => $file->getClientOriginalName(),
-                    'file_path' => $url,
+                    'file_path' => '/storage/' . $path,
                     'file_mime' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
                 ]);

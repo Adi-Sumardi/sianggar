@@ -51,9 +51,12 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $data['password'] = $data['password']; // Will be hashed by the model cast
 
         $user = User::create($data);
+
+        // Sync Spatie role so permissions are resolved from model_has_roles
+        $user->syncRoles([$data['role']]);
+
         $user->load('unit');
 
         return response()->json([
@@ -79,7 +82,14 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-        $user->update($request->validated());
+        $data = $request->validated();
+        $user->update($data);
+
+        // Sync Spatie role if role was changed
+        if (isset($data['role'])) {
+            $user->syncRoles([$data['role']]);
+        }
+
         $user->load('unit');
 
         return response()->json([
