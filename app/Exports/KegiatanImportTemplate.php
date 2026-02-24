@@ -18,7 +18,7 @@ class KegiatanImportTemplate implements FromArray, WithHeadings, WithStyles, Sho
     public function array(): array
     {
         return [
-            ['1', '1.1', '1.1.1', '1.1.1.1', 'Contoh Kegiatan', 'non-unggulan', 'Keterangan opsional'],
+            ['1', '1.1', '1.1.1', '1.1.1.1', 'Contoh Kegiatan', 'non-unggulan'],
         ];
     }
 
@@ -31,7 +31,6 @@ class KegiatanImportTemplate implements FromArray, WithHeadings, WithStyles, Sho
             'Kode Kegiatan',
             'Nama Kegiatan',
             'Jenis Kegiatan',
-            'Keterangan',
         ];
     }
 

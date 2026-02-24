@@ -33,7 +33,6 @@ class ProkerImport implements ToCollection, WithHeadingRow
             $kodeIndikator = str_replace(',', '.', trim((string) ($row['kode_indikator'] ?? '')));
             $kodeProker = str_replace(',', '.', trim((string) ($row['kode_proker'] ?? '')));
             $namaProker = trim((string) ($row['nama_proker'] ?? ''));
-            $keterangan = trim((string) ($row['keterangan'] ?? '')) ?: null;
 
             // Required fields
             if ($kodeStrategi === '' || $kodeIndikator === '' || $kodeProker === '' || $namaProker === '') {
@@ -84,7 +83,6 @@ class ProkerImport implements ToCollection, WithHeadingRow
                 'unit_id' => $this->unitId,
                 'kode' => $kodeProker,
                 'nama' => $namaProker,
-                'keterangan' => $keterangan,
             ]);
 
             $this->imported++;

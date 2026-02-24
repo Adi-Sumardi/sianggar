@@ -36,7 +36,6 @@ class KegiatanImport implements ToCollection, WithHeadingRow
             $kodeKegiatan = str_replace(',', '.', trim((string) ($row['kode_kegiatan'] ?? '')));
             $namaKegiatan = trim((string) ($row['nama_kegiatan'] ?? ''));
             $jenisKegiatan = strtolower(trim((string) ($row['jenis_kegiatan'] ?? ''))) ?: 'non-unggulan';
-            $keterangan = trim((string) ($row['keterangan'] ?? '')) ?: null;
 
             // Required fields
             if ($kodeStrategi === '' || $kodeIndikator === '' || $kodeProker === '' || $kodeKegiatan === '' || $namaKegiatan === '') {
@@ -106,7 +105,6 @@ class KegiatanImport implements ToCollection, WithHeadingRow
                 'kode' => $kodeKegiatan,
                 'nama' => $namaKegiatan,
                 'jenis_kegiatan' => $jenisKegiatan,
-                'keterangan' => $keterangan,
             ]);
 
             $this->imported++;

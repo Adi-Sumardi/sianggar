@@ -18,7 +18,7 @@ class ProkerImportTemplate implements FromArray, WithHeadings, WithStyles, Shoul
     public function array(): array
     {
         return [
-            ['1', '1.1', '1.1.1', 'Contoh Program Kerja', 'Keterangan opsional'],
+            ['1', '1.1', '1.1.1', 'Contoh Program Kerja'],
         ];
     }
 
@@ -29,7 +29,6 @@ class ProkerImportTemplate implements FromArray, WithHeadings, WithStyles, Shoul
             'Kode Indikator',
             'Kode Proker',
             'Nama Proker',
-            'Keterangan',
         ];
     }
 

@@ -24,7 +24,6 @@ class Proker extends Model
         'unit_id',
         'kode',
         'nama',
-        'keterangan',
     ];
 
     // -------------------------------------------------------------------------
