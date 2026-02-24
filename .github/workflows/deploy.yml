@@ -75,7 +75,7 @@ jobs:
           FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
           FTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
-      # 9. Trigger deploy webhook to extract archives & run artisan commands
+      # 9. Trigger deploy webhook to extract archives
       - name: Run deploy webhook
         run: |
           response=$(curl -s -w "\n%{http_code}" -X POST \
@@ -90,3 +90,20 @@ jobs:
             echo "Deploy webhook failed with HTTP $http_code"
             exit 1
           fi
+
+      # 10. Run artisan commands via SSH
+      - name: Run post-deploy commands via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          script: |
+            cd ~/domains/sianggar.yapinet.id/sianggar
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+            echo "Post-deploy commands completed successfully"

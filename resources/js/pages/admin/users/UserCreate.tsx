@@ -74,6 +74,7 @@ export default function UserCreate() {
                 name: data.name,
                 email: data.email,
                 password: data.password,
+                password_confirmation: data.password_confirmation,
                 role: data.role,
                 unit_id: data.unit_id ?? null,
             });

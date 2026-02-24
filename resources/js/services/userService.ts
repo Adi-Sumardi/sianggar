@@ -37,6 +37,7 @@ export interface CreateUserPayload {
     name: string;
     email: string;
     password: string;
+    password_confirmation: string;
     role: string;
     unit_id?: number | null;
 }
