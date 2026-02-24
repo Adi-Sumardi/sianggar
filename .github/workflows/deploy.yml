@@ -1,0 +1,82 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Setup PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, pdo_mysql
+          coverage: none
+
+      # 3. Install Composer dependencies
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
+      # 4. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 5. Install npm dependencies & build
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      # 6. Prepare production index.php
+      - name: Prepare production index.php
+        run: cp public/index.php.production public/index.php
+
+      # 7. Upload app files to server (excluding public/, node_modules/, .git/, tests/, .env)
+      - name: Deploy app files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          source: "app/,bootstrap/,config/,database/,lang/,resources/,routes/,storage/,vendor/,artisan,composer.json,composer.lock,deploy.sh"
+          target: /home/u300093989/sianggar
+          overwrite: true
+          strip_components: 0
+
+      # 8. Upload public files to public_html
+      - name: Deploy public files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          source: "public/"
+          target: /home/u300093989/public_html
+          overwrite: true
+          strip_components: 1
+
+      # 9. Run post-deploy commands via SSH
+      - name: Run deploy script
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          script: |
+            chmod +x /home/u300093989/sianggar/deploy.sh
+            bash /home/u300093989/sianggar/deploy.sh
