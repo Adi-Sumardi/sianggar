@@ -87,7 +87,6 @@ enum UserRole: string
             self::SMP12,
             self::SMP55,
             self::SMA33,
-            self::Yta,
         ]);
     }
 
@@ -102,6 +101,7 @@ enum UserRole: string
             self::StaffSekretariat,
             self::SDM,
             self::Umum,
+            self::Yta,
         ]);
     }
 
@@ -131,7 +131,7 @@ enum UserRole: string
 
     public function canCreateLpj(): bool
     {
-        return $this === self::Admin || $this->isUnit();
+        return $this === self::Admin || $this->isUnit() || $this->isSubstansi();
     }
 
     public function dashboardType(): string

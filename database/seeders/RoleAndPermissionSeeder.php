@@ -160,7 +160,6 @@ class RoleAndPermissionSeeder extends Seeder
             UserRole::SMP12->value => $unitPermissions,
             UserRole::SMP55->value => $unitPermissions,
             UserRole::SMA33->value => $unitPermissions,
-            UserRole::Yta->value => $unitPermissions,
             UserRole::Stebank->value => $unitPermissions,
 
             // Substansi roles
@@ -170,6 +169,7 @@ class RoleAndPermissionSeeder extends Seeder
             UserRole::SDM->value => $substansiPermissions,
             UserRole::Umum->value => $substansiPermissions,
             UserRole::StaffSekretariat->value => $substansiPermissions,
+            UserRole::Yta->value => $substansiPermissions,
 
             // Other
             UserRole::Ketua->value => $otherPermissions,

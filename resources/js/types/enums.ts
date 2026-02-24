@@ -377,7 +377,6 @@ export function isUnitRole(role: UserRole): boolean {
         UserRole.SMP12,
         UserRole.SMP55,
         UserRole.SMA33,
-        UserRole.Yta,
     ].includes(role);
 }
 
@@ -394,6 +393,7 @@ export function isSubstansiRole(role: UserRole): boolean {
         UserRole.StaffSekretariat,
         UserRole.SDM,
         UserRole.Umum,
+        UserRole.Yta,
     ].includes(role);
 }
 
