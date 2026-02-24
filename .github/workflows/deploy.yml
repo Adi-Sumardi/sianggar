@@ -7,6 +7,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       # 1. Checkout code
@@ -43,52 +44,49 @@ jobs:
       - name: Prepare production index.php
         run: cp public/index.php.production public/index.php
 
-      # 7. Deploy app files via FTP to ~/domains/sianggar.yapinet.id/sianggar/
+      # 7. Install lftp
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
+
+      # 8. Deploy app files via FTP (lftp with parallel upload & auto-reconnect)
       - name: Deploy app files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USERNAME }}
-          password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: 21
-          protocol: ftp
-          server-dir: ./domains/sianggar.yapinet.id/sianggar/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            public/**
-            tests/**
-            .env
-            .env.*
-            .github/**
-            README.md
-            vite.config.*
-            tsconfig.*
-            postcss.config.*
-            tailwind.config.*
-            eslint.config.*
-            package.json
-            package-lock.json
-            phpunit.xml
+        run: |
+          lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
+          set ftp:ssl-allow yes
+          set ftp:ssl-force no
+          set ftp:passive-mode yes
+          set net:timeout 30
+          set net:max-retries 5
+          set net:reconnect-interval-base 5
+          set mirror:parallel-transfer-count 5
+          mirror -R --verbose --exclude-glob .git/ --exclude-glob .github/ --exclude-glob node_modules/ --exclude-glob public/ --exclude-glob tests/ --exclude-glob .env --exclude-glob .env.* --exclude-glob README.md --exclude-glob vite.config.* --exclude-glob tsconfig.* --exclude-glob postcss.config.* --exclude-glob tailwind.config.* --exclude-glob eslint.config.* --exclude-glob package.json --exclude-glob package-lock.json --exclude-glob phpunit.xml . ./domains/sianggar.yapinet.id/sianggar
+          quit
+          SCRIPT
+        env:
+          FTP_HOST: ${{ secrets.HOSTINGER_HOST }}
+          FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
+          FTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
-      # 8. Deploy public files via FTP to ~/domains/sianggar.yapinet.id/public_html/
+      # 9. Deploy public files via FTP
       - name: Deploy public files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USERNAME }}
-          password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: 21
-          protocol: ftp
-          local-dir: ./public/
-          server-dir: ./domains/sianggar.yapinet.id/public_html/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            index.php.production
+        run: |
+          lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
+          set ftp:ssl-allow yes
+          set ftp:ssl-force no
+          set ftp:passive-mode yes
+          set net:timeout 30
+          set net:max-retries 5
+          set net:reconnect-interval-base 5
+          set mirror:parallel-transfer-count 5
+          mirror -R --verbose --exclude-glob index.php.production public/ ./domains/sianggar.yapinet.id/public_html
+          quit
+          SCRIPT
+        env:
+          FTP_HOST: ${{ secrets.HOSTINGER_HOST }}
+          FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
+          FTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
-      # 9. Trigger deploy commands via HTTPS webhook
+      # 10. Trigger deploy commands via HTTPS webhook
       - name: Run post-deploy commands
         run: |
           response=$(curl -s -w "\n%{http_code}" -X POST \
