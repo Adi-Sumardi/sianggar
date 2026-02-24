@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Kegiatan extends Model
+{
+    use HasFactory;
+
+    /**
+     * The table associated with the model.
+     */
+    protected $table = 'kegiatans';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'strategy_id',
+        'indikator_id',
+        'proker_id',
+        'unit_id',
+        'kode',
+        'nama',
+        'jenis_kegiatan',
+        'keterangan',
+    ];
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function strategy(): BelongsTo
+    {
+        return $this->belongsTo(Strategy::class);
+    }
+
+    public function indikator(): BelongsTo
+    {
+        return $this->belongsTo(Indikator::class);
+    }
+
+    public function proker(): BelongsTo
+    {
+        return $this->belongsTo(Proker::class);
+    }
+
+    public function pkts(): HasMany
+    {
+        return $this->hasMany(Pkt::class);
+    }
+}
