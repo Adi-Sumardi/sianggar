@@ -13,7 +13,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
@@ -106,6 +105,13 @@ class UserController extends Controller
      */
     public function updatePassword(Request $request, User $user): JsonResponse
     {
+        // Prevent non-admin from changing other user's password
+        /** @var \App\Models\User $currentUser */
+        $currentUser = $request->user();
+        if ($currentUser->id !== $user->id && !$currentUser->hasEnumRole(UserRole::Admin)) {
+            abort(403, 'Anda tidak memiliki izin untuk mengubah password pengguna ini.');
+        }
+
         $request->validate([
             'password' => ['required', 'string', Password::min(8), 'confirmed'],
         ]);

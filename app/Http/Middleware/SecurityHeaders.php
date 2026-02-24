@@ -32,6 +32,19 @@ class SecurityHeaders
         // Permissions Policy (disable potentially dangerous features)
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
+        // Content Security Policy
+        $response->headers->set('Content-Security-Policy', implode('; ', [
+            "default-src 'self'",
+            "script-src 'self'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob:",
+            "font-src 'self' data:",
+            "connect-src 'self'",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+        ]));
+
         // HSTS (only in production with HTTPS)
         if (app()->environment('production') && $request->secure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');

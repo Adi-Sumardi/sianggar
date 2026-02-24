@@ -48,7 +48,8 @@ Route::prefix('v1')->group(function () {
     // Public Routes
     // =========================================================================
 
-    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::post('auth/login', [AuthController::class, 'login'])
+        ->middleware('throttle:5,1'); // Max 5 attempts per minute
 
     // =========================================================================
     // Authenticated Routes
