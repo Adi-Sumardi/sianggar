@@ -33,6 +33,7 @@ class UpdateBudgetBalance implements ShouldQueue
                     continue;
                 }
 
+                /** @var DetailMataAnggaran|null $detailMataAnggaran */
                 $detailMataAnggaran = DetailMataAnggaran::find($detail->detail_mata_anggaran_id);
 
                 if (! $detailMataAnggaran) {
