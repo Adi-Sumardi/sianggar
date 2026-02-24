@@ -55,7 +55,7 @@ jobs:
       - name: Install lftp
         run: sudo apt-get install -y lftp
 
-      - name: Upload archives via FTP
+      - name: Upload files via FTP
         run: |
           lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
           set ftp:ssl-allow yes
@@ -66,6 +66,7 @@ jobs:
           set net:max-retries 5
           set net:reconnect-interval-base 5
           cd ./domains/sianggar.yapinet.id/public_html
+          put public/deploy-webhook.php
           put deploy-app.tar.gz
           put deploy-public.tar.gz
           quit
