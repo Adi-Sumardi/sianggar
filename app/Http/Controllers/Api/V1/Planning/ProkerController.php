@@ -130,7 +130,7 @@ class ProkerController extends Controller
     public function import(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:2048'],
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:2048'],
         ]);
 
         /** @var \App\Models\User $user */
