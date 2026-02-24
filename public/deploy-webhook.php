@@ -3,9 +3,16 @@
 /**
  * Deploy Webhook
  *
- * Triggered by GitHub Actions after FTP upload to run artisan commands.
- * Protected by a secret token stored in .env (DEPLOY_TOKEN).
+ * Triggered by GitHub Actions after FTP upload of archives.
+ * 1. Extracts deploy-app.tar.gz to ../sianggar/
+ * 2. Extracts deploy-public.tar.gz to ../public_html/
+ * 3. Runs artisan commands (migrate, cache)
+ * 4. Cleans up archive files
+ *
+ * Protected by DEPLOY_TOKEN in .env
  */
+
+set_time_limit(300);
 
 // Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -13,13 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Method Not Allowed');
 }
 
-// Determine app path (shared hosting: ../sianggar/)
-$appPath = dirname(__DIR__) . '/sianggar';
+$domainPath = dirname(__DIR__);
+$appPath = $domainPath . '/sianggar';
+$publicPath = $domainPath . '/public_html';
 $envFile = $appPath . '/.env';
 
 if (!file_exists($envFile)) {
     http_response_code(500);
-    exit('App not configured');
+    exit('App not configured - .env not found');
 }
 
 // Read DEPLOY_TOKEN from .env
@@ -41,7 +49,48 @@ if (!hash_equals($expectedToken, $providedToken)) {
     exit('Forbidden');
 }
 
-// Run artisan commands
+header('Content-Type: text/plain');
+$allSuccess = true;
+
+// Step 1: Extract app archive
+$appArchive = $publicPath . '/deploy-app.tar.gz';
+if (file_exists($appArchive)) {
+    echo "==> Extracting app archive...\n";
+    $cmd = "tar xzf " . escapeshellarg($appArchive) . " -C " . escapeshellarg($appPath);
+    exec($cmd . ' 2>&1', $output, $exitCode);
+    echo implode("\n", $output) . "\n";
+    if ($exitCode === 0) {
+        echo "    App extracted successfully.\n\n";
+        unlink($appArchive);
+    } else {
+        echo "    ERROR: App extraction failed (exit: {$exitCode})\n\n";
+        $allSuccess = false;
+    }
+    $output = [];
+} else {
+    echo "==> WARNING: deploy-app.tar.gz not found, skipping extraction.\n\n";
+}
+
+// Step 2: Extract public archive
+$publicArchive = $publicPath . '/deploy-public.tar.gz';
+if (file_exists($publicArchive)) {
+    echo "==> Extracting public archive...\n";
+    $cmd = "tar xzf " . escapeshellarg($publicArchive) . " -C " . escapeshellarg($publicPath);
+    exec($cmd . ' 2>&1', $output, $exitCode);
+    echo implode("\n", $output) . "\n";
+    if ($exitCode === 0) {
+        echo "    Public files extracted successfully.\n\n";
+        unlink($publicArchive);
+    } else {
+        echo "    ERROR: Public extraction failed (exit: {$exitCode})\n\n";
+        $allSuccess = false;
+    }
+    $output = [];
+} else {
+    echo "==> WARNING: deploy-public.tar.gz not found, skipping extraction.\n\n";
+}
+
+// Step 3: Run artisan commands
 chdir($appPath);
 
 $commands = [
@@ -52,9 +101,6 @@ $commands = [
     'php artisan event:cache',
 ];
 
-header('Content-Type: text/plain');
-
-$allSuccess = true;
 foreach ($commands as $cmd) {
     $cmdOutput = [];
     $exitCode = 0;
@@ -69,18 +115,17 @@ foreach ($commands as $cmd) {
     }
 }
 
-// Create storage link if not exists
-$publicPath = dirname(__DIR__) . '/public_html';
+// Step 4: Create storage link if not exists
 $storageLink = $publicPath . '/storage';
 if (!is_link($storageLink)) {
     $target = $appPath . '/storage/app/public';
     if (symlink($target, $storageLink)) {
-        echo "$ storage link created\n";
+        echo "==> Storage link created.\n";
     } else {
-        echo "$ storage link failed (create manually)\n";
+        echo "==> Storage link failed (create manually).\n";
     }
 } else {
-    echo "$ storage link already exists\n";
+    echo "==> Storage link already exists.\n";
 }
 
 if (!$allSuccess) {

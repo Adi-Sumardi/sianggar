@@ -44,22 +44,29 @@ jobs:
       - name: Prepare production index.php
         run: cp public/index.php.production public/index.php
 
-      # 7. Install lftp
+      # 7. Create deployment archives
+      - name: Create app archive
+        run: tar czf deploy-app.tar.gz app/ bootstrap/ config/ database/ lang/ resources/ routes/ storage/ vendor/ artisan composer.json composer.lock
+
+      - name: Create public archive
+        run: tar czf deploy-public.tar.gz -C public/ .
+
+      # 8. Upload archives via FTP (only 2 files = reliable)
       - name: Install lftp
         run: sudo apt-get install -y lftp
 
-      # 8. Deploy app files via FTP (lftp with parallel upload & auto-reconnect)
-      - name: Deploy app files via FTP
+      - name: Upload archives via FTP
         run: |
           lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
           set ftp:ssl-allow yes
           set ftp:ssl-force no
           set ftp:passive-mode yes
-          set net:timeout 30
+          set net:timeout 60
           set net:max-retries 5
           set net:reconnect-interval-base 5
-          set mirror:parallel-transfer-count 5
-          mirror -R --verbose --exclude-glob .git/ --exclude-glob .github/ --exclude-glob node_modules/ --exclude-glob public/ --exclude-glob tests/ --exclude-glob .env --exclude-glob .env.* --exclude-glob README.md --exclude-glob vite.config.* --exclude-glob tsconfig.* --exclude-glob postcss.config.* --exclude-glob tailwind.config.* --exclude-glob eslint.config.* --exclude-glob package.json --exclude-glob package-lock.json --exclude-glob phpunit.xml . ./domains/sianggar.yapinet.id/sianggar
+          cd ./domains/sianggar.yapinet.id/public_html
+          put deploy-app.tar.gz
+          put deploy-public.tar.gz
           quit
           SCRIPT
         env:
@@ -67,33 +74,14 @@ jobs:
           FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
           FTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
 
-      # 9. Deploy public files via FTP
-      - name: Deploy public files via FTP
-        run: |
-          lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
-          set ftp:ssl-allow yes
-          set ftp:ssl-force no
-          set ftp:passive-mode yes
-          set net:timeout 30
-          set net:max-retries 5
-          set net:reconnect-interval-base 5
-          set mirror:parallel-transfer-count 5
-          mirror -R --verbose --exclude-glob index.php.production public/ ./domains/sianggar.yapinet.id/public_html
-          quit
-          SCRIPT
-        env:
-          FTP_HOST: ${{ secrets.HOSTINGER_HOST }}
-          FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
-          FTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
-
-      # 10. Trigger deploy commands via HTTPS webhook
-      - name: Run post-deploy commands
+      # 9. Trigger deploy webhook to extract archives & run artisan commands
+      - name: Run deploy webhook
         run: |
           response=$(curl -s -w "\n%{http_code}" -X POST \
             "https://sianggar.yapinet.id/deploy-webhook.php" \
             -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            --max-time 120)
+            --max-time 300)
           http_code=$(echo "$response" | tail -1)
           body=$(echo "$response" | head -n -1)
           echo "$body"
