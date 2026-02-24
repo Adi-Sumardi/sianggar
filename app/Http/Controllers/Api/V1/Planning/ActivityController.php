@@ -157,18 +157,24 @@ class ActivityController extends Controller
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:2048'],
         ]);
 
-        /** @var \App\Models\User $user */
-        $user = $request->user();
+        try {
+            /** @var \App\Models\User $user */
+            $user = $request->user();
 
-        $import = new KegiatanImport($user->unit_id);
-        Excel::import($import, $request->file('file'));
+            $import = new KegiatanImport($user->unit_id);
+            Excel::import($import, $request->file('file'));
 
-        $errorCount = count($import->getErrors());
+            $errorCount = count($import->getErrors());
 
-        return response()->json([
-            'message' => "Import selesai: {$import->getImportedCount()} berhasil" . ($errorCount ? ", {$errorCount} gagal." : '.'),
-            'imported' => $import->getImportedCount(),
-            'errors' => $import->getErrors(),
-        ]);
+            return response()->json([
+                'message' => "Import selesai: {$import->getImportedCount()} berhasil" . ($errorCount ? ", {$errorCount} gagal." : '.'),
+                'imported' => $import->getImportedCount(),
+                'errors' => $import->getErrors(),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Gagal mengimpor file: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }
