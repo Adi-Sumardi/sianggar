@@ -49,7 +49,7 @@ jobs:
         run: tar czf deploy-app.tar.gz app/ bootstrap/ config/ database/ resources/ routes/ storage/ vendor/ artisan composer.json composer.lock
 
       - name: Create public archive
-        run: tar czf deploy-public.tar.gz -C public/ .
+        run: cd public && shopt -s dotglob && tar czf ../deploy-public.tar.gz *
 
       # 8. Upload archives via FTP (only 2 files = reliable)
       - name: Install lftp
