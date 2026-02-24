@@ -46,7 +46,7 @@ jobs:
 
       # 7. Create deployment archives
       - name: Create app archive
-        run: tar czf deploy-app.tar.gz app/ bootstrap/ config/ database/ lang/ resources/ routes/ storage/ vendor/ artisan composer.json composer.lock
+        run: tar czf deploy-app.tar.gz app/ bootstrap/ config/ database/ resources/ routes/ storage/ vendor/ artisan composer.json composer.lock
 
       - name: Create public archive
         run: tar czf deploy-public.tar.gz -C public/ .
