@@ -65,7 +65,6 @@ jobs:
           set net:timeout 60
           set net:max-retries 5
           set net:reconnect-interval-base 5
-          cd ./domains/sianggar.yapinet.id/public_html
           put public/deploy-webhook.php
           put deploy-app.tar.gz
           put deploy-public.tar.gz
