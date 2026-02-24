@@ -20,6 +20,11 @@ let csrfCookieFetched = false;
 // Request interceptor
 // ---------------------------------------------------------------------------
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+    // Let axios auto-set Content-Type for FormData (multipart/form-data with boundary)
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+
     const mutatingMethods = ['post', 'put', 'patch', 'delete'];
 
     if (config.method && mutatingMethods.includes(config.method.toLowerCase())) {
