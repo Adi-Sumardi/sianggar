@@ -136,6 +136,14 @@ class PerubahanAnggaranController extends Controller
         UpdatePerubahanAnggaranRequest $request,
         PerubahanAnggaran $perubahanAnggaran,
     ): JsonResponse {
+        // Only owner or admin can update
+        $user = Auth::user();
+        if ($perubahanAnggaran->user_id !== $user->id && ! $user->hasEnumRole(\App\Enums\UserRole::Admin)) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk mengubah perubahan anggaran ini.',
+            ], 403);
+        }
+
         if (! $perubahanAnggaran->isEditable()) {
             return response()->json([
                 'message' => 'Perubahan anggaran tidak dapat diedit pada status ini.',
@@ -208,6 +216,14 @@ class PerubahanAnggaranController extends Controller
      */
     public function destroy(PerubahanAnggaran $perubahanAnggaran): JsonResponse
     {
+        // Only owner or admin can delete
+        $user = Auth::user();
+        if ($perubahanAnggaran->user_id !== $user->id && ! $user->hasEnumRole(\App\Enums\UserRole::Admin)) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk menghapus perubahan anggaran ini.',
+            ], 403);
+        }
+
         if (! $perubahanAnggaran->isEditable()) {
             return response()->json([
                 'message' => 'Perubahan anggaran tidak dapat dihapus pada status ini.',

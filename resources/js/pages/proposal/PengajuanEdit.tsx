@@ -165,7 +165,7 @@ export default function PengajuanEdit() {
         return detailMataAnggaranData.data.map(dma => ({
             value: dma.id.toString(),
             label: dma.nama,
-            description: `Saldo: ${formatRupiah(dma.balance ?? 0)}`,
+            description: `Saldo: ${formatRupiah(dma.saldo_tersedia ?? 0)}`,
         }));
     }, [detailMataAnggaranData]);
 

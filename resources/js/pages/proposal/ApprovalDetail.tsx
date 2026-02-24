@@ -686,7 +686,7 @@ export default function ApprovalDetail() {
                                         {(pengajuan.detail_pengajuans || []).map((detail, index) => {
                                             const pagu = detail.detail_mata_anggaran?.anggaran_awal ?? 0;
                                             const terpakai = detail.detail_mata_anggaran?.saldo_dipakai ?? 0;
-                                            const saldo = detail.detail_mata_anggaran?.balance ?? (pagu - terpakai);
+                                            const saldo = detail.detail_mata_anggaran?.saldo_tersedia ?? (pagu - terpakai);
                                             const isSaldoKurang = detail.jumlah > saldo;
 
                                             return (

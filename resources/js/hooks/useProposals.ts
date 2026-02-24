@@ -65,6 +65,7 @@ export function useSubmitPengajuan() {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
             queryClient.invalidateQueries({ queryKey: ['pengajuans', id] });
             queryClient.invalidateQueries({ queryKey: ['approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
         },
     });
 }
@@ -78,6 +79,7 @@ export function useResubmitPengajuan() {
             queryClient.invalidateQueries({ queryKey: ['pengajuans', id] });
             queryClient.invalidateQueries({ queryKey: ['approvals'] });
             queryClient.invalidateQueries({ queryKey: ['lpj-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
         },
     });
 }

@@ -121,10 +121,12 @@ class PengajuanPolicy
             return true;
         }
 
-        // Proposal must be in a reviewable state
-        if (! in_array($pengajuan->status_proses, [
-            ProposalStatus::Submitted,
-            ProposalStatus::InReview,
+        // Proposal must be in a reviewable state (any status in the approval pipeline)
+        if (in_array($pengajuan->status_proses, [
+            ProposalStatus::Draft,
+            ProposalStatus::RevisionRequired,
+            ProposalStatus::Rejected,
+            ProposalStatus::Paid,
         ], true)) {
             return false;
         }

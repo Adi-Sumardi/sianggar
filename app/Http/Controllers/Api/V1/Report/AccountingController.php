@@ -187,6 +187,9 @@ class AccountingController extends Controller
      */
     public function storeRealisasi(Request $request): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
         $validated = $request->validate([
             'unit_id' => ['required', 'integer', Rule::exists('units', 'id')],
             'tahun' => ['required', 'string', 'max:9'],
@@ -197,6 +200,13 @@ class AccountingController extends Controller
             'persentase' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'keterangan' => ['nullable', 'string'],
         ]);
+
+        // Unit roles can only create realisasi for their own unit
+        if ($user->role->shouldFilterByOwnData() && $user->unit_id !== null && (int) $validated['unit_id'] !== $user->unit_id) {
+            return response()->json([
+                'message' => 'Anda hanya dapat menambah realisasi untuk unit Anda sendiri.',
+            ], 403);
+        }
 
         $realisasi = RealisasiAnggaran::create($validated);
         $realisasi->load('unit');
@@ -212,6 +222,16 @@ class AccountingController extends Controller
      */
     public function updateRealisasi(Request $request, RealisasiAnggaran $realisasi): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // Unit roles can only update realisasi for their own unit
+        if ($user->role->shouldFilterByOwnData() && $user->unit_id !== null && $realisasi->unit_id !== $user->unit_id) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk mengubah realisasi unit lain.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'unit_id' => ['sometimes', 'required', 'integer', Rule::exists('units', 'id')],
             'tahun' => ['sometimes', 'required', 'string', 'max:9'],
@@ -235,8 +255,18 @@ class AccountingController extends Controller
     /**
      * Remove a realisasi record.
      */
-    public function destroyRealisasi(RealisasiAnggaran $realisasi): JsonResponse
+    public function destroyRealisasi(Request $request, RealisasiAnggaran $realisasi): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // Unit roles can only delete realisasi for their own unit
+        if ($user->role->shouldFilterByOwnData() && $user->unit_id !== null && $realisasi->unit_id !== $user->unit_id) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk menghapus realisasi unit lain.',
+            ], 403);
+        }
+
         $realisasi->delete();
 
         return response()->json([

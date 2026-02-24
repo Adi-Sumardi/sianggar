@@ -221,7 +221,7 @@ export default function PengajuanRevise() {
         const insufficient: BudgetCheckResultItem[] = [];
 
         for (const item of items) {
-            if (!item.detail_mata_anggaran_id || !item.budget_saldo_tersedia) continue;
+            if (!item.detail_mata_anggaran_id || item.budget_saldo_tersedia == null) continue;
 
             if (item.jumlah > item.budget_saldo_tersedia) {
                 insufficient.push({
@@ -415,8 +415,8 @@ export default function PengajuanRevise() {
             className="space-y-4"
         >
             {items.map((item, index) => {
-                const hasBudgetInfo = item.budget_saldo_tersedia !== undefined && item.budget_saldo_tersedia > 0;
-                const isBudgetInsufficient = hasBudgetInfo && item.jumlah > (item.budget_saldo_tersedia || 0);
+                const hasBudgetInfo = item.budget_saldo_tersedia != null;
+                const isBudgetInsufficient = hasBudgetInfo && item.jumlah > (item.budget_saldo_tersedia ?? 0);
 
                 return (
                 <div

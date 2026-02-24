@@ -42,25 +42,28 @@ class ApprovalService
             ? ApprovalStage::StaffDirektur
             : ApprovalStage::StaffKeuangan;
 
-        $pengajuan->update([
-            'submitter_type' => $submitterType,
-            'amount_category' => AmountCategory::fromAmount((float) $pengajuan->jumlah_pengajuan_total)->value,
-            'status_proses' => ProposalStatus::Submitted->value,
-            'current_approval_stage' => $initialStage->value,
-        ]);
+        // Wrap in transaction so everything rolls back if budget is insufficient
+        DB::transaction(function () use ($pengajuan, $submitterType, $initialStage) {
+            $pengajuan->update([
+                'submitter_type' => $submitterType,
+                'amount_category' => AmountCategory::fromAmount((float) $pengajuan->jumlah_pengajuan_total)->value,
+                'status_proses' => ProposalStatus::Submitted->value,
+                'current_approval_stage' => $initialStage->value,
+            ]);
 
-        Approval::create([
-            'approvable_type' => PengajuanAnggaran::class,
-            'approvable_id' => $pengajuan->id,
-            'stage' => $initialStage->value,
-            'stage_order' => 1,
-            'status' => ApprovalStatus::Pending->value,
-        ]);
+            Approval::create([
+                'approvable_type' => PengajuanAnggaran::class,
+                'approvable_id' => $pengajuan->id,
+                'stage' => $initialStage->value,
+                'stage_order' => 1,
+                'status' => ApprovalStatus::Pending->value,
+            ]);
 
-        // Reserve budget immediately (bank-like debit)
-        $this->reserveBudget($pengajuan);
+            // Check budget sufficiency and reserve (throws RuntimeException if insufficient)
+            $this->recalculateAndCheckBudget($pengajuan);
+        });
 
-        // Notify approvers at initial stage
+        // Notify outside transaction (non-critical)
         $this->notifyApproversForStage($pengajuan, $initialStage);
     }
 
@@ -700,49 +703,14 @@ class ApprovalService
     // =========================================================================
 
     /**
-     * Reserve budget for all detail items of a pengajuan (bank-like debit).
-     * Called on submit / resubmit so the balance is immediately reduced.
-     */
-    private function reserveBudget(PengajuanAnggaran $pengajuan): void
-    {
-        $pengajuan->loadMissing('detailPengajuans');
-
-        DB::transaction(function () use ($pengajuan) {
-            foreach ($pengajuan->detailPengajuans as $detail) {
-                if (! $detail->detail_mata_anggaran_id) {
-                    continue;
-                }
-
-                /** @var DetailMataAnggaran|null $dma */
-                $dma = DetailMataAnggaran::find($detail->detail_mata_anggaran_id);
-                if (! $dma) {
-                    continue;
-                }
-
-                $amount = (float) $detail->jumlah;
-                $newSaldoDigunakan = (float) ($dma->saldo_dipakai ?? 0) + $amount;
-                $anggaranAwal = (float) ($dma->anggaran_awal ?? 0);
-
-                $dma->update([
-                    'saldo_dipakai' => $newSaldoDigunakan,
-                    'balance' => $anggaranAwal - $newSaldoDigunakan,
-                ]);
-            }
-        });
-    }
-
-    /**
      * Recalculate budget for all detail items affected by a pengajuan.
      * Sums ALL active (non-draft, non-rejected) pengajuan amounts per DetailMataAnggaran.
      * Throws RuntimeException if any budget line is insufficient.
-     * Called on resubmit to handle amount changes during revision.
+     * Uses pessimistic locking to prevent race conditions.
      */
     private function recalculateAndCheckBudget(PengajuanAnggaran $pengajuan): void
     {
         $pengajuan->loadMissing('detailPengajuans');
-
-        $insufficientItems = [];
-        $updates = [];
 
         // Collect unique DetailMataAnggaran IDs affected by this pengajuan
         $dmaIds = $pengajuan->detailPengajuans
@@ -750,42 +718,45 @@ class ApprovalService
             ->filter()
             ->unique();
 
-        foreach ($dmaIds as $dmaId) {
-            /** @var DetailMataAnggaran|null $dma */
-            $dma = DetailMataAnggaran::find($dmaId);
-            if (! $dma) {
-                continue;
+        DB::transaction(function () use ($dmaIds) {
+            $insufficientItems = [];
+            $updates = [];
+
+            foreach ($dmaIds as $dmaId) {
+                /** @var DetailMataAnggaran|null $dma */
+                $dma = DetailMataAnggaran::lockForUpdate()->find($dmaId);
+                if (! $dma) {
+                    continue;
+                }
+
+                // Sum ALL active pengajuan amounts for this budget line
+                $totalReserved = (float) DetailPengajuan::where('detail_mata_anggaran_id', $dmaId)
+                    ->whereHas('pengajuanAnggaran', function ($q) {
+                        $q->whereNotIn('status_proses', ['draft', 'rejected']);
+                    })
+                    ->sum('jumlah');
+
+                $anggaranAwal = (float) ($dma->anggaran_awal ?? 0);
+                $newBalance = $anggaranAwal - $totalReserved;
+
+                if ($newBalance < 0) {
+                    $insufficientItems[] = "{$dma->kode} - {$dma->nama}: "
+                        . 'anggaran Rp ' . number_format($anggaranAwal, 0, ',', '.')
+                        . ', total terpakai Rp ' . number_format($totalReserved, 0, ',', '.')
+                        . ', kekurangan Rp ' . number_format(abs($newBalance), 0, ',', '.');
+                }
+
+                $updates[] = ['dma' => $dma, 'saldo_dipakai' => $totalReserved, 'balance' => $newBalance];
             }
 
-            // Sum ALL active pengajuan amounts for this budget line
-            $totalReserved = (float) DetailPengajuan::where('detail_mata_anggaran_id', $dmaId)
-                ->whereHas('pengajuanAnggaran', function ($q) {
-                    $q->whereNotIn('status_proses', ['draft', 'rejected']);
-                })
-                ->sum('jumlah');
-
-            $anggaranAwal = (float) ($dma->anggaran_awal ?? 0);
-            $newBalance = $anggaranAwal - $totalReserved;
-
-            if ($newBalance < 0) {
-                $insufficientItems[] = "{$dma->kode} - {$dma->nama}: "
-                    . 'anggaran Rp ' . number_format($anggaranAwal, 0, ',', '.')
-                    . ', total terpakai Rp ' . number_format($totalReserved, 0, ',', '.')
-                    . ', kekurangan Rp ' . number_format(abs($newBalance), 0, ',', '.');
+            // Block if any budget line is insufficient
+            if (! empty($insufficientItems)) {
+                throw new \RuntimeException(
+                    "Saldo anggaran tidak mencukupi untuk pengajuan ini:\n" . implode("\n", $insufficientItems)
+                );
             }
 
-            $updates[] = ['dma' => $dma, 'saldo_dipakai' => $totalReserved, 'balance' => $newBalance];
-        }
-
-        // Block resubmit if any budget line is insufficient
-        if (! empty($insufficientItems)) {
-            throw new \RuntimeException(
-                "Saldo anggaran tidak mencukupi untuk pengajuan ini:\n" . implode("\n", $insufficientItems)
-            );
-        }
-
-        // All OK — apply updates
-        DB::transaction(function () use ($updates) {
+            // All OK — apply updates (already locked above)
             foreach ($updates as $update) {
                 $update['dma']->update([
                     'saldo_dipakai' => $update['saldo_dipakai'],
@@ -810,7 +781,7 @@ class ApprovalService
                 }
 
                 /** @var DetailMataAnggaran|null $dma */
-                $dma = DetailMataAnggaran::find($detail->detail_mata_anggaran_id);
+                $dma = DetailMataAnggaran::lockForUpdate()->find($detail->detail_mata_anggaran_id);
                 if (! $dma) {
                     continue;
                 }
