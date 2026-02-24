@@ -12,6 +12,8 @@
  * Protected by DEPLOY_TOKEN in .env
  */
 
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
 set_time_limit(300);
 
 // Only accept POST requests
@@ -20,14 +22,26 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Method Not Allowed');
 }
 
+header('Content-Type: text/plain');
+
 $domainPath = dirname(__DIR__);
 $appPath = $domainPath . '/sianggar';
 $publicPath = $domainPath . '/public_html';
 $envFile = $appPath . '/.env';
 
+echo "==> Domain path: {$domainPath}\n";
+echo "==> App path: {$appPath}\n";
+echo "==> Public path: {$publicPath}\n\n";
+
+// Ensure app directory exists
+if (!is_dir($appPath)) {
+    echo "==> Creating app directory...\n";
+    mkdir($appPath, 0755, true);
+}
+
 if (!file_exists($envFile)) {
     http_response_code(500);
-    exit('App not configured - .env not found');
+    exit('App not configured - .env not found at ' . $envFile);
 }
 
 // Read DEPLOY_TOKEN from .env
@@ -49,16 +63,24 @@ if (!hash_equals($expectedToken, $providedToken)) {
     exit('Forbidden');
 }
 
-header('Content-Type: text/plain');
 $allSuccess = true;
 
 // Step 1: Extract app archive
 $appArchive = $publicPath . '/deploy-app.tar.gz';
+echo "==> Looking for app archive: {$appArchive}\n";
+echo "    Exists: " . (file_exists($appArchive) ? 'yes' : 'no') . "\n";
+echo "    Size: " . (file_exists($appArchive) ? round(filesize($appArchive) / 1024 / 1024, 2) . ' MB' : 'N/A') . "\n";
+
 if (file_exists($appArchive)) {
     echo "==> Extracting app archive...\n";
-    $cmd = "tar xzf " . escapeshellarg($appArchive) . " -C " . escapeshellarg($appPath);
-    exec($cmd . ' 2>&1', $output, $exitCode);
-    echo implode("\n", $output) . "\n";
+    $cmd = "tar xzf " . escapeshellarg($appArchive) . " -C " . escapeshellarg($appPath) . " 2>&1";
+    echo "    CMD: {$cmd}\n";
+    $output = [];
+    $exitCode = 0;
+    exec($cmd, $output, $exitCode);
+    if (!empty($output)) {
+        echo "    Output: " . implode("\n    ", $output) . "\n";
+    }
     if ($exitCode === 0) {
         echo "    App extracted successfully.\n\n";
         unlink($appArchive);
@@ -66,18 +88,24 @@ if (file_exists($appArchive)) {
         echo "    ERROR: App extraction failed (exit: {$exitCode})\n\n";
         $allSuccess = false;
     }
-    $output = [];
 } else {
-    echo "==> WARNING: deploy-app.tar.gz not found, skipping extraction.\n\n";
+    echo "==> WARNING: deploy-app.tar.gz not found, skipping.\n\n";
 }
 
 // Step 2: Extract public archive
 $publicArchive = $publicPath . '/deploy-public.tar.gz';
+echo "==> Looking for public archive: {$publicArchive}\n";
+echo "    Exists: " . (file_exists($publicArchive) ? 'yes' : 'no') . "\n";
+
 if (file_exists($publicArchive)) {
     echo "==> Extracting public archive...\n";
-    $cmd = "tar xzf " . escapeshellarg($publicArchive) . " -C " . escapeshellarg($publicPath);
-    exec($cmd . ' 2>&1', $output, $exitCode);
-    echo implode("\n", $output) . "\n";
+    $cmd = "tar xzf " . escapeshellarg($publicArchive) . " -C " . escapeshellarg($publicPath) . " 2>&1";
+    $output = [];
+    $exitCode = 0;
+    exec($cmd, $output, $exitCode);
+    if (!empty($output)) {
+        echo "    Output: " . implode("\n    ", $output) . "\n";
+    }
     if ($exitCode === 0) {
         echo "    Public files extracted successfully.\n\n";
         unlink($publicArchive);
@@ -85,39 +113,30 @@ if (file_exists($publicArchive)) {
         echo "    ERROR: Public extraction failed (exit: {$exitCode})\n\n";
         $allSuccess = false;
     }
-    $output = [];
 } else {
-    echo "==> WARNING: deploy-public.tar.gz not found, skipping extraction.\n\n";
+    echo "==> WARNING: deploy-public.tar.gz not found, skipping.\n\n";
 }
 
-// Step 3: Find PHP 8.4 binary (Hostinger CLI defaults to older version)
-$phpBin = 'php';
-$phpCandidates = [
-    '/usr/bin/php8.4',
-    '/opt/alt/php84/usr/bin/php',
-    '/usr/local/php8.4/bin/php',
-    '/opt/cpanel/ea-php84/root/usr/bin/php',
-];
-foreach ($phpCandidates as $candidate) {
-    if (file_exists($candidate)) {
-        $phpBin = $candidate;
-        break;
-    }
-}
-echo "==> Using PHP binary: {$phpBin}\n";
-exec($phpBin . ' -v 2>&1', $phpVersion);
-echo "    " . ($phpVersion[0] ?? 'unknown') . "\n\n";
+// Step 3: Detect PHP version
+echo "==> PHP version check:\n";
 $phpVersion = [];
+exec('php -v 2>&1', $phpVersion);
+echo "    " . ($phpVersion[0] ?? 'unknown') . "\n\n";
 
 // Step 4: Run artisan commands
-chdir($appPath);
+if (!chdir($appPath)) {
+    echo "ERROR: Cannot chdir to {$appPath}\n";
+    http_response_code(500);
+    exit;
+}
+echo "==> Working directory: " . getcwd() . "\n\n";
 
 $commands = [
-    $phpBin . ' artisan migrate --force',
-    $phpBin . ' artisan config:cache',
-    $phpBin . ' artisan route:cache',
-    $phpBin . ' artisan view:cache',
-    $phpBin . ' artisan event:cache',
+    'php artisan migrate --force',
+    'php artisan config:cache',
+    'php artisan route:cache',
+    'php artisan view:cache',
+    'php artisan event:cache',
 ];
 
 foreach ($commands as $cmd) {
