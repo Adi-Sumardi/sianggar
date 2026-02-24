@@ -132,7 +132,7 @@ class PengajuanPolicy
         }
 
         // Check if the user's role matches the current approval stage
-        $currentStage = $pengajuan->current_stage;
+        $currentStage = $pengajuan->current_approval_stage;
 
         if ($currentStage === null) {
             return false;
