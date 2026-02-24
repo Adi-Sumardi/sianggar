@@ -8,7 +8,6 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Communication\StoreEmailRequest;
 use App\Http\Resources\EmailResource;
-use App\Http\Resources\UserResource;
 use App\Models\Email;
 use App\Models\EmailRecipient;
 use App\Models\User;
@@ -223,22 +222,10 @@ class EmailController extends Controller
                 'description' => $user->role->label(),
             ]);
 
-        // Get all roles
-        $roles = collect(UserRole::cases())
-            ->filter(fn (UserRole $role) => $role !== $currentUser->role)
-            ->map(fn (UserRole $role) => [
-                'type' => 'role',
-                'user_id' => null,
-                'role' => $role->value,
-                'label' => $role->label(),
-                'description' => 'Semua pengguna dengan role ini',
-            ])
-            ->values();
-
         return response()->json([
             'data' => [
                 'users' => $users,
-                'roles' => $roles,
+                'roles' => [],
             ],
         ]);
     }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, Send, X, Loader2, Users, User } from 'lucide-react';
+import { ArrowLeft, Send, X, Loader2, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -11,7 +11,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useCreateEmail, useEmailRecipients } from '@/hooks/useEmails';
 import type { EmailRecipientDTO } from '@/types/api';
 import type { EmailRecipientOption } from '@/services/emailService';
-import { cn } from '@/lib/utils';
+
 
 // ---------------------------------------------------------------------------
 // Component
@@ -32,10 +32,7 @@ export default function EmailCreate() {
     const { data: recipientsData, isLoading: loadingRecipients } = useEmailRecipients();
     const createEmail = useCreateEmail();
 
-    const allRecipients = [
-        ...(recipientsData?.users || []),
-        ...(recipientsData?.roles || []),
-    ];
+    const allRecipients = recipientsData?.users || [];
 
     const filteredRecipients = allRecipients.filter((r) => {
         const isNotSelected = !selectedRecipients.some(
@@ -169,19 +166,10 @@ export default function EmailCreate() {
                                         <div className="mb-2 flex flex-wrap gap-2">
                                             {selectedRecipients.map((recipient, index) => (
                                                 <span
-                                                    key={`${recipient.type}-${recipient.user_id || recipient.role}-${index}`}
-                                                    className={cn(
-                                                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm',
-                                                        recipient.type === 'user'
-                                                            ? 'bg-blue-100 text-blue-700'
-                                                            : 'bg-purple-100 text-purple-700'
-                                                    )}
+                                                    key={`user-${recipient.user_id}-${index}`}
+                                                    className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700"
                                                 >
-                                                    {recipient.type === 'user' ? (
-                                                        <User className="h-3.5 w-3.5" />
-                                                    ) : (
-                                                        <Users className="h-3.5 w-3.5" />
-                                                    )}
+                                                    <User className="h-3.5 w-3.5" />
                                                     {recipient.label}
                                                     <button
                                                         type="button"
@@ -221,65 +209,24 @@ export default function EmailCreate() {
                                                         Tidak ada hasil
                                                     </div>
                                                 ) : (
-                                                    <>
-                                                        {/* Users section */}
-                                                        {filteredRecipients.some((r) => r.type === 'user') && (
-                                                            <>
-                                                                <div className="px-3 py-1.5 text-xs font-semibold uppercase text-slate-400">
-                                                                    Pengguna
+                                                    filteredRecipients.map((recipient) => (
+                                                        <button
+                                                            key={`user-${recipient.user_id}`}
+                                                            type="button"
+                                                            onClick={() => handleAddRecipient(recipient)}
+                                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                                                        >
+                                                            <User className="h-4 w-4 text-blue-500" />
+                                                            <div>
+                                                                <div className="font-medium text-slate-700">
+                                                                    {recipient.label}
                                                                 </div>
-                                                                {filteredRecipients
-                                                                    .filter((r) => r.type === 'user')
-                                                                    .map((recipient) => (
-                                                                        <button
-                                                                            key={`user-${recipient.user_id}`}
-                                                                            type="button"
-                                                                            onClick={() => handleAddRecipient(recipient)}
-                                                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
-                                                                        >
-                                                                            <User className="h-4 w-4 text-blue-500" />
-                                                                            <div>
-                                                                                <div className="font-medium text-slate-700">
-                                                                                    {recipient.label}
-                                                                                </div>
-                                                                                <div className="text-xs text-slate-400">
-                                                                                    {recipient.description}
-                                                                                </div>
-                                                                            </div>
-                                                                        </button>
-                                                                    ))}
-                                                            </>
-                                                        )}
-
-                                                        {/* Roles section */}
-                                                        {filteredRecipients.some((r) => r.type === 'role') && (
-                                                            <>
-                                                                <div className="px-3 py-1.5 text-xs font-semibold uppercase text-slate-400">
-                                                                    Role
+                                                                <div className="text-xs text-slate-400">
+                                                                    {recipient.description}
                                                                 </div>
-                                                                {filteredRecipients
-                                                                    .filter((r) => r.type === 'role')
-                                                                    .map((recipient) => (
-                                                                        <button
-                                                                            key={`role-${recipient.role}`}
-                                                                            type="button"
-                                                                            onClick={() => handleAddRecipient(recipient)}
-                                                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
-                                                                        >
-                                                                            <Users className="h-4 w-4 text-purple-500" />
-                                                                            <div>
-                                                                                <div className="font-medium text-slate-700">
-                                                                                    {recipient.label}
-                                                                                </div>
-                                                                                <div className="text-xs text-slate-400">
-                                                                                    {recipient.description}
-                                                                                </div>
-                                                                            </div>
-                                                                        </button>
-                                                                    ))}
-                                                            </>
-                                                        )}
-                                                    </>
+                                                            </div>
+                                                        </button>
+                                                    ))
                                                 )}
                                             </div>
                                         )}
