@@ -66,6 +66,7 @@ export default function UserCreate() {
         },
     });
 
+    const selectedRole = watch('role');
     const selectedUnitId = watch('unit_id');
 
     const onSubmit = async (data: CreateUserForm) => {
@@ -237,24 +238,18 @@ export default function UserCreate() {
                                     >
                                         Role <span className="text-red-500">*</span>
                                     </label>
-                                    <select
-                                        id="role"
-                                        {...register('role')}
-                                        className={cn(
-                                            'block w-full rounded-md border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition-colors',
-                                            'focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20',
-                                            errors.role
-                                                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                                                : 'border-slate-300',
-                                        )}
-                                    >
-                                        <option value="">Pilih role</option>
-                                        {Object.values(UserRole).map((role) => (
-                                            <option key={role} value={role}>
-                                                {getRoleLabel(role)}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <SearchableSelect
+                                        options={Object.values(UserRole).map((role) => ({
+                                            value: role,
+                                            label: getRoleLabel(role),
+                                        }))}
+                                        value={selectedRole ?? ''}
+                                        onChange={(val) => {
+                                            setValue('role', val as UserRole, { shouldValidate: true });
+                                        }}
+                                        placeholder="Pilih role..."
+                                        searchPlaceholder="Cari role..."
+                                    />
                                     {errors.role && (
                                         <p className="text-xs text-red-600">{errors.role.message}</p>
                                     )}
