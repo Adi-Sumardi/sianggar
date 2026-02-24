@@ -148,8 +148,10 @@ class ProkerController extends Controller
                 'errors' => $import->getErrors(),
             ]);
         } catch (\Throwable $e) {
+            report($e);
+
             return response()->json([
-                'message' => 'Gagal mengimpor file: ' . $e->getMessage(),
+                'message' => 'Terjadi kesalahan saat mengimpor file. Silakan hubungi administrator.',
             ], 500);
         }
     }
