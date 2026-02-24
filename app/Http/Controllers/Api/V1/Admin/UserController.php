@@ -53,10 +53,6 @@ class UserController extends Controller
         $data = $request->validated();
 
         $user = User::create($data);
-
-        // Sync Spatie role so permissions are resolved from model_has_roles
-        $user->syncRoles([$data['role']]);
-
         $user->load('unit');
 
         return response()->json([
@@ -84,12 +80,6 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $user->update($data);
-
-        // Sync Spatie role if role was changed
-        if (isset($data['role'])) {
-            $user->syncRoles([$data['role']]);
-        }
-
         $user->load('unit');
 
         return response()->json([

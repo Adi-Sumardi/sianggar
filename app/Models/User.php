@@ -56,6 +56,25 @@ class User extends Authenticatable
     }
 
     // -------------------------------------------------------------------------
+    // Auto-sync Spatie role when the role column changes
+    // -------------------------------------------------------------------------
+
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            if ($user->role !== null) {
+                $user->syncRoles([$user->role->value]);
+            }
+        });
+
+        static::updated(function (User $user) {
+            if ($user->wasChanged('role') && $user->role !== null) {
+                $user->syncRoles([$user->role->value]);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
     // Relationships
     // -------------------------------------------------------------------------
 

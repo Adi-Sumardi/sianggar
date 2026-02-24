@@ -38,6 +38,7 @@ export enum UserRole {
     Litbang = 'litbang',
     Laz = 'laz',
     Pembangunan = 'pembangunan',
+    Yta = 'yta',
 }
 
 // ---------------------------------------------------------------------------
@@ -230,6 +231,7 @@ export function getRoleLabel(role: UserRole): string {
         [UserRole.Litbang]: 'Litbang',
         [UserRole.Laz]: 'LAZ',
         [UserRole.Pembangunan]: 'Pembangunan',
+        [UserRole.Yta]: 'YTA',
     };
 
     return labels[role] ?? role;
@@ -375,6 +377,7 @@ export function isUnitRole(role: UserRole): boolean {
         UserRole.SMP12,
         UserRole.SMP55,
         UserRole.SMA33,
+        UserRole.Yta,
     ].includes(role);
 }
 

@@ -37,6 +37,7 @@ enum UserRole: string
     case Litbang = 'litbang';
     case Laz = 'laz';
     case Pembangunan = 'pembangunan';
+    case Yta = 'yta';
 
     public function label(): string
     {
@@ -72,6 +73,7 @@ enum UserRole: string
             self::Litbang => 'Litbang',
             self::Laz => 'LAZ',
             self::Pembangunan => 'Pembangunan',
+            self::Yta => 'YTA',
         };
     }
 
@@ -85,6 +87,7 @@ enum UserRole: string
             self::SMP12,
             self::SMP55,
             self::SMA33,
+            self::Yta,
         ]);
     }
 
