@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Planning;
 
+use App\Exports\ProkerImportTemplate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Planning\StoreProkerRequest;
 use App\Http\Resources\ProkerResource;
+use App\Imports\ProkerImport;
 use App\Models\Proker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProkerController extends Controller
 {
@@ -109,6 +113,38 @@ class ProkerController extends Controller
 
         return response()->json([
             'message' => 'Program kerja berhasil dihapus.',
+        ]);
+    }
+
+    /**
+     * Download Excel template for importing program kerja.
+     */
+    public function importTemplate(): BinaryFileResponse
+    {
+        return Excel::download(new ProkerImportTemplate, 'template-import-proker.xlsx');
+    }
+
+    /**
+     * Import program kerja from an Excel/CSV file.
+     */
+    public function import(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:2048'],
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $import = new ProkerImport($user->unit_id);
+        Excel::import($import, $request->file('file'));
+
+        $errorCount = count($import->getErrors());
+
+        return response()->json([
+            'message' => "Import selesai: {$import->getImportedCount()} berhasil" . ($errorCount ? ", {$errorCount} gagal." : '.'),
+            'imported' => $import->getImportedCount(),
+            'errors' => $import->getErrors(),
         ]);
     }
 }

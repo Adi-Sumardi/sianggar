@@ -8,6 +8,7 @@ import type {
 } from '@/types/models';
 import type {
     ApiResponse,
+    ImportResult,
     PaginatedResponse,
     PaginationParams,
     CreateStrategyDTO,
@@ -188,4 +189,30 @@ export async function deletePkt(id: number): Promise<void> {
 export async function submitPkt(id: number): Promise<Pkt> {
     const { data } = await api.post<ApiResponse<Pkt>>(`/pkt/${id}/submit`);
     return data.data;
+}
+
+// =============================================================================
+// Import
+// =============================================================================
+
+export async function importProkers(file: File): Promise<ImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await api.post<ImportResult>('/prokers/import', formData);
+    return data;
+}
+
+export function getProkerImportTemplateUrl(): string {
+    return `${api.defaults.baseURL}/prokers/import-template`;
+}
+
+export async function importKegiatans(file: File): Promise<ImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await api.post<ImportResult>('/activities/import', formData);
+    return data;
+}
+
+export function getKegiatanImportTemplateUrl(): string {
+    return `${api.defaults.baseURL}/activities/import-template`;
 }

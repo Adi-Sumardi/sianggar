@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { motion } from 'motion/react';
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { SearchFilter } from '@/components/common/SearchFilter';
 import { DataTable } from '@/components/common/DataTable';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ImportDialog } from '@/components/common/ImportDialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -19,7 +20,9 @@ import {
     useCreateKegiatan,
     useUpdateKegiatan,
     useDeleteKegiatan,
+    useImportKegiatans,
 } from '@/hooks/usePlanning';
+import { getKegiatanImportTemplateUrl } from '@/services/planningService';
 import { useUnitsList } from '@/hooks/useUnits';
 import { UserRole } from '@/types/enums';
 import type { Kegiatan } from '@/types/models';
@@ -52,6 +55,7 @@ export default function ActivityList() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editItem, setEditItem] = useState<ActivityRow | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: ActivityRow | null }>({ open: false, item: null });
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
 
     // Form state
     const [formKode, setFormKode] = useState('');
@@ -82,6 +86,7 @@ export default function ActivityList() {
     const createKegiatan = useCreateKegiatan();
     const updateKegiatan = useUpdateKegiatan();
     const deleteKegiatan = useDeleteKegiatan();
+    const importKegiatans = useImportKegiatans();
 
     // Helper to extract array from various response structures
     const extractArray = <T,>(data: unknown): T[] => {
@@ -316,10 +321,16 @@ export default function ActivityList() {
                         title="Kegiatan"
                         description="Kelola kegiatan per program kerja"
                         actions={
-                            <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
-                                <Plus className="h-4 w-4" />
-                                Tambah Kegiatan
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button type="button" onClick={() => setImportDialogOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                                    <Upload className="h-4 w-4" />
+                                    Import
+                                </button>
+                                <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">
+                                    <Plus className="h-4 w-4" />
+                                    Tambah Kegiatan
+                                </button>
+                            </div>
                         }
                     />
                 </motion.div>
@@ -395,6 +406,15 @@ export default function ActivityList() {
                 variant="destructive"
                 onConfirm={handleDelete}
                 confirmDisabled={isDeleting}
+            />
+
+            <ImportDialog
+                open={importDialogOpen}
+                onOpenChange={setImportDialogOpen}
+                title="Import Kegiatan"
+                templateUrl={getKegiatanImportTemplateUrl()}
+                templateFileName="template-import-kegiatan.xlsx"
+                onImport={(file) => importKegiatans.mutateAsync(file)}
             />
         </PageTransition>
     );

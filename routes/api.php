@@ -315,6 +315,12 @@ Route::prefix('v1')->group(function () {
         // Planning
         // ---------------------------------------------------------------------
         Route::middleware('permission:manage-planning')->group(function () {
+            // Import routes (must be before apiResource to avoid wildcard conflicts)
+            Route::get('prokers/import-template', [ProkerController::class, 'importTemplate']);
+            Route::post('prokers/import', [ProkerController::class, 'import']);
+            Route::get('activities/import-template', [ActivityController::class, 'importTemplate']);
+            Route::post('activities/import', [ActivityController::class, 'import']);
+
             Route::apiResource('strategies', StrategyController::class);
             Route::apiResource('indicators', IndicatorController::class);
             Route::apiResource('prokers', ProkerController::class);

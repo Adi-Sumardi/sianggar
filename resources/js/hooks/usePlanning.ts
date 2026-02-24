@@ -298,3 +298,27 @@ export function useSubmitPkt() {
         },
     });
 }
+
+// =============================================================================
+// Import hooks
+// =============================================================================
+
+export function useImportProkers() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (file: File) => planningService.importProkers(file),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['prokers'] });
+        },
+    });
+}
+
+export function useImportKegiatans() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (file: File) => planningService.importKegiatans(file),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['kegiatans'] });
+        },
+    });
+}

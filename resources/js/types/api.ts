@@ -620,3 +620,13 @@ export interface RapbsApprovalFilterParams extends PaginationParams {
     stage?: string;
     status?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Import
+// ---------------------------------------------------------------------------
+
+export interface ImportResult {
+    message: string;
+    imported: number;
+    errors: string[];
+}
