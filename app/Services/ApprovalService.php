@@ -13,6 +13,7 @@ use App\Enums\UserRole;
 use App\Models\AmountEditLog;
 use App\Models\Approval;
 use App\Models\DetailMataAnggaran;
+use App\Models\DetailPengajuan;
 use App\Models\Discussion;
 use App\Models\FinanceValidation;
 use App\Models\PengajuanAnggaran;
@@ -116,8 +117,8 @@ class ApprovalService
             'status_revisi' => null,
         ]);
 
-        // Re-reserve budget with (possibly updated) amounts
-        $this->reserveBudget($pengajuan);
+        // Recalculate budget and block if insufficient after revision edits
+        $this->recalculateAndCheckBudget($pengajuan);
 
         // Notify approvers at the revision stage
         $this->notifyApproversForStage($pengajuan, $targetStage);
@@ -156,8 +157,8 @@ class ApprovalService
             'status' => ApprovalStatus::Pending->value,
         ]);
 
-        // Re-reserve budget with (possibly updated) amounts
-        $this->reserveBudget($pengajuan);
+        // Recalculate budget and block if insufficient after revision edits
+        $this->recalculateAndCheckBudget($pengajuan);
 
         // Notify approvers at initial stage
         $this->notifyApproversForStage($pengajuan, $initialStage);
@@ -316,9 +317,6 @@ class ApprovalService
             'current_approval_stage' => null,
             'revision_requested_stage' => $currentStage, // Save for return after revision
         ]);
-
-        // Return reserved budget so user can adjust amounts during revision
-        $this->releaseBudget($pengajuan);
 
         // Notify the creator that revision is needed
         $this->notifyCreatorOfRevision($pengajuan, $approver, $notes);
@@ -734,8 +732,72 @@ class ApprovalService
     }
 
     /**
+     * Recalculate budget for all detail items affected by a pengajuan.
+     * Sums ALL active (non-draft, non-rejected) pengajuan amounts per DetailMataAnggaran.
+     * Throws RuntimeException if any budget line is insufficient.
+     * Called on resubmit to handle amount changes during revision.
+     */
+    private function recalculateAndCheckBudget(PengajuanAnggaran $pengajuan): void
+    {
+        $pengajuan->loadMissing('detailPengajuans');
+
+        $insufficientItems = [];
+        $updates = [];
+
+        // Collect unique DetailMataAnggaran IDs affected by this pengajuan
+        $dmaIds = $pengajuan->detailPengajuans
+            ->pluck('detail_mata_anggaran_id')
+            ->filter()
+            ->unique();
+
+        foreach ($dmaIds as $dmaId) {
+            /** @var DetailMataAnggaran|null $dma */
+            $dma = DetailMataAnggaran::find($dmaId);
+            if (! $dma) {
+                continue;
+            }
+
+            // Sum ALL active pengajuan amounts for this budget line
+            $totalReserved = (float) DetailPengajuan::where('detail_mata_anggaran_id', $dmaId)
+                ->whereHas('pengajuanAnggaran', function ($q) {
+                    $q->whereNotIn('status_proses', ['draft', 'rejected']);
+                })
+                ->sum('jumlah');
+
+            $anggaranAwal = (float) ($dma->anggaran_awal ?? 0);
+            $newBalance = $anggaranAwal - $totalReserved;
+
+            if ($newBalance < 0) {
+                $insufficientItems[] = "{$dma->kode} - {$dma->nama}: "
+                    . 'anggaran Rp ' . number_format($anggaranAwal, 0, ',', '.')
+                    . ', total terpakai Rp ' . number_format($totalReserved, 0, ',', '.')
+                    . ', kekurangan Rp ' . number_format(abs($newBalance), 0, ',', '.');
+            }
+
+            $updates[] = ['dma' => $dma, 'saldo_dipakai' => $totalReserved, 'balance' => $newBalance];
+        }
+
+        // Block resubmit if any budget line is insufficient
+        if (! empty($insufficientItems)) {
+            throw new \RuntimeException(
+                "Saldo anggaran tidak mencukupi untuk pengajuan ini:\n" . implode("\n", $insufficientItems)
+            );
+        }
+
+        // All OK — apply updates
+        DB::transaction(function () use ($updates) {
+            foreach ($updates as $update) {
+                $update['dma']->update([
+                    'saldo_dipakai' => $update['saldo_dipakai'],
+                    'balance' => $update['balance'],
+                ]);
+            }
+        });
+    }
+
+    /**
      * Release previously reserved budget (bank-like credit).
-     * Called on reject / revision-request so the balance is restored.
+     * Called on reject so the balance is restored.
      */
     private function releaseBudget(PengajuanAnggaran $pengajuan): void
     {

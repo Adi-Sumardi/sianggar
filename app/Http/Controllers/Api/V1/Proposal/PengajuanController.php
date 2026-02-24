@@ -303,7 +303,13 @@ class PengajuanController extends Controller
             ], 422);
         }
 
-        $this->approvalService->resubmit($pengajuan);
+        try {
+            $this->approvalService->resubmit($pengajuan);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         $pengajuan->refresh();
         $pengajuan->load(['user', 'detailPengajuans', 'approvals']);
