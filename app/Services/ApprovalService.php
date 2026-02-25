@@ -85,45 +85,49 @@ class ApprovalService
 
         $targetStage = ApprovalStage::from($revisionStage);
 
-        // Find the last approval at revision stage and reset it to pending
-        $lastApproval = $pengajuan->approvals()
-            ->where('stage', $revisionStage)
-            ->orderBy('stage_order', 'desc')
-            ->first();
+        // Wrap in transaction so budget check failure rolls back all changes
+        DB::transaction(function () use ($pengajuan, $targetStage, $revisionStage) {
+            // Find the last approval at revision stage and reset it to pending
+            $lastApproval = $pengajuan->approvals()
+                ->where('stage', $revisionStage)
+                ->orderBy('stage_order', 'desc')
+                ->first();
 
-        if ($lastApproval) {
-            // Reset the approval that requested revision back to pending
-            $lastApproval->update([
-                'status' => ApprovalStatus::Pending->value,
-                'approved_by' => null,
-                'notes' => null,
-                'approved_at' => null,
+            if ($lastApproval) {
+                // Reset the approval that requested revision back to pending
+                $lastApproval->update([
+                    'status' => ApprovalStatus::Pending->value,
+                    'approved_by' => null,
+                    'notes' => null,
+                    'approved_at' => null,
+                ]);
+            } else {
+                // Create new approval at the revision stage
+                $maxOrder = $pengajuan->approvals()->max('stage_order') ?? 0;
+                Approval::create([
+                    'approvable_type' => PengajuanAnggaran::class,
+                    'approvable_id' => $pengajuan->id,
+                    'stage' => $targetStage->value,
+                    'stage_order' => $maxOrder + 1,
+                    'status' => ApprovalStatus::Pending->value,
+                ]);
+            }
+
+            // Update pengajuan status
+            $pengajuan->update([
+                'amount_category' => AmountCategory::fromAmount((float) $pengajuan->jumlah_pengajuan_total)->value,
+                'status_proses' => ProposalStatus::Revised->value,
+                'current_approval_stage' => $targetStage->value,
+                'revision_requested_stage' => null, // Clear after resubmit
+                'status_revisi' => null,
             ]);
-        } else {
-            // Create new approval at the revision stage
-            $maxOrder = $pengajuan->approvals()->max('stage_order') ?? 0;
-            Approval::create([
-                'approvable_type' => PengajuanAnggaran::class,
-                'approvable_id' => $pengajuan->id,
-                'stage' => $targetStage->value,
-                'stage_order' => $maxOrder + 1,
-                'status' => ApprovalStatus::Pending->value,
-            ]);
-        }
 
-        // Update pengajuan status
-        $pengajuan->update([
-            'amount_category' => AmountCategory::fromAmount((float) $pengajuan->jumlah_pengajuan_total)->value,
-            'status_proses' => ProposalStatus::Revised->value,
-            'current_approval_stage' => $targetStage->value,
-            'revision_requested_stage' => null, // Clear after resubmit
-            'status_revisi' => null,
-        ]);
+            // Recalculate budget and block if insufficient after revision edits
+            // If this throws, the entire transaction (status + approval) is rolled back
+            $this->recalculateAndCheckBudget($pengajuan);
+        });
 
-        // Recalculate budget and block if insufficient after revision edits
-        $this->recalculateAndCheckBudget($pengajuan);
-
-        // Notify approvers at the revision stage
+        // Notify approvers at the revision stage (outside transaction — only on success)
         $this->notifyApproversForStage($pengajuan, $targetStage);
     }
 
@@ -132,38 +136,42 @@ class ApprovalService
      */
     private function resubmitFromStart(PengajuanAnggaran $pengajuan): void
     {
-        // Delete all previous approval records
-        $pengajuan->approvals()->delete();
-
-        // Clear finance validation (will be re-done)
-        $pengajuan->financeValidation()?->delete();
-
         $initialStage = $pengajuan->submitter_type === 'unit'
             ? ApprovalStage::StaffDirektur
             : ApprovalStage::StaffKeuangan;
 
-        $pengajuan->update([
-            'amount_category' => AmountCategory::fromAmount((float) $pengajuan->jumlah_pengajuan_total)->value,
-            'status_proses' => ProposalStatus::Submitted->value,
-            'current_approval_stage' => $initialStage->value,
-            'revision_requested_stage' => null,
-            'status_revisi' => null,
-            'reference_type' => null,
-            'need_lpj' => false,
-        ]);
+        // Wrap in transaction so budget check failure rolls back all changes
+        DB::transaction(function () use ($pengajuan, $initialStage) {
+            // Delete all previous approval records
+            $pengajuan->approvals()->delete();
 
-        Approval::create([
-            'approvable_type' => PengajuanAnggaran::class,
-            'approvable_id' => $pengajuan->id,
-            'stage' => $initialStage->value,
-            'stage_order' => 1,
-            'status' => ApprovalStatus::Pending->value,
-        ]);
+            // Clear finance validation (will be re-done)
+            $pengajuan->financeValidation()?->delete();
 
-        // Recalculate budget and block if insufficient after revision edits
-        $this->recalculateAndCheckBudget($pengajuan);
+            $pengajuan->update([
+                'amount_category' => AmountCategory::fromAmount((float) $pengajuan->jumlah_pengajuan_total)->value,
+                'status_proses' => ProposalStatus::Submitted->value,
+                'current_approval_stage' => $initialStage->value,
+                'revision_requested_stage' => null,
+                'status_revisi' => null,
+                'reference_type' => null,
+                'need_lpj' => false,
+            ]);
 
-        // Notify approvers at initial stage
+            Approval::create([
+                'approvable_type' => PengajuanAnggaran::class,
+                'approvable_id' => $pengajuan->id,
+                'stage' => $initialStage->value,
+                'stage_order' => 1,
+                'status' => ApprovalStatus::Pending->value,
+            ]);
+
+            // Recalculate budget and block if insufficient after revision edits
+            // If this throws, the entire transaction is rolled back
+            $this->recalculateAndCheckBudget($pengajuan);
+        });
+
+        // Notify approvers at initial stage (outside transaction — only on success)
         $this->notifyApproversForStage($pengajuan, $initialStage);
     }
 
@@ -320,6 +328,9 @@ class ApprovalService
             'current_approval_stage' => null,
             'revision_requested_stage' => $currentStage, // Save for return after revision
         ]);
+
+        // Seed initial revision comment thread
+        app(RevisionCommentService::class)->seedInitialNote($pengajuan, $approver, $notes);
 
         // Notify the creator that revision is needed
         $this->notifyCreatorOfRevision($pengajuan, $approver, $notes);

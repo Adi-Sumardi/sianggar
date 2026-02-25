@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Communication\StoreEmailRequest;
 use App\Http\Resources\EmailResource;
+use App\Models\Attachment;
 use App\Models\Email;
 use App\Models\EmailRecipient;
 use App\Models\User;
@@ -86,7 +87,7 @@ class EmailController extends Controller
         return DB::transaction(function () use ($request, $user) {
             $data = $request->validated();
             $recipients = $data['recipients'] ?? [];
-            unset($data['recipients']);
+            unset($data['recipients'], $data['files']);
 
             $data['user_id'] = $user->id;
             $data['status'] = $data['status'] ?? 'draft';
@@ -107,7 +108,24 @@ class EmailController extends Controller
                 ]);
             }
 
-            $email->load(['user', 'recipients.user']);
+            // Handle file uploads
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $path = $file->store('emails/' . $email->id, 'public');
+
+                    Attachment::create([
+                        'attachable_type' => Email::class,
+                        'attachable_id' => $email->id,
+                        'uploaded_by' => $user->id,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => '/storage/' . $path,
+                        'file_mime' => $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                    ]);
+                }
+            }
+
+            $email->load(['user', 'recipients.user', 'attachments']);
 
             // Send notifications to recipients
             $this->notifyRecipients($email);

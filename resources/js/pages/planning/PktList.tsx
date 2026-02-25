@@ -18,10 +18,11 @@ import {
     usePkts,
     useDeletePkt,
 } from '@/hooks/usePlanning';
+import { useRapbsList } from '@/hooks/useRapbsApproval';
 import { getCurrentAcademicYear, getAcademicYearOptions } from '@/stores/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnitsList } from '@/hooks/useUnits';
-import { UserRole } from '@/types/enums';
+import { RapbsStatus, UserRole } from '@/types/enums';
 import type { Pkt } from '@/types/models';
 
 // ---------------------------------------------------------------------------
@@ -133,6 +134,20 @@ export default function PktList() {
         unit: filterValues.unit || undefined,
     });
     const { data: unitsData } = useUnitsList();
+
+    // Check if unit's RAPBS is locked (not draft/rejected)
+    const { data: rapbsData } = useRapbsList(
+        user?.unit_id ? { unit_id: user.unit_id } : undefined,
+    );
+    const unitRapbs = rapbsData?.data?.[0];
+    const rapbsLocked = !!unitRapbs &&
+        unitRapbs.status !== RapbsStatus.Draft &&
+        unitRapbs.status !== RapbsStatus.Rejected;
+    const rapbsApproved = !!unitRapbs && (
+        unitRapbs.status === RapbsStatus.Approved ||
+        unitRapbs.status === RapbsStatus.ApbsGenerated ||
+        unitRapbs.status === RapbsStatus.Active
+    );
 
     // Mutations
     const deletePkt = useDeletePkt();
@@ -265,14 +280,24 @@ export default function PktList() {
                         title="Program Kerja Tahunan (PKT)"
                         description="Kelola program kerja tahunan dengan mata anggaran terkait"
                         actions={
-                            <button
-                                type="button"
-                                onClick={() => navigate('/planning/pkt/create')}
-                                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-                            >
-                                <Plus className="h-4 w-4" />
-                                Tambah PKT
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {rapbsLocked && (
+                                    <span className={`text-xs ${rapbsApproved ? 'text-green-600' : 'text-amber-600'}`}>
+                                        {rapbsApproved
+                                            ? 'RAPBS sudah diapprove, pengisian PKT ditutup'
+                                            : 'RAPBS sedang diajukan'}
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/planning/pkt/create')}
+                                    disabled={rapbsLocked}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Tambah PKT
+                                </button>
+                            </div>
                         }
                     />
                 </motion.div>

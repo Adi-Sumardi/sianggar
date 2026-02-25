@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { RevisionCommentThread } from '@/components/common/RevisionCommentThread';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FileUpload } from '@/components/common/FileUpload';
@@ -761,6 +762,11 @@ export default function PerubahanAnggaranDetail() {
                         </div>
                     </motion.div>
                 </div>
+
+                {/* Revision Comment Thread */}
+                {perubahan && (
+                    <RevisionCommentThread docType="perubahan-anggaran" docId={perubahan.id} className="mt-6" />
+                )}
 
                 {/* Action Dialogs */}
                 <ActionDialog

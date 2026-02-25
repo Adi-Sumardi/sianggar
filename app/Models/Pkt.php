@@ -143,13 +143,13 @@ class Pkt extends Model
     public function getCoaCode(): string
     {
         // Use the most specific kode available (each child already includes the parent prefix)
-        if ($this->detailMataAnggaran) {
+        if ($this->detailMataAnggaran?->kode) {
             return $this->detailMataAnggaran->kode;
         }
-        if ($this->subMataAnggaran) {
+        if ($this->subMataAnggaran?->kode) {
             return $this->subMataAnggaran->kode;
         }
-        if ($this->mataAnggaran) {
+        if ($this->mataAnggaran?->kode) {
             return $this->mataAnggaran->kode;
         }
 

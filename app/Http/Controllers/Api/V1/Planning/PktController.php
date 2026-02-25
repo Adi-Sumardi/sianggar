@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Planning;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PktResource;
 use App\Models\Pkt;
+use App\Models\Rapbs;
 use App\Services\PktService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -113,6 +114,10 @@ class PktController extends Controller
             'satuan' => ['nullable', 'string', 'max:50'],
         ]);
 
+        if ($error = $this->checkRapbsLocked($validated['unit_id'] ?? $request->user()->unit_id, $validated['tahun'])) {
+            return $error;
+        }
+
         $pkt = $this->pktService->create($validated, $request->user());
 
         $pkt->load([
@@ -166,6 +171,10 @@ class PktController extends Controller
             ], 403);
         }
 
+        if ($error = $this->checkRapbsLocked($pkt->unit_id, $pkt->tahun)) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'strategy_id' => ['sometimes', 'required', 'integer', Rule::exists('strategies', 'id')],
             'indikator_id' => ['sometimes', 'required', 'integer', Rule::exists('indikators', 'id')],
@@ -215,6 +224,10 @@ class PktController extends Controller
             ], 403);
         }
 
+        if ($error = $this->checkRapbsLocked($pkt->unit_id, $pkt->tahun)) {
+            return $error;
+        }
+
         $this->pktService->delete($pkt, $request->user());
 
         return response()->json(null, 204);
@@ -237,5 +250,25 @@ class PktController extends Controller
             'message' => 'PKT berhasil disubmit.',
             'data' => new PktResource($pkt),
         ]);
+    }
+
+    /**
+     * Check if the unit's RAPBS is locked (not editable).
+     */
+    private function checkRapbsLocked(?int $unitId, string $tahun): ?JsonResponse
+    {
+        $rapbs = Rapbs::where('unit_id', $unitId)->where('tahun', $tahun)->first();
+
+        if ($rapbs && !$rapbs->canEdit()) {
+            $message = $rapbs->status->isFullyApproved()
+                ? 'RAPBS sudah diapprove, pengisian PKT ditutup.'
+                : 'Tidak dapat mengubah PKT karena RAPBS sedang dalam proses pengajuan. Tunggu hingga RAPBS selesai diproses atau direvisi.';
+
+            return response()->json([
+                'message' => $message,
+            ], 422);
+        }
+
+        return null;
     }
 }

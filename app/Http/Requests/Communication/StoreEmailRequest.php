@@ -33,6 +33,8 @@ class StoreEmailRequest extends FormRequest
             'recipients.*.user_id' => ['nullable', 'integer', 'exists:users,id'],
             'recipients.*.role' => ['nullable', 'string', 'max:50'],
             'status' => ['nullable', 'string', 'max:50'],
+            'files' => ['nullable', 'array'],
+            'files.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg'],
         ];
     }
 

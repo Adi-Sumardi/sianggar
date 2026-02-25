@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace App\Listeners;
 
 use App\Events\ProposalFullyApproved;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
-class UpdateBudgetBalance implements ShouldQueue
+class UpdateBudgetBalance
 {
     /**
      * Create the event listener.

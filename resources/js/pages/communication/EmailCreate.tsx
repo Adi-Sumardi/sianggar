@@ -82,6 +82,7 @@ export default function EmailCreate() {
                 tgl_surat: tanggalSurat,
                 isi_surat: isiSurat,
                 recipients,
+                ...(files.length > 0 && { files }),
             });
 
             toast.success('Surat berhasil dikirim');

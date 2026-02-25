@@ -12,14 +12,21 @@ use App\Models\Rapbs;
 use App\Models\RapbsItem;
 use App\Models\Strategy;
 use App\Models\SubMataAnggaran;
+use App\Enums\UserRole;
 use App\Models\Unit;
 use App\Models\User;
 use App\Services\PktService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Seed Spatie roles needed by User::booted() syncRoles()
+    foreach (UserRole::cases() as $role) {
+        Role::firstOrCreate(['name' => $role->value, 'guard_name' => 'web']);
+    }
+
     $this->pktService = app(PktService::class);
 });
 

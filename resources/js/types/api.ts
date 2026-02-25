@@ -143,10 +143,13 @@ export interface CreateLpjDTO {
 
 export interface UpdateLpjDTO {
     perihal?: string;
-    tanggal?: string;
-    total_realisasi?: number;
-    sisa_anggaran?: number;
-    catatan?: string;
+    no_surat?: string;
+    mata_anggaran?: string;
+    no_mata_anggaran?: string;
+    tgl_kegiatan?: string;
+    input_realisasi?: number;
+    deskripsi_singkat?: string;
+    ditujukan?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -209,6 +212,10 @@ export interface EditAmountDTO {
 }
 
 export interface DiscussionMessageDTO {
+    message: string;
+}
+
+export interface RevisionCommentDTO {
     message: string;
 }
 
@@ -381,6 +388,7 @@ export interface CreateEmailDTO {
     ditujukan?: string; // Legacy field for single recipient
     recipients?: EmailRecipientDTO[]; // New field for multiple recipients
     status?: string;
+    files?: File[];
 }
 
 export interface UpdateEmailDTO {
@@ -483,6 +491,8 @@ export interface PengajuanFilterParams extends PaginationParams {
 export interface LpjFilterParams extends PaginationParams {
     status?: string;
     unit_id?: number;
+    tahun?: string;
+    search?: string;
 }
 
 export interface EmailFilterParams extends PaginationParams {

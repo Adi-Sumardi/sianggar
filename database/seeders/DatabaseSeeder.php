@@ -26,7 +26,12 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             StrategySeeder::class,
             MataAnggaranSeeder::class,
+            MasterDataSeeder::class,
             PengajuanSeeder::class,
+            LpjSeeder::class,
+            PerubahanAnggaranSeeder::class,
+            RapbsSeeder::class,
+            AdditionalDataSeeder::class,
         ]);
     }
 }

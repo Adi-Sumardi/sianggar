@@ -22,6 +22,7 @@ import { CurrencyInput } from '@/components/common/CurrencyInput';
 import { FileUpload } from '@/components/common/FileUpload';
 import { BudgetInfoCard } from '@/components/common/BudgetInfoCard';
 import { InsufficientBudgetModal } from '@/components/common/InsufficientBudgetModal';
+import { RevisionCommentThread } from '@/components/common/RevisionCommentThread';
 import { formatRupiah } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
@@ -835,6 +836,11 @@ export default function PengajuanRevise() {
                     </div>
                 </motion.div>
             </motion.div>
+
+            {/* Revision Comment Thread */}
+            {pengajuan && (
+                <RevisionCommentThread docType="pengajuan" docId={pengajuan.id} className="mt-6" />
+            )}
 
             {/* Insufficient Budget Modal */}
             <InsufficientBudgetModal

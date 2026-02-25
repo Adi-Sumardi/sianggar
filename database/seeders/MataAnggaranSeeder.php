@@ -20,7 +20,7 @@ class MataAnggaranSeeder extends Seeder
      */
     public function run(): void
     {
-        $tahun = '2025/2026';
+        $tahun = '2026/2027';
         $units = Unit::all();
 
         // ---------------------------------------------------------------

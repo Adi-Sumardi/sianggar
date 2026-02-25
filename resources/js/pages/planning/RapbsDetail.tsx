@@ -22,6 +22,7 @@ import {
 
 import { PageTransition } from '@/components/layout/PageTransition';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { RevisionCommentThread } from '@/components/common/RevisionCommentThread';
 import { formatRupiah } from '@/lib/currency';
 import { formatDateTime } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
@@ -769,6 +770,11 @@ export default function RapbsDetail() {
                         </motion.div>
                 </div>
             </motion.div>
+
+            {/* Revision Comment Thread */}
+            {rapbs && (
+                <RevisionCommentThread docType="rapbs" docId={rapbs.id} className="mt-6" />
+            )}
 
             {/* Submit Dialog */}
             <ConfirmDialog

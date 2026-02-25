@@ -16,8 +16,10 @@ import {
     useCreatePkt,
 } from '@/hooks/usePlanning';
 import { useMataAnggarans, useSubMataAnggarans } from '@/hooks/useBudget';
+import { useRapbsList } from '@/hooks/useRapbsApproval';
 import { useAuth } from '@/hooks/useAuth';
 import { getAcademicYearOptions } from '@/stores/authStore';
+import { RapbsStatus } from '@/types/enums';
 import type { Kegiatan } from '@/types/models';
 
 // ---------------------------------------------------------------------------
@@ -84,6 +86,30 @@ export default function PktCreate() {
             setForm((prev) => ({ ...prev, unit_id: user.unit_id }));
         }
     }, [user?.unit_id]);
+
+    // Check if unit's RAPBS is locked — redirect if so
+    const { data: rapbsData } = useRapbsList(
+        user?.unit_id ? { unit_id: user.unit_id } : undefined,
+    );
+    const unitRapbs = rapbsData?.data?.[0];
+    const rapbsLocked = !!unitRapbs &&
+        unitRapbs.status !== RapbsStatus.Draft &&
+        unitRapbs.status !== RapbsStatus.Rejected;
+    const rapbsApproved = !!unitRapbs && (
+        unitRapbs.status === RapbsStatus.Approved ||
+        unitRapbs.status === RapbsStatus.ApbsGenerated ||
+        unitRapbs.status === RapbsStatus.Active
+    );
+
+    useEffect(() => {
+        if (rapbsLocked) {
+            toast.warning(rapbsApproved
+                ? 'RAPBS sudah diapprove, pengisian PKT ditutup.'
+                : 'Tidak dapat menambah PKT karena RAPBS sedang dalam proses pengajuan.',
+            );
+            navigate('/planning/pkt');
+        }
+    }, [rapbsLocked, rapbsApproved, navigate]);
 
     // API Queries — fetch all kegiatans for user's unit (backend auto-filters by unit)
     const { data: kegiatansData, isLoading: kegiatansLoading } = useKegiatans({ per_page: 100 });

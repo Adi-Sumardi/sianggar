@@ -8,10 +8,9 @@ use App\Events\LpjApproved;
 use App\Events\ProposalApproved;
 use App\Events\ProposalRevised;
 use App\Models\ActivityLog;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Events\Dispatcher;
 
-class LogApprovalAction implements ShouldQueue
+class LogApprovalAction
 {
     /**
      * Create the event listener.

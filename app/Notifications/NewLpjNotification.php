@@ -6,14 +6,10 @@ namespace App\Notifications;
 
 use App\Enums\LpjApprovalStage;
 use App\Models\Lpj;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class NewLpjNotification extends Notification implements ShouldQueue
+class NewLpjNotification extends Notification
 {
-    use Queueable;
-
     /**
      * Create a new notification instance.
      */

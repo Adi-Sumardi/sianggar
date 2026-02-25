@@ -6,14 +6,10 @@ namespace App\Notifications;
 
 use App\Models\Lpj;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class LpjRevisedNotification extends Notification implements ShouldQueue
+class LpjRevisedNotification extends Notification
 {
-    use Queueable;
-
     /**
      * Create a new notification instance.
      */

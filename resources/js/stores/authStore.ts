@@ -96,9 +96,21 @@ export const useAuthStore = create<AuthState>()(
  * Get available academic year options for the selector.
  */
 export function getAcademicYearOptions(): string[] {
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    // Academic year starts in July.
+    // Before July → current AY is (year-1)/year
+    // From July  → current AY is year/(year+1)
+    if (month >= 7) {
+        return [
+            `${currentYear}/${currentYear + 1}`,
+            `${currentYear + 1}/${currentYear + 2}`,
+        ];
+    }
     return [
+        `${currentYear - 1}/${currentYear}`,
         `${currentYear}/${currentYear + 1}`,
-        `${currentYear + 1}/${currentYear + 2}`,
     ];
 }

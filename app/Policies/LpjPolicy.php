@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Enums\ApprovalStage;
+use App\Enums\LpjApprovalStage;
 use App\Enums\LpjStatus;
 use App\Enums\UserRole;
 use App\Models\Lpj;
@@ -135,17 +135,27 @@ class LpjPolicy
             return false;
         }
 
-        // Check the latest pending approval stage
-        $pendingApproval = $lpj->approvals()
-            ->where('status', 'pending')
-            ->orderBy('id', 'asc')
-            ->first();
-
-        if (! $pendingApproval || ! $pendingApproval->stage) {
+        // Must have a current approval stage
+        if (! $lpj->current_approval_stage) {
             return false;
         }
 
-        $stage = $pendingApproval->stage;
+        // Check pending approval matches the current stage
+        $pendingApproval = $lpj->approvals()
+            ->where('status', 'pending')
+            ->where('stage', $lpj->current_approval_stage->value)
+            ->first();
+
+        if (! $pendingApproval) {
+            return false;
+        }
+
+        // Resolve stage as LpjApprovalStage for role matching
+        $stage = LpjApprovalStage::tryFrom($lpj->current_approval_stage->value);
+
+        if (! $stage) {
+            return false;
+        }
 
         return $user->role === $stage->requiredRole();
     }

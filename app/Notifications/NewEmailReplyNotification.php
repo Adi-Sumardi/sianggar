@@ -6,14 +6,10 @@ namespace App\Notifications;
 
 use App\Models\Email;
 use App\Models\EmailReply;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class NewEmailReplyNotification extends Notification implements ShouldQueue
+class NewEmailReplyNotification extends Notification
 {
-    use Queueable;
-
     /**
      * Create a new notification instance.
      */

@@ -44,7 +44,34 @@ export async function getEmail(id: number): Promise<Email> {
 }
 
 export async function createEmail(dto: CreateEmailDTO): Promise<Email> {
-    const { data } = await api.post<ApiResponse<Email>>('/emails', dto);
+    // Use FormData when files are present
+    if (dto.files && dto.files.length > 0) {
+        const formData = new FormData();
+        formData.append('name_surat', dto.name_surat);
+        formData.append('isi_surat', dto.isi_surat);
+        formData.append('tgl_surat', dto.tgl_surat);
+
+        if (dto.no_surat) formData.append('no_surat', dto.no_surat);
+        if (dto.status) formData.append('status', dto.status);
+        if (dto.ditujukan) formData.append('ditujukan', dto.ditujukan);
+
+        if (dto.recipients) {
+            dto.recipients.forEach((r, i) => {
+                if (r.user_id) formData.append(`recipients[${i}][user_id]`, String(r.user_id));
+                if (r.role) formData.append(`recipients[${i}][role]`, r.role);
+            });
+        }
+
+        dto.files.forEach((file, i) => {
+            formData.append(`files[${i}]`, file);
+        });
+
+        const { data } = await api.post<ApiResponse<Email>>('/emails', formData);
+        return data.data;
+    }
+
+    const { files: _, ...payload } = dto;
+    const { data } = await api.post<ApiResponse<Email>>('/emails', payload);
     return data.data;
 }
 

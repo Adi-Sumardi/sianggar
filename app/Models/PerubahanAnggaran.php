@@ -88,6 +88,11 @@ class PerubahanAnggaran extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
+    public function revisionComments(): MorphMany
+    {
+        return $this->morphMany(RevisionComment::class, 'commentable');
+    }
+
     // -------------------------------------------------------------------------
     // Scopes
     // -------------------------------------------------------------------------

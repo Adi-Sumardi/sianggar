@@ -199,6 +199,9 @@ class PerubahanAnggaranService
             'current_approval_stage' => null,
         ]);
 
+        // Seed initial revision comment thread
+        app(RevisionCommentService::class)->seedInitialNote($perubahan, $approver, $notes);
+
         return $currentApproval->fresh();
     }
 

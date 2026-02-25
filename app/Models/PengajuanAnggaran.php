@@ -127,6 +127,11 @@ class PengajuanAnggaran extends Model
         return $this->hasMany(AmountEditLog::class);
     }
 
+    public function revisionComments(): MorphMany
+    {
+        return $this->morphMany(RevisionComment::class, 'commentable');
+    }
+
     // -------------------------------------------------------------------------
     // Scopes
     // -------------------------------------------------------------------------

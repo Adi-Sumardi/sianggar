@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\Proposal\DiscussionController;
 use App\Http\Controllers\Api\V1\Proposal\PengajuanController;
 use App\Http\Controllers\Api\V1\Proposal\PerubahanAnggaranController;
 use App\Http\Controllers\Api\V1\Proposal\PerubahanController;
+use App\Http\Controllers\Api\V1\Proposal\RevisionCommentController;
 use App\Http\Controllers\Api\V1\Report\AccountingController;
 use App\Http\Controllers\Api\V1\Report\LaporanController;
 use App\Http\Controllers\Api\V1\Report\LpjController;
@@ -345,6 +346,12 @@ Route::prefix('v1')->group(function () {
             Route::post('rapbs/{rapbs}/revise', [RapbsApprovalController::class, 'revise']);
             Route::post('rapbs/{rapbs}/reject', [RapbsApprovalController::class, 'reject']);
         });
+
+        // ---------------------------------------------------------------------
+        // Revision Comments (Diskusi Revisi)
+        // ---------------------------------------------------------------------
+        Route::get('revision-comments/{type}/{id}', [RevisionCommentController::class, 'index']);
+        Route::post('revision-comments/{type}/{id}', [RevisionCommentController::class, 'store']);
 
         // ---------------------------------------------------------------------
         // Communication - Email / Surat

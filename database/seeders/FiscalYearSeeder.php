@@ -18,12 +18,12 @@ class FiscalYearSeeder extends Seeder
     public function run(): void
     {
         FiscalYear::updateOrCreate(
-            ['tahun' => '2025/2026'],
+            ['tahun' => '2026/2027'],
             [
-                'tahun' => '2025/2026',
+                'tahun' => '2026/2027',
                 'is_active' => true,
-                'start_date' => '2025-07-01',
-                'end_date' => '2026-06-30',
+                'start_date' => '2026-07-01',
+                'end_date' => '2027-06-30',
             ],
         );
     }

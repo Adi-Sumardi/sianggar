@@ -45,6 +45,7 @@ class Lpj extends Model
         'status_revisi',
         'tahun',
         'ditujukan',
+        'budget_released',
         // New routing fields
         'reference_type',
         'validated_at',
@@ -67,6 +68,7 @@ class Lpj extends Model
             'current_approval_stage' => LpjApprovalStage::class,
             'reference_type' => ReferenceType::class,
             'validated_at' => 'datetime',
+            'budget_released' => 'boolean',
         ];
     }
 
@@ -103,6 +105,11 @@ class Lpj extends Model
     public function validatedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'validated_by');
+    }
+
+    public function revisionComments(): MorphMany
+    {
+        return $this->morphMany(RevisionComment::class, 'commentable');
     }
 
     // -------------------------------------------------------------------------

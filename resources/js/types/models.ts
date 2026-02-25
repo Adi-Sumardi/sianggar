@@ -426,7 +426,7 @@ export interface Lpj {
     updated_at: string;
 
     // Relations
-    pengajuan?: PengajuanAnggaran;
+    pengajuan_anggaran?: PengajuanAnggaran;
     validated_by_user?: User;
     attachments?: Attachment[];
     approvals?: Approval[];
@@ -975,4 +975,39 @@ export interface PerubahanAnggaranLog {
     source_detail_mata_anggaran?: DetailMataAnggaran;
     target_detail_mata_anggaran?: DetailMataAnggaran;
     executor?: User;
+}
+
+// ---------------------------------------------------------------------------
+// RevisionComment (Diskusi Revisi)
+// ---------------------------------------------------------------------------
+
+export interface RevisionComment {
+    id: number;
+    commentable_type: string;
+    commentable_id: number;
+    user_id: number;
+    message: string;
+    revision_round: number;
+    is_initial_note: boolean;
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    user?: User;
+}
+
+export interface RevisionThreadData {
+    comments: RevisionComment[];
+    current_round: number;
+    is_read_only: boolean;
+    is_in_revision: boolean;
+    can_comment: boolean;
+}
+
+export interface RevisionThreadAllRoundsData {
+    rounds: Record<number, RevisionComment[]>;
+    current_round: number;
+    is_read_only: boolean;
+    is_in_revision: boolean;
+    can_comment: boolean;
 }

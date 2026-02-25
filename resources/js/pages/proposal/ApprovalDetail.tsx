@@ -27,6 +27,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ApprovalTimeline } from '@/components/common/ApprovalTimeline';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { RevisionCommentThread } from '@/components/common/RevisionCommentThread';
 import { VoucherModal } from '@/components/common/VoucherModal';
 import { formatRupiah } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
@@ -1078,6 +1079,11 @@ export default function ApprovalDetail() {
                     )}
                 </motion.div>
             </motion.div>
+
+            {/* Revision Comment Thread */}
+            {pengajuan && (
+                <RevisionCommentThread docType="pengajuan" docId={pengajuan.id} className="mt-6" />
+            )}
 
             {/* Approve dialog */}
             <ConfirmDialog

@@ -102,6 +102,11 @@ class Rapbs extends Model
         return $this->morphMany(ActivityLog::class, 'loggable');
     }
 
+    public function revisionComments(): MorphMany
+    {
+        return $this->morphMany(RevisionComment::class, 'commentable');
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------

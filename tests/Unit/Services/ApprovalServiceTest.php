@@ -14,11 +14,18 @@ use App\Models\User;
 use App\Services\ApprovalService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Notification::fake();
+
+    // Seed Spatie roles needed by User::booted() syncRoles()
+    foreach (UserRole::cases() as $role) {
+        Role::firstOrCreate(['name' => $role->value, 'guard_name' => 'web']);
+    }
+
     $this->service = new ApprovalService();
 });
 

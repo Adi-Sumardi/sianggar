@@ -18,6 +18,7 @@ import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { RevisionCommentThread } from '@/components/common/RevisionCommentThread';
 import { LpjApprovalTimeline } from '@/components/lpj/LpjApprovalTimeline';
 import { LpjValidationDialog } from '@/components/lpj/LpjValidationDialog';
 import { formatRupiah } from '@/lib/currency';
@@ -245,7 +246,7 @@ export default function LpjDetail() {
                 </motion.div>
 
                 {/* Linked pengajuan summary */}
-                {lpj.pengajuan && (
+                {lpj.pengajuan_anggaran && (
                     <motion.div
                         variants={staggerItem}
                         className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4"
@@ -253,15 +254,15 @@ export default function LpjDetail() {
                         <h3 className="mb-2 text-sm font-semibold text-slate-700">Pengajuan Terkait</h3>
                         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
                             <span className="text-slate-500">
-                                No: <span className="font-medium text-blue-600">{lpj.pengajuan.nomor_pengajuan}</span>
+                                No: <span className="font-medium text-blue-600">{lpj.pengajuan_anggaran.nomor_pengajuan}</span>
                             </span>
                             <span className="text-slate-500">
-                                Perihal: <span className="font-medium text-slate-700">{lpj.pengajuan.perihal}</span>
+                                Perihal: <span className="font-medium text-slate-700">{lpj.pengajuan_anggaran.perihal}</span>
                             </span>
                             <span className="text-slate-500">
-                                Anggaran: <span className="font-medium text-slate-700">{formatRupiah(lpj.pengajuan.jumlah_pengajuan_total)}</span>
+                                Anggaran: <span className="font-medium text-slate-700">{formatRupiah(lpj.pengajuan_anggaran.jumlah_pengajuan_total)}</span>
                             </span>
-                            <StatusBadge status={lpj.pengajuan.status_proses as string} size="sm" />
+                            <StatusBadge status={lpj.pengajuan_anggaran.status_proses as string} size="sm" />
                         </div>
                     </motion.div>
                 )}
@@ -456,6 +457,11 @@ export default function LpjDetail() {
                     )}
                 </motion.div>
             </motion.div>
+
+            {/* Revision Comment Thread */}
+            {lpj && (
+                <RevisionCommentThread docType="lpj" docId={lpj.id} className="mt-6" />
+            )}
 
             {/* Validation Dialog (Staf Keuangan) */}
             <LpjValidationDialog

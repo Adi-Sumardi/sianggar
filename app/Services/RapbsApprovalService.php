@@ -157,6 +157,9 @@ class RapbsApprovalService
                 $approver->id
             );
 
+            // Seed initial revision comment thread
+            app(RevisionCommentService::class)->seedInitialNote($rapbs, $approver, $notes);
+
             return $currentApproval;
         });
     }

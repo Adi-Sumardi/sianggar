@@ -20,7 +20,9 @@ use Illuminate\Database\Seeder;
 
 class PengajuanSeeder extends Seeder
 {
-    private string $tahun = '2026';
+    private string $tahun = '2026/2027';
+
+    private string $tahunDoc = '2026';
 
     private int $nomorUrut = 1;
 
@@ -1513,7 +1515,7 @@ class PengajuanSeeder extends Seeder
 
         // Generate nomor pengajuan
         $noSurat = $status !== ProposalStatus::Draft
-            ? sprintf('PA/%s/%s/%03d', $this->tahun, strtoupper(substr($unit, 0, 3)), $this->nomorUrut++)
+            ? sprintf('PA/%s/%s/%03d', $this->tahunDoc, strtoupper(substr($unit, 0, 3)), $this->nomorUrut++)
             : null;
 
         $pengajuan = PengajuanAnggaran::create([

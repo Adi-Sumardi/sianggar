@@ -6,14 +6,10 @@ namespace App\Notifications;
 
 use App\Enums\ApprovalStage;
 use App\Models\PengajuanAnggaran;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class NewProposalNotification extends Notification implements ShouldQueue
+class NewProposalNotification extends Notification
 {
-    use Queueable;
-
     /**
      * Create a new notification instance.
      */

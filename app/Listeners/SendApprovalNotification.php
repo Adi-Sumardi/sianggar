@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use App\Enums\UserRole;
 use App\Events\ProposalApproved;
 use App\Events\ProposalRevised;
 use App\Models\User;
 use App\Notifications\NewProposalNotification;
 use App\Notifications\ProposalRevisedNotification;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Services\ApprovalService;
 use Illuminate\Events\Dispatcher;
 
-class SendApprovalNotification implements ShouldQueue
+class SendApprovalNotification
 {
     /**
      * Create the event listener.
      */
-    public function __construct() {}
+    public function __construct(
+        private ApprovalService $approvalService,
+    ) {}
 
     /**
      * Register the listeners for the subscriber.
@@ -47,8 +48,8 @@ class SendApprovalNotification implements ShouldQueue
         $pengajuan = $event->pengajuan;
         $currentStage = $event->approval->stage;
 
-        // Determine the next approval stage
-        $nextStage = $currentStage->next();
+        // Determine the next approval stage using the service
+        $nextStage = $this->approvalService->getNextStage($pengajuan, $currentStage);
 
         if ($nextStage === null) {
             // No next stage means fully approved; handled by other listeners.

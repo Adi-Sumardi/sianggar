@@ -9,10 +9,9 @@ use App\Events\ProposalFullyApproved;
 use App\Events\ProposalRevised;
 use App\Notifications\ProposalApprovedNotification;
 use App\Notifications\ProposalRevisedNotification;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Events\Dispatcher;
 
-class NotifyProposalCreator implements ShouldQueue
+class NotifyProposalCreator
 {
     /**
      * Create the event listener.

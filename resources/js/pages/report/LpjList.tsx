@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type ColumnDef } from '@tanstack/react-table';
 import { motion } from 'motion/react';
@@ -19,19 +19,6 @@ import { getAcademicYearOptions } from '@/stores/authStore';
 import type { Lpj } from '@/types/models';
 
 // ---------------------------------------------------------------------------
-// Extended type for display
-// ---------------------------------------------------------------------------
-
-interface LpjWithPengajuan extends Lpj {
-    pengajuan_anggaran?: {
-        id: number;
-        nomor?: string;
-        unit_id?: number;
-        unit?: string;
-    };
-}
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -39,7 +26,7 @@ export default function LpjList() {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-    const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: LpjWithPengajuan | null }>({
+    const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: Lpj | null }>({
         open: false,
         item: null,
     });
@@ -58,7 +45,7 @@ export default function LpjList() {
     const deleteMutation = useDeleteLpj();
 
     // Extract data from paginated response
-    const lpjData = (lpjResponse?.data || []) as LpjWithPengajuan[];
+    const lpjData = (lpjResponse?.data || []) as Lpj[];
 
     const filters = [
         {
@@ -74,7 +61,8 @@ export default function LpjList() {
             options: [
                 { value: 'draft', label: 'Draft' },
                 { value: 'submitted', label: 'Submitted' },
-                { value: 'in_review', label: 'In Review' },
+                { value: 'validated', label: 'Validated' },
+                { value: 'approved-middle', label: 'Approved (Middle)' },
                 { value: 'approved', label: 'Approved' },
                 { value: 'revised', label: 'Revised' },
                 { value: 'rejected', label: 'Rejected' },
@@ -82,12 +70,12 @@ export default function LpjList() {
         },
     ];
 
-    const columns: ColumnDef<LpjWithPengajuan, unknown>[] = [
+    const columns: ColumnDef<Lpj, unknown>[] = [
         {
-            accessorKey: 'nomor',
+            accessorKey: 'no_surat',
             header: 'No Surat',
             cell: ({ row }) => (
-                <span className="font-medium text-blue-600">{row.original.nomor ?? row.original.no_surat ?? '-'}</span>
+                <span className="font-medium text-blue-600">{row.original.no_surat ?? '-'}</span>
             ),
         },
         {
@@ -101,7 +89,7 @@ export default function LpjList() {
             id: 'unit',
             header: 'Unit',
             cell: ({ row }) => (
-                <span>{row.original.pengajuan_anggaran?.unit ?? row.original.unit ?? '-'}</span>
+                <span>{row.original.unit ?? '-'}</span>
             ),
         },
         {
@@ -109,15 +97,15 @@ export default function LpjList() {
             header: 'Pengajuan Terkait',
             cell: ({ row }) => (
                 <span className="text-xs font-medium text-slate-500">
-                    {row.original.pengajuan_anggaran?.nomor ?? '-'}
+                    {row.original.pengajuan_anggaran?.nomor_pengajuan ?? '-'}
                 </span>
             ),
         },
         {
-            accessorKey: 'total_realisasi',
+            accessorKey: 'input_realisasi',
             header: 'Realisasi',
             cell: ({ row }) => (
-                <span className="font-medium">{formatRupiah(row.original.total_realisasi ?? row.original.input_realisasi ?? 0)}</span>
+                <span className="font-medium">{formatRupiah(row.original.input_realisasi ?? 0)}</span>
             ),
         },
         {

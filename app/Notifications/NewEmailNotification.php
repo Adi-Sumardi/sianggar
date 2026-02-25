@@ -5,14 +5,10 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Email;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class NewEmailNotification extends Notification implements ShouldQueue
+class NewEmailNotification extends Notification
 {
-    use Queueable;
-
     /**
      * Create a new notification instance.
      */

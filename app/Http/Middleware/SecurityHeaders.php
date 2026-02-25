@@ -33,17 +33,32 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         // Content Security Policy
-        $response->headers->set('Content-Security-Policy', implode('; ', [
-            "default-src 'self'",
-            "script-src 'self'",
-            "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: blob:",
-            "font-src 'self' data:",
-            "connect-src 'self'",
-            "frame-ancestors 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-        ]));
+        if (app()->environment('local')) {
+            // Relaxed CSP for local development (Vite dev server)
+            $response->headers->set('Content-Security-Policy', implode('; ', [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline' http://localhost:*",
+                "style-src 'self' 'unsafe-inline' http://localhost:*",
+                "img-src 'self' data: blob:",
+                "font-src 'self' data:",
+                "connect-src 'self' http://localhost:* ws://localhost:*",
+                "frame-ancestors 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+            ]));
+        } else {
+            $response->headers->set('Content-Security-Policy', implode('; ', [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline'",
+                "style-src 'self' 'unsafe-inline'",
+                "img-src 'self' data: blob:",
+                "font-src 'self' data:",
+                "connect-src 'self'",
+                "frame-ancestors 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+            ]));
+        }
 
         // HSTS (only in production with HTTPS)
         if (app()->environment('production') && $request->secure()) {
