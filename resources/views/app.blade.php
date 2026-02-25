@@ -11,11 +11,19 @@
 
         <link rel="icon" href="/logo/logo-sianggar.png" type="image/png">
         <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
+        <link rel="manifest" href="/build/manifest.webmanifest">
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx'])
     </head>
     <body class="bg-background text-foreground antialiased">
         <div id="root"></div>
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function () {
+                    navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                });
+            }
+        </script>
     </body>
 </html>
