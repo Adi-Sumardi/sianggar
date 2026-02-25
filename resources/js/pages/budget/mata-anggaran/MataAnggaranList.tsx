@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Plus, Pencil, Trash2, Eye, ChevronDown, ChevronRight, BookOpen, Loader2 } from 'lucide-react';
@@ -10,7 +10,10 @@ import { PageTransition } from '@/components/layout/PageTransition';
 import { SearchFilter } from '@/components/common/SearchFilter';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useMataAnggarans, useDeleteMataAnggaran, useSubMataAnggarans } from '@/hooks/useBudget';
+import { useUnitsList } from '@/hooks/useUnits';
+import { useAuth } from '@/hooks/useAuth';
 import { getAcademicYearOptions } from '@/stores/authStore';
+import { UserRole, isApproverRole } from '@/types/enums';
 import type { MataAnggaran, SubMataAnggaran } from '@/types/models';
 
 // ---------------------------------------------------------------------------
@@ -34,15 +37,39 @@ const yearOptions = getAcademicYearOptions().map((y) => ({ value: y, label: `TA 
 
 export default function MataAnggaranList() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
     const [deleteItem, setDeleteItem] = useState<MataAnggaranWithSubs | null>(null);
 
+    const showUnitFilter = user?.role === UserRole.Admin || (user?.role && isApproverRole(user.role as UserRole));
+    const { data: units } = useUnitsList();
+
+    const filters = useMemo(() => {
+        const f: Array<{ key: string; label: string; type: 'select'; options: Array<{ value: string; label: string }> }> = [];
+        if (showUnitFilter) {
+            f.push({
+                key: 'unit_id',
+                label: 'Semua Unit',
+                type: 'select',
+                options: units?.map((u) => ({ value: String(u.id), label: u.nama })) || [],
+            });
+        }
+        f.push({
+            key: 'tahun',
+            label: 'Semua Tahun',
+            type: 'select',
+            options: yearOptions,
+        });
+        return f;
+    }, [showUnitFilter, units]);
+
     // Fetch data from API - backend automatically filters by user's unit_id
     const { data: mataAnggaransResponse, isLoading, isError, error } = useMataAnggarans({
         search: searchQuery || undefined,
         tahun: filterValues.tahun || undefined,
+        unit_id: filterValues.unit_id ? Number(filterValues.unit_id) : undefined,
     });
 
     const deleteMutation = useDeleteMataAnggaran();
@@ -128,14 +155,7 @@ export default function MataAnggaranList() {
                 {/* Search & Filters */}
                 <motion.div variants={staggerItem}>
                     <SearchFilter
-                        filters={[
-                            {
-                                key: 'tahun',
-                                label: 'Semua Tahun',
-                                type: 'select',
-                                options: yearOptions,
-                            },
-                        ]}
+                        filters={filters}
                         values={filterValues}
                         onChange={setFilterValues}
                         onSearch={setSearchQuery}
