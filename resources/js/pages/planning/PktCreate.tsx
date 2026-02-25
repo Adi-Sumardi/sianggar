@@ -17,7 +17,7 @@ import {
 } from '@/hooks/usePlanning';
 import { useMataAnggarans, useSubMataAnggarans } from '@/hooks/useBudget';
 import { useAuth } from '@/hooks/useAuth';
-import { getCurrentAcademicYear, getAcademicYearOptions } from '@/stores/authStore';
+import { getAcademicYearOptions } from '@/stores/authStore';
 import type { Kegiatan } from '@/types/models';
 
 // ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ export default function PktCreate() {
     // Form state - unit_id will be set from user
     const [form, setForm] = useState<FormData>({
         unit_id: null,
-        tahun: getCurrentAcademicYear(),
+        tahun: '2026/2027',
         strategy_id: null,
         indikator_id: null,
         proker_id: null,
@@ -182,7 +182,7 @@ export default function PktCreate() {
 
     // Submit handler
     const handleSubmit = async () => {
-        if (!form.strategy_id || !form.indikator_id || !form.proker_id || !form.kegiatan_id || !form.mata_anggaran_id) {
+        if (!form.tahun || !form.strategy_id || !form.indikator_id || !form.proker_id || !form.kegiatan_id || !form.mata_anggaran_id) {
             toast.error('Field yang wajib harus diisi');
             return;
         }
@@ -211,7 +211,7 @@ export default function PktCreate() {
     };
 
     const isSubmitting = createPkt.isPending;
-    const canSubmit = form.kegiatan_id && form.mata_anggaran_id;
+    const canSubmit = form.tahun && form.kegiatan_id && form.mata_anggaran_id;
 
     return (
         <PageTransition>
@@ -264,7 +264,7 @@ export default function PktCreate() {
                                 </div>
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-slate-700">
-                                        Tahun Anggaran
+                                        Tahun Anggaran <span className="text-red-500">*</span>
                                     </label>
                                     <SearchableSelect
                                         options={tahunOptions}
