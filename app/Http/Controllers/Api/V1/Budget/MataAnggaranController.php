@@ -33,6 +33,10 @@ class MataAnggaranController extends Controller
             $query->where('unit_id', $request->query('unit_id'));
         }
 
+        if ($request->filled('tahun')) {
+            $query->where('tahun', $request->query('tahun'));
+        }
+
         if ($request->filled('search')) {
             $search = $request->query('search');
             $query->where(function ($q) use ($search) {

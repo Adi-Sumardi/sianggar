@@ -42,7 +42,7 @@ export default function MataAnggaranList() {
     // Fetch data from API - backend automatically filters by user's unit_id
     const { data: mataAnggaransResponse, isLoading, isError, error } = useMataAnggarans({
         search: searchQuery || undefined,
-        // Note: unit_id filter is handled automatically by backend based on user role
+        tahun: filterValues.tahun || undefined,
     });
 
     const deleteMutation = useDeleteMataAnggaran();

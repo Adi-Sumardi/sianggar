@@ -21,6 +21,7 @@ class MataAnggaranResource extends JsonResource
             'unit_id' => $this->unit_id,
             'kode' => $this->kode,
             'nama' => $this->nama,
+            'tahun' => $this->tahun,
             'jenis' => $this->jenis,
             'keterangan' => $this->keterangan,
             'unit' => new UnitResource($this->whenLoaded('unit')),
