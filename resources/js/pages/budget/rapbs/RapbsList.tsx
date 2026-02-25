@@ -17,7 +17,7 @@ import { CurrencyInput } from '@/components/common/CurrencyInput';
 import { useRapbsList as useRapbsAggregated, useSubMataAnggarans, useDetailMataAnggarans, useUpdateBudgetComparison } from '@/hooks/useBudget';
 import { useRapbsList as useRapbsRecords, useSubmitRapbs } from '@/hooks/useRapbsApproval';
 import { useAuth } from '@/hooks/useAuth';
-import { getCurrentAcademicYear, getAcademicYearOptions } from '@/stores/authStore';
+import { getAcademicYearOptions } from '@/stores/authStore';
 import type { RapbsUnitData } from '@/services/budgetService';
 import type { Rapbs } from '@/types/models';
 import { UserRole } from '@/types/enums';
@@ -48,7 +48,7 @@ function formatAcademicYear(year: string): { previous: string; current: string }
 // ---------------------------------------------------------------------------
 
 export default function RapbsList() {
-    const defaultTahun = getCurrentAcademicYear();
+    const defaultTahun = '2026/2027';
     const [filterValues, setFilterValues] = useState<Record<string, string>>({ tahun: defaultTahun });
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedMa, setExpandedMa] = useState<Set<number>>(new Set());

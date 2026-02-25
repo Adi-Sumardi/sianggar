@@ -152,7 +152,7 @@ export default function ActivityList() {
     // Filters for SearchFilter component
     const jenisOptions = [
         { value: 'unggulan', label: 'Unggulan' },
-        { value: 'non-unggulan', label: 'Non-Unggulan' },
+        { value: 'non-unggulan', label: 'Prestasi' },
     ];
 
     const filters = [
@@ -268,7 +268,7 @@ export default function ActivityList() {
             cell: ({ row }) => (
                 row.original.jenis_kegiatan === 'unggulan'
                     ? <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Unggulan</span>
-                    : <span className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">Non-Unggulan</span>
+                    : <span className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">Prestasi</span>
             ),
         },
         ...(isAdmin ? [{
@@ -390,7 +390,7 @@ export default function ActivityList() {
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">Jenis Kegiatan</label>
                         <select value={formJenisKegiatan} onChange={(e) => setFormJenisKegiatan(e.target.value as 'unggulan' | 'non-unggulan')} className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                            <option value="non-unggulan">Non-Unggulan</option>
+                            <option value="non-unggulan">Prestasi</option>
                             <option value="unggulan">Unggulan</option>
                         </select>
                     </div>
