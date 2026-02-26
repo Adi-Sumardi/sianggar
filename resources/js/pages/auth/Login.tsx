@@ -80,7 +80,7 @@ function DecorativeBackground() {
             </svg>
 
             {/* Gradient overlay at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-blue-900/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#063E66]/50 to-transparent" />
         </div>
     );
 }
@@ -141,7 +141,7 @@ export default function Login() {
             {/* -------------------------------------------------------------- */}
             {/* Left panel - Blue gradient (hidden on mobile)                   */}
             {/* -------------------------------------------------------------- */}
-            <div className="relative hidden w-1/2 lg:flex lg:flex-col lg:items-center lg:justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
+            <div className="relative hidden w-1/2 lg:flex lg:flex-col lg:items-center lg:justify-center bg-gradient-to-br from-[#063E66] via-[#1C61A2] to-[#063E66]">
                 <DecorativeBackground />
 
                 <motion.div
@@ -192,7 +192,7 @@ export default function Login() {
             {/* -------------------------------------------------------------- */}
             <div className="flex w-full flex-col lg:w-1/2">
                 {/* Mobile header strip */}
-                <div className="flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 lg:hidden">
+                <div className="flex flex-col items-center justify-center gap-2 bg-gradient-to-r from-[#063E66] to-[#1C61A2] px-6 py-6 lg:hidden">
                     <img
                         src="/logo/logo-sianggar.png"
                         alt="SIANGGAR"
@@ -207,7 +207,7 @@ export default function Login() {
                 </div>
 
                 {/* Form container */}
-                <div className="flex flex-1 items-center justify-center bg-white px-6 py-12 sm:px-12">
+                <div className="flex flex-1 items-center justify-center bg-linear-to-b from-[#BEDBED]/15 to-white px-6 py-12 sm:px-12">
                     <motion.div
                         {...fadeIn}
                         transition={{ duration: 0.4 }}
@@ -334,7 +334,7 @@ export default function Login() {
                                 className={cn(
                                     'flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm',
                                     'transition-all duration-150',
-                                    'bg-blue-600 hover:bg-blue-700 active:bg-blue-800',
+                                    'bg-[#1C61A2] hover:bg-[#063E66] active:bg-[#052e4d]',
                                     'focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2',
                                     'disabled:cursor-not-allowed disabled:opacity-60',
                                 )}

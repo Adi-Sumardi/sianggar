@@ -1,5 +1,6 @@
 import { Suspense, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import { Navbar } from './Navbar';
 import { Sidebar, MobileSidebar } from './Sidebar';
@@ -7,6 +8,7 @@ import { BottomNav } from './BottomNav';
 import { GlobalDiscussionButton } from '@/components/common/GlobalDiscussionButton';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useSidebarStore } from '@/stores/sidebarStore';
+import { pageVariants, pageTransition } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 function PageLoader() {
@@ -46,19 +48,29 @@ export function AppLayout() {
             {/* Main content area */}
             <main
                 className={cn(
-                    'pt-16 transition-[margin-left] duration-200 ease-out',
+                    'pt-16 transition-[margin-left] duration-300 ease-out',
                     'pb-20 sm:pb-0',
                     isCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[272px]',
                     'print:ml-0! print:pt-0! print:pb-0!',
                 )}
             >
-                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none! print:px-0! print:py-0!">
-                    <ErrorBoundary key={location.pathname}>
-                        <Suspense fallback={<PageLoader />}>
-                            <Outlet />
-                        </Suspense>
-                    </ErrorBoundary>
-                </div>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={location.pathname}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        variants={pageVariants}
+                        transition={pageTransition}
+                        className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none! print:px-0! print:py-0!"
+                    >
+                        <ErrorBoundary key={location.pathname}>
+                            <Suspense fallback={<PageLoader />}>
+                                <Outlet />
+                            </Suspense>
+                        </ErrorBoundary>
+                    </motion.div>
+                </AnimatePresence>
             </main>
 
             {/* Mobile bottom navigation */}
