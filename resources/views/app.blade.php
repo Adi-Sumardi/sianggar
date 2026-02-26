@@ -24,8 +24,14 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx'])
     </head>
-    <body class="bg-background text-foreground antialiased">
-        <div id="root"></div>
+    <body class="bg-background text-foreground antialiased" style="background:#fff">
+        <div id="root">
+            {{-- Inline splash — shown instantly before React mounts --}}
+            <div id="splash" style="display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;flex-direction:column;gap:16px;background:#fff">
+                <img src="/pwa-192x192.png" alt="" width="72" height="72" style="border-radius:16px">
+                <div style="color:#2563EB;font-size:14px;font-weight:600;font-family:system-ui,sans-serif;letter-spacing:0.5px">SIANGGAR</div>
+            </div>
+        </div>
         <script>
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function () {
