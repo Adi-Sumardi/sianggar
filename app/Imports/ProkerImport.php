@@ -41,6 +41,13 @@ class ProkerImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            // Validate kode length
+            if (mb_strlen($kodeProker) > 255) {
+                $this->errors[] = "Baris {$rowNum}: Kode proker terlalu panjang (maks 255 karakter).";
+
+                continue;
+            }
+
             // Lookup strategy
             $strategy = Strategy::where('kode', $kodeStrategi)->first();
             if (! $strategy) {
