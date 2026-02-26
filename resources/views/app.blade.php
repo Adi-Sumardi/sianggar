@@ -7,10 +7,16 @@
         <meta name="theme-color" content="#2563EB">
         <meta name="description" content="SIANGGAR - Sistem Informasi Pengajuan Anggaran">
 
+        <!-- iOS PWA -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="SIANGGAR">
+
         <title>SIANGGAR - Sistem Informasi Pengajuan Anggaran</title>
 
         <link rel="icon" href="/logo/logo-sianggar.png" type="image/png">
-        <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
         <link rel="manifest" href="/build/manifest.webmanifest">
 
         @viteReactRefresh
