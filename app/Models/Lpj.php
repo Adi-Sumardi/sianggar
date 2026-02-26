@@ -45,8 +45,7 @@ class Lpj extends Model
         'status_revisi',
         'tahun',
         'ditujukan',
-        'budget_released',
-        // New routing fields
+        // Routing fields
         'reference_type',
         'validated_at',
         'validated_by',
@@ -68,7 +67,6 @@ class Lpj extends Model
             'current_approval_stage' => LpjApprovalStage::class,
             'reference_type' => ReferenceType::class,
             'validated_at' => 'datetime',
-            'budget_released' => 'boolean',
         ];
     }
 

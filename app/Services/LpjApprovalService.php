@@ -9,13 +9,10 @@ use App\Enums\LpjApprovalStage;
 use App\Enums\LpjStatus;
 use App\Enums\ReferenceType;
 use App\Enums\UserRole;
-use App\Models\Apbs;
 use App\Models\Approval;
-use App\Models\DetailMataAnggaran;
 use App\Models\Lpj;
 use App\Models\LpjValidation;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use App\Notifications\LpjApprovedNotification;
 use App\Notifications\LpjRejectedNotification;
 use App\Notifications\LpjRevisedNotification;
@@ -297,9 +294,6 @@ class LpjApprovalService
                 'current_approval_stage' => null,
             ]);
 
-            // Return unused budget to DetailMataAnggaran
-            $this->releaseUnusedBudget($lpj);
-
             // Notify the creator that LPJ is fully approved
             $this->notifyCreatorOfApproval($lpj, $approver, isFinal: true);
         }
@@ -554,90 +548,6 @@ class LpjApprovalService
             : ReferenceType::from($referenceType);
 
         return LpjApprovalStage::fromReferenceType($ref);
-    }
-
-    // =========================================================================
-    // Budget Release
-    // =========================================================================
-
-    /**
-     * Release unused budget back to DetailMataAnggaran when LPJ is fully approved.
-     *
-     * If input_realisasi < total reserved (sum of detail pengajuan), the difference
-     * is returned proportionally to each DetailMataAnggaran budget line.
-     */
-    private function releaseUnusedBudget(Lpj $lpj): void
-    {
-        // Guard: prevent double release
-        if ($lpj->budget_released) {
-            return;
-        }
-
-        $pengajuan = $lpj->pengajuanAnggaran;
-        if (! $pengajuan) {
-            return;
-        }
-
-        $pengajuan->loadMissing('detailPengajuans');
-        $details = $pengajuan->detailPengajuans;
-
-        if ($details->isEmpty()) {
-            return;
-        }
-
-        $totalReserved = (float) $details->sum('jumlah');
-        $inputRealisasi = (float) $lpj->input_realisasi;
-        $savings = $totalReserved - $inputRealisasi;
-
-        // No savings to return (fully spent or overspent)
-        if ($savings <= 0) {
-            $lpj->update(['budget_released' => true]);
-
-            return;
-        }
-
-        DB::transaction(function () use ($details, $totalReserved, $savings, $lpj) {
-            foreach ($details as $detail) {
-                if (! $detail->detail_mata_anggaran_id) {
-                    continue;
-                }
-
-                /** @var DetailMataAnggaran|null $dma */
-                $dma = DetailMataAnggaran::lockForUpdate()->find($detail->detail_mata_anggaran_id);
-                if (! $dma) {
-                    continue;
-                }
-
-                // Proportional distribution
-                $porsi = (float) $detail->jumlah / $totalReserved;
-                $returnAmount = round($savings * $porsi, 2);
-
-                $newSaldoDipakai = max(0, (float) ($dma->saldo_dipakai ?? 0) - $returnAmount);
-                $anggaranAwal = (float) ($dma->anggaran_awal ?? 0);
-
-                $dma->update([
-                    'saldo_dipakai' => $newSaldoDipakai,
-                    'balance' => $anggaranAwal - $newSaldoDipakai,
-                ]);
-            }
-
-            // Update APBS realisasi if available
-            $pengajuan = $lpj->pengajuanAnggaran;
-            if ($pengajuan && $pengajuan->unit_id) {
-                $apbs = Apbs::where('unit_id', $pengajuan->unit_id)
-                    ->where('tahun', $lpj->tahun)
-                    ->where('status', 'active')
-                    ->first();
-
-                if ($apbs) {
-                    $apbs->total_realisasi = (float) $apbs->total_realisasi + (float) $lpj->input_realisasi;
-                    $apbs->sisa_anggaran = (float) $apbs->total_anggaran - (float) $apbs->total_realisasi;
-                    $apbs->save();
-                }
-            }
-
-            $lpj->update(['budget_released' => true]);
-        });
     }
 
     // =========================================================================

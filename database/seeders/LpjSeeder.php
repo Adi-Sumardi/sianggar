@@ -344,7 +344,6 @@ class LpjSeeder extends Seeder
             'revision_requested_stage' => $status === LpjStatus::Revised ? $currentStage?->value : null,
             'tahun' => $this->tahun,
             'ditujukan' => 'Ketua Yayasan',
-            'budget_released' => $status === LpjStatus::Approved,
             'reference_type' => $referenceType,
             'validated_at' => $isValidated ? Carbon::now()->subDays(rand(1, 5)) : null,
             'validated_by' => $isValidated ? $staffKeuangan?->id : null,
