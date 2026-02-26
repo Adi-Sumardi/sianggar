@@ -14,6 +14,7 @@
 
         <title>SIANGGAR - Sistem Informasi Pengajuan Anggaran</title>
 
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
         <link rel="icon" type="image/png" sizes="512x512" href="/logo/logo-sianggar.png">
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
