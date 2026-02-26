@@ -54,23 +54,24 @@ export function AppLayout() {
                     'print:ml-0! print:pt-0! print:pb-0!',
                 )}
             >
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={location.pathname}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        variants={pageVariants}
-                        transition={pageTransition}
-                        className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none! print:px-0! print:py-0!"
-                    >
-                        <ErrorBoundary key={location.pathname}>
-                            <Suspense fallback={<PageLoader />}>
-                                <Outlet />
-                            </Suspense>
-                        </ErrorBoundary>
-                    </motion.div>
-                </AnimatePresence>
+                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none! print:px-0! print:py-0!">
+                    <ErrorBoundary key={location.pathname}>
+                        <Suspense fallback={<PageLoader />}>
+                            <AnimatePresence mode="popLayout">
+                                <motion.div
+                                    key={location.pathname}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                    variants={pageVariants}
+                                    transition={pageTransition}
+                                >
+                                    <Outlet />
+                                </motion.div>
+                            </AnimatePresence>
+                        </Suspense>
+                    </ErrorBoundary>
+                </div>
             </main>
 
             {/* Mobile bottom navigation */}
