@@ -136,6 +136,13 @@
     background: #94a3b8;
 }
 
+/* Hide full-page loading spinners (only-child in centered containers).
+   Page transition animation provides visual continuity instead.
+   Button/inline spinners have siblings, so :only-child skips them. */
+.items-center.justify-center > .animate-spin:only-child {
+    display: none;
+}
+
 /* Global styles */
 body {
     font-family: var(--font-sans);
