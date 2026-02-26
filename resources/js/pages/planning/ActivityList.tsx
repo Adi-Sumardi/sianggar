@@ -50,7 +50,6 @@ export default function ActivityList() {
     const { user } = useAuth();
     const canViewAllUnits = user?.role === UserRole.Admin || (user?.role != null && isApproverRole(user.role));
 
-    const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editItem, setEditItem] = useState<ActivityRow | null>(null);
@@ -75,8 +74,6 @@ export default function ActivityList() {
         indikator_id: formIndikatorId ? Number(formIndikatorId) : undefined,
     });
     const { data: kegiatansData, isLoading: loadingKegiatans, error: kegiatansError } = useKegiatans({
-        strategy_id: filterValues.strategy ? Number(filterValues.strategy) : undefined,
-        proker_id: filterValues.proker ? Number(filterValues.proker) : undefined,
         unit_id: filterValues.unit ? Number(filterValues.unit) : undefined,
         jenis_kegiatan: filterValues.jenis || undefined,
         per_page: 100,
@@ -107,7 +104,7 @@ export default function ActivityList() {
     }, [strategiesData]);
 
     const unitOptions = useMemo(() => {
-        return (unitsData?.data || []).map((u) => ({
+        return (unitsData || []).map((u) => ({
             value: String(u.id),
             label: u.nama,
         }));
@@ -129,16 +126,6 @@ export default function ActivityList() {
         }));
     }, [prokersData]);
 
-    // All prokers for filter (not cascaded)
-    const { data: allProkersData } = useProkers({ per_page: 100 });
-    const allProkerOptions = useMemo(() => {
-        const items = extractArray<{ id: number; kode: string; nama: string }>(allProkersData);
-        return items.map((p) => ({
-            value: p.id.toString(),
-            label: `${p.kode} - ${p.nama}`,
-        }));
-    }, [allProkersData]);
-
     // Reset dependent fields when parent changes
     useEffect(() => {
         setFormIndikatorId('');
@@ -156,10 +143,8 @@ export default function ActivityList() {
     ];
 
     const filters = [
-        { key: 'strategy', label: 'Semua Strategi', type: 'select' as const, options: strategyOptions },
-        { key: 'proker', label: 'Semua Proker', type: 'select' as const, options: allProkerOptions },
-        { key: 'jenis', label: 'Semua Jenis', type: 'select' as const, options: jenisOptions },
         ...(canViewAllUnits ? [{ key: 'unit', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
+        { key: 'jenis', label: 'Semua Jenis', type: 'select' as const, options: jenisOptions },
     ];
 
     // Transform data to table format
@@ -336,11 +321,11 @@ export default function ActivityList() {
                 </motion.div>
 
                 <motion.div variants={staggerItem}>
-                    <SearchFilter filters={filters} values={filterValues} onChange={setFilterValues} onSearch={setSearchQuery} searchPlaceholder="Cari kegiatan..." className="mb-4" />
+                    <SearchFilter filters={filters} values={filterValues} onChange={setFilterValues} className="mb-4" />
                 </motion.div>
 
                 <motion.div variants={staggerItem}>
-                    <DataTable columns={columns} data={tableData} searchValue={searchQuery} emptyTitle="Belum ada kegiatan" emptyDescription="Klik 'Tambah Kegiatan' untuk menambahkan kegiatan baru." />
+                    <DataTable columns={columns} data={tableData} searchPlaceholder="Cari kegiatan..." emptyMessage="Belum ada kegiatan. Klik 'Tambah Kegiatan' untuk menambahkan." />
                 </motion.div>
             </motion.div>
 

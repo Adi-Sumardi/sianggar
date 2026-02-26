@@ -47,7 +47,6 @@ export default function ProkerList() {
     const { user } = useAuth();
     const canViewAllUnits = user?.role === UserRole.Admin || (user?.role != null && isApproverRole(user.role));
 
-    const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editItem, setEditItem] = useState<ProkerRow | null>(null);
@@ -66,7 +65,6 @@ export default function ProkerList() {
         strategy_id: formStrategyId ? Number(formStrategyId) : undefined,
     });
     const { data: prokersData, isLoading, isError } = useProkers({
-        strategy_id: filterValues.strategy ? Number(filterValues.strategy) : undefined,
         unit_id: filterValues.unit ? Number(filterValues.unit) : undefined,
         per_page: 100,
     });
@@ -84,7 +82,7 @@ export default function ProkerList() {
     }, [strategiesData]);
 
     const unitOptions = useMemo(() => {
-        return (unitsData?.data || []).map((u) => ({
+        return (unitsData || []).map((u) => ({
             value: String(u.id),
             label: u.nama,
         }));
@@ -110,7 +108,6 @@ export default function ProkerList() {
     }, [prokersData]);
 
     const filters = [
-        { key: 'strategy', label: 'Semua Strategi', type: 'select' as const, options: strategyOptions },
         ...(canViewAllUnits ? [{ key: 'unit', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
     ];
 
@@ -258,12 +255,14 @@ export default function ProkerList() {
                     />
                 </motion.div>
 
-                <motion.div variants={staggerItem}>
-                    <SearchFilter filters={filters} values={filterValues} onChange={setFilterValues} onSearch={setSearchQuery} searchPlaceholder="Cari program kerja..." className="mb-4" />
-                </motion.div>
+                {filters.length > 0 && (
+                    <motion.div variants={staggerItem}>
+                        <SearchFilter filters={filters} values={filterValues} onChange={setFilterValues} className="mb-4" />
+                    </motion.div>
+                )}
 
                 <motion.div variants={staggerItem}>
-                    <DataTable columns={columns} data={tableData} searchValue={searchQuery} emptyTitle="Belum ada program kerja" emptyDescription="Klik 'Tambah Proker' untuk menambahkan." />
+                    <DataTable columns={columns} data={tableData} searchPlaceholder="Cari program kerja..." emptyMessage="Belum ada program kerja. Klik 'Tambah Proker' untuk menambahkan." />
                 </motion.div>
             </motion.div>
 
