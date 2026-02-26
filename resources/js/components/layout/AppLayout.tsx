@@ -1,7 +1,6 @@
 import { Suspense, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Loader2 } from 'lucide-react';
 import { Navbar } from './Navbar';
 import { Sidebar, MobileSidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
@@ -10,14 +9,6 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { pageVariants, pageTransition } from '@/lib/animations';
 import { cn } from '@/lib/utils';
-
-function PageLoader() {
-    return (
-        <div className="flex min-h-[50vh] items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-        </div>
-    );
-}
 
 export function AppLayout() {
     const location = useLocation();
@@ -56,7 +47,7 @@ export function AppLayout() {
             >
                 <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none! print:px-0! print:py-0!">
                     <ErrorBoundary key={location.pathname}>
-                        <Suspense fallback={<PageLoader />}>
+                        <Suspense fallback={null}>
                             <AnimatePresence mode="popLayout">
                                 <motion.div
                                     key={location.pathname}
