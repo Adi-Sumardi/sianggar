@@ -44,6 +44,13 @@ class KegiatanImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            // Validate kode length
+            if (mb_strlen($kodeKegiatan) > 255) {
+                $this->errors[] = "Baris {$rowNum}: Kode kegiatan terlalu panjang (maks 255 karakter).";
+
+                continue;
+            }
+
             // Validate jenis_kegiatan
             if (! in_array($jenisKegiatan, ['unggulan', 'non-unggulan'], true)) {
                 $this->errors[] = "Baris {$rowNum}: Jenis kegiatan harus 'unggulan' atau 'non-unggulan', diterima: '{$jenisKegiatan}'.";
