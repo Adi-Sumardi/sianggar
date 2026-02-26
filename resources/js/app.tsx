@@ -42,12 +42,12 @@ if (container) {
         </React.StrictMode>
     );
 
-    // Fade out splash after animations complete (~1.5s minimum)
+    // Fade out splash after animations complete (~2.5s minimum)
     const splash = document.getElementById('splash');
     if (splash) {
         setTimeout(() => {
             splash.classList.add('hide');
             splash.addEventListener('transitionend', () => splash.remove(), { once: true });
-        }, 1500);
+        }, 2500);
     }
 }

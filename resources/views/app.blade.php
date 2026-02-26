@@ -17,7 +17,7 @@
         {{-- Splash screen styles — in <head> so browser parses before first paint --}}
         <style>
             body{margin:0;background:#f0f6ff}
-            #splash{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;flex-direction:column;background:linear-gradient(145deg,#f0f6ff 0%,#e0edff 50%,#f0f6ff 100%);overflow:hidden;position:fixed;inset:0;z-index:9999;transition:opacity .3s ease,visibility .3s ease}
+            #splash{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;flex-direction:column;background:linear-gradient(145deg,#f0f6ff 0%,#e0edff 50%,#f0f6ff 100%);overflow:hidden;position:fixed;inset:0;z-index:9999;transition:opacity .6s ease,visibility .6s ease}
             #splash.hide{opacity:0;visibility:hidden}
             #splash::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.08) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-55%);animation:sp-glow 2s ease-in-out infinite alternate}
             .sp-logo{width:80px;height:80px;border-radius:20px;box-shadow:0 8px 32px rgba(37,99,235,.18),0 2px 8px rgba(0,0,0,.06);animation:sp-pop .6s cubic-bezier(.34,1.56,.64,1) both;position:relative;z-index:1}
