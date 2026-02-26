@@ -23,7 +23,7 @@ import {
 } from '@/hooks/usePlanning';
 import { getProkerImportTemplateUrl } from '@/services/planningService';
 import { useUnitsList } from '@/hooks/useUnits';
-import { UserRole } from '@/types/enums';
+import { UserRole, isApproverRole } from '@/types/enums';
 import type { Proker } from '@/types/models';
 
 // ---------------------------------------------------------------------------
@@ -45,7 +45,7 @@ interface ProkerRow {
 
 export default function ProkerList() {
     const { user } = useAuth();
-    const isAdmin = user?.role === UserRole.Admin;
+    const canViewAllUnits = user?.role === UserRole.Admin || (user?.role != null && isApproverRole(user.role));
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
@@ -111,7 +111,7 @@ export default function ProkerList() {
 
     const filters = [
         { key: 'strategy', label: 'Semua Strategi', type: 'select' as const, options: strategyOptions },
-        ...(isAdmin ? [{ key: 'unit', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
+        ...(canViewAllUnits ? [{ key: 'unit', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
     ];
 
     const openCreate = () => {
@@ -190,7 +190,7 @@ export default function ProkerList() {
             accessorKey: 'nama',
             header: 'Nama Program Kerja',
         },
-        ...(isAdmin ? [{
+        ...(canViewAllUnits ? [{
             accessorKey: 'unit_nama',
             header: 'Unit',
             cell: ({ row }: { row: { original: ProkerRow } }) => (

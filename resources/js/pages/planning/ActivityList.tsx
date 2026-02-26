@@ -24,7 +24,7 @@ import {
 } from '@/hooks/usePlanning';
 import { getKegiatanImportTemplateUrl } from '@/services/planningService';
 import { useUnitsList } from '@/hooks/useUnits';
-import { UserRole } from '@/types/enums';
+import { UserRole, isApproverRole } from '@/types/enums';
 import type { Kegiatan } from '@/types/models';
 
 // ---------------------------------------------------------------------------
@@ -48,7 +48,7 @@ interface ActivityRow {
 
 export default function ActivityList() {
     const { user } = useAuth();
-    const isAdmin = user?.role === UserRole.Admin;
+    const canViewAllUnits = user?.role === UserRole.Admin || (user?.role != null && isApproverRole(user.role));
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
@@ -159,7 +159,7 @@ export default function ActivityList() {
         { key: 'strategy', label: 'Semua Strategi', type: 'select' as const, options: strategyOptions },
         { key: 'proker', label: 'Semua Proker', type: 'select' as const, options: allProkerOptions },
         { key: 'jenis', label: 'Semua Jenis', type: 'select' as const, options: jenisOptions },
-        ...(isAdmin ? [{ key: 'unit', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
+        ...(canViewAllUnits ? [{ key: 'unit', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
     ];
 
     // Transform data to table format
@@ -271,7 +271,7 @@ export default function ActivityList() {
                     : <span className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">Prestasi</span>
             ),
         },
-        ...(isAdmin ? [{
+        ...(canViewAllUnits ? [{
             accessorKey: 'unit_nama',
             header: 'Unit',
             cell: ({ row }: { row: { original: ActivityRow } }) => (
