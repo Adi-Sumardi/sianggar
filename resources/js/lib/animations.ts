@@ -11,13 +11,13 @@ const standard = [0.4, 0.0, 0.2, 1.0] as const; // material standard
 // ---------------------------------------------------------------------------
 
 export const pageVariants = {
-    initial: { opacity: 0, y: 12, scale: 0.99 },
-    animate: { opacity: 1, y: 0, scale: 1 },
-    exit: { opacity: 0, y: -6, scale: 0.99 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
 };
 
 export const pageTransition = {
-    duration: 0.35,
+    duration: 0.2,
     ease: smoothEase,
 };
 

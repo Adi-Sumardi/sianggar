@@ -1,32 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PermissionGuard } from './PermissionGuard';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Permission } from '@/types/permissions';
-
-// =============================================================================
-// Loading screen shown while lazy-loaded pages are being fetched
-// =============================================================================
-
-function LoadingScreen() {
-    return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-            <div className="relative flex items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
-            </div>
-            <div className="text-center">
-                <h2 className="text-xl font-bold tracking-tight text-primary-600">
-                    SIANGGAR
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                    Sistem Informasi Pengajuan Anggaran
-                </p>
-            </div>
-        </div>
-    );
-}
 
 // =============================================================================
 // Lazy-loaded pages
@@ -111,7 +88,7 @@ const Settings = lazy(() => import('@/pages/settings/Settings'));
 
 export function AppRouter() {
     return (
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={null}>
             <Routes>
                 {/* ---- Public routes ---- */}
                 <Route path="/login" element={<Login />} />
