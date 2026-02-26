@@ -41,4 +41,11 @@ if (container) {
             <App />
         </React.StrictMode>
     );
+
+    // Fade out and remove splash screen
+    const splash = document.getElementById('splash');
+    if (splash) {
+        splash.classList.add('hide');
+        splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+    }
 }
