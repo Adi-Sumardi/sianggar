@@ -49,11 +49,8 @@ class StoreApbsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'unit_id.required' => 'Unit wajib dipilih.',
-            'unit_id.exists' => 'Unit tidak ditemukan.',
-            'tahun.required' => 'Tahun wajib diisi.',
-            'total_anggaran.required' => 'Total anggaran wajib diisi.',
-            'total_anggaran.min' => 'Total anggaran tidak boleh negatif.',
+            'rapbs_id.required' => 'RAPBS wajib dipilih.',
+            'rapbs_id.exists' => 'RAPBS tidak ditemukan.',
         ];
     }
 }

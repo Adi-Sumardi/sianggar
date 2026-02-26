@@ -199,7 +199,7 @@ class DashboardController extends Controller
             'data' => $pengajuans->map(function (PengajuanAnggaran $p) use ($includeVoucher) {
                 $item = [
                     'id' => $p->id,
-                    'nomor' => $p->nomor_pengajuan ?? 'PA/' . $p->tahun_anggaran . '/' . str_pad((string) $p->id, 3, '0', STR_PAD_LEFT),
+                    'nomor' => $p->nomor_pengajuan ?? 'PA/' . $p->tahun . '/' . str_pad((string) $p->id, 3, '0', STR_PAD_LEFT),
                     'perihal' => $p->perihal,
                     'unit' => $p->unitRelation?->nama ?? $p->unit ?? '-',
                     'total' => $p->jumlah_pengajuan_total,
