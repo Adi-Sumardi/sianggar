@@ -57,11 +57,10 @@ class SecurityHeaders
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",
+                "upgrade-insecure-requests",
             ]));
-        }
 
-        // HSTS (only in production with HTTPS)
-        if (app()->environment('production') && $request->secure()) {
+            // HSTS — always in production (HTTPS enforced by Apache)
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
