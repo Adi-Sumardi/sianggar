@@ -201,7 +201,7 @@ export function Navbar() {
     const yearOptions = getAcademicYearOptions();
 
     return (
-        <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center overflow-hidden border-b border-primary-200 bg-white/95 shadow-sm">
+        <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b border-primary-200 bg-white/95 shadow-sm">
             {/* Animated background scene */}
             <NavbarScene />
 
