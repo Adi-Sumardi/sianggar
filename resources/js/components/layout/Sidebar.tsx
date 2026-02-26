@@ -203,13 +203,27 @@ export function Sidebar() {
         [userPermissions, isKasir, isPayment],
     );
 
-    // Check if a path is active (exact or starts-with for nested routes)
+    // Collect all nav paths so prefix matching skips sibling menu items
+    const allNavPaths = useMemo(() => {
+        const paths = new Set<string>();
+        for (const group of visibleGroups) {
+            for (const item of group.items) {
+                paths.add(item.to);
+            }
+        }
+        return paths;
+    }, [visibleGroups]);
+
+    // Check if a path is active (exact match, or prefix match for sub-pages
+    // that are NOT themselves a nav item — e.g. /pengajuan/123 activates
+    // /pengajuan, but /pengajuan/create does NOT because it's its own item)
     const isActive = useCallback(
         (to: string) => {
-            if (to === '/dashboard') return location.pathname === '/dashboard';
-            return location.pathname === to || location.pathname.startsWith(to + '/');
+            if (location.pathname === to) return true;
+            if (to === '/dashboard') return false;
+            return location.pathname.startsWith(to + '/') && !allNavPaths.has(location.pathname);
         },
-        [location.pathname],
+        [location.pathname, allNavPaths],
     );
 
     return (
@@ -507,12 +521,24 @@ export function MobileSidebar() {
         [userPermissions, isKasir, isPayment],
     );
 
+    // Collect all nav paths so prefix matching skips sibling menu items
+    const allNavPaths = useMemo(() => {
+        const paths = new Set<string>();
+        for (const group of visibleGroups) {
+            for (const item of group.items) {
+                paths.add(item.to);
+            }
+        }
+        return paths;
+    }, [visibleGroups]);
+
     const isActive = useCallback(
         (to: string) => {
-            if (to === '/dashboard') return location.pathname === '/dashboard';
-            return location.pathname === to || location.pathname.startsWith(to + '/');
+            if (location.pathname === to) return true;
+            if (to === '/dashboard') return false;
+            return location.pathname.startsWith(to + '/') && !allNavPaths.has(location.pathname);
         },
-        [location.pathname],
+        [location.pathname, allNavPaths],
     );
 
     return (

@@ -17,6 +17,7 @@ import {
     Clock,
     AlertCircle,
     ClipboardCheck,
+    Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore, getAcademicYearOptions } from '@/stores/authStore';
@@ -201,8 +202,8 @@ export function Navbar() {
     const yearOptions = getAcademicYearOptions();
 
     return (
-        <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b border-primary-200 bg-white/95 shadow-sm">
-            {/* Animated background scene */}
+        <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b border-primary-100 bg-white/95 shadow-sm backdrop-blur-sm">
+            {/* Animated batik background scene */}
             <NavbarScene />
 
             <div className="relative z-10 flex h-full w-full items-center gap-4 px-4">
@@ -249,7 +250,7 @@ export function Navbar() {
                                 <span key={path} className="flex items-center gap-1">
                                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
                                     {isLast ? (
-                                        <span className="max-w-35 truncate font-medium text-foreground">
+                                        <span className="max-w-35 truncate font-medium text-primary-700">
                                             {label}
                                         </span>
                                     ) : (
@@ -270,16 +271,17 @@ export function Navbar() {
                 <div className="flex-1" />
 
                 {/* --- Right: Fiscal year, notifications, user --- */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     {/* Fiscal Year Selector */}
                     <div ref={yearMenuRef} className="relative">
                         <button
                             type="button"
                             onClick={() => setShowYearPicker((prev) => !prev)}
-                            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                            className="flex items-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50/50 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-primary-50"
                         >
+                            <Calendar className="hidden h-3.5 w-3.5 text-primary-500 sm:block" />
                             <span className="hidden sm:inline text-muted-foreground">TA</span>
-                            <span>{fiscalYear}</span>
+                            <span className="text-primary-700 font-semibold">{fiscalYear}</span>
                             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                         </button>
 
@@ -417,6 +419,9 @@ export function Navbar() {
                         </AnimatePresence>
                     </div>
 
+                    {/* Separator */}
+                    <div className="mx-1 hidden h-8 w-px bg-primary-200 lg:block" />
+
                     {/* User avatar dropdown */}
                     <div ref={userMenuRef} className="relative">
                         <button
@@ -424,7 +429,7 @@ export function Navbar() {
                             onClick={() => setShowUserMenu((prev) => !prev)}
                             className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-muted"
                         >
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary-500 to-primary-700 text-xs font-bold text-white shadow-sm">
                                 {initials}
                             </div>
                             <div className="hidden text-left lg:block">

@@ -154,6 +154,35 @@ body {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
 /* ==========================================================================
+   Navbar Batik Animated Background
+   ========================================================================== */
+
+@keyframes navbar-batik-kawung {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@keyframes navbar-batik-parang {
+    from { transform: translateX(0); }
+    to { transform: translateX(-33.333%); }
+}
+
+.navbar-batik-kawung {
+    animation: navbar-batik-kawung 120s linear infinite;
+}
+
+.navbar-batik-parang {
+    animation: navbar-batik-parang 80s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar-batik-kawung,
+    .navbar-batik-parang {
+        animation: none;
+    }
+}
+
+/* ==========================================================================
    Print Styles
    ========================================================================== */
 @media print {
