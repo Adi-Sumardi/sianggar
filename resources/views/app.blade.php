@@ -7,8 +7,8 @@
         <meta name="theme-color" content="#2563EB">
         <meta name="description" content="SIANGGAR - Sistem Informasi Pengajuan Anggaran">
 
-        <!-- iOS PWA -->
-        <meta name="apple-mobile-web-app-capable" content="yes">
+        <!-- PWA -->
+        <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="SIANGGAR">
 
@@ -55,7 +55,7 @@
         <div id="root"></div>
 
         <script>
-            if ('serviceWorker' in navigator) {
+            if ('serviceWorker' in navigator && location.protocol === 'https:') {
                 window.addEventListener('load', function () {
                     navigator.serviceWorker.register('/build/sw.js', { scope: '/' });
                 });
