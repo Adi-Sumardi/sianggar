@@ -42,10 +42,12 @@ if (container) {
         </React.StrictMode>
     );
 
-    // Fade out and remove splash screen
+    // Fade out splash after animations complete (~1.5s minimum)
     const splash = document.getElementById('splash');
     if (splash) {
-        splash.classList.add('hide');
-        splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+        setTimeout(() => {
+            splash.classList.add('hide');
+            splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+        }, 1500);
     }
 }
