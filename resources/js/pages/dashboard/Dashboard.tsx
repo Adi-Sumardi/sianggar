@@ -41,7 +41,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { StatCard } from '@/components/common/StatCard';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { formatRupiah } from '@/lib/currency';
-import { staggerContainer, staggerItem, fadeIn } from '@/lib/animations';
+import { staggerItem, slideFromLeft, slideFromRight, float, staggerContainerSlow } from '@/lib/animations';
 import { getDashboardType } from '@/types/enums';
 import type { UserRole } from '@/types/enums';
 
@@ -151,6 +151,72 @@ function SectionHeader({
 }
 
 // =============================================================================
+// Dynamic greeting
+// =============================================================================
+
+function getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 11) return 'Selamat Pagi';
+    if (hour >= 11 && hour < 15) return 'Selamat Siang';
+    if (hour >= 15 && hour < 18) return 'Selamat Sore';
+    return 'Selamat Malam';
+}
+
+// =============================================================================
+// Dashboard Hero Header — gradient blue with decorative elements
+// =============================================================================
+
+interface DashboardHeroProps {
+    title: string;
+    userName: string;
+    badge?: React.ReactNode;
+    actions?: React.ReactNode;
+}
+
+function DashboardHero({ title, userName, badge, actions }: DashboardHeroProps) {
+    const greeting = getGreeting();
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#063E66] to-[#1C61A2] px-6 py-6 text-white shadow-lg sm:px-8 sm:py-8"
+        >
+            {/* Decorative floating circles */}
+            <motion.div
+                {...float}
+                className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/5"
+            />
+            <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="pointer-events-none absolute -bottom-4 right-20 h-20 w-20 rounded-full bg-white/5"
+            />
+            <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="pointer-events-none absolute left-1/3 top-2 h-12 w-12 rounded-full bg-white/[0.03]"
+            />
+
+            {/* Content */}
+            <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+                        {title}
+                    </h1>
+                    <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-white/80">
+                        {greeting}, {userName}
+                        {badge}
+                    </p>
+                </div>
+                {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+            </div>
+        </motion.div>
+    );
+}
+
+// =============================================================================
 // Admin Dashboard
 // =============================================================================
 
@@ -179,36 +245,31 @@ function AdminDashboard({ userName }: { userName: string }) {
 
     return (
         <div className="space-y-6">
-            {/* Page header with unit filter */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                        Dashboard Admin
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Selamat datang, {userName}
-                        {selectedUnit && (
-                            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                                <Building2 className="h-3 w-3" />
-                                {selectedUnit.nama}
-                            </span>
-                        )}
-                    </p>
-                </div>
-                {/* Unit filter dropdown */}
-                <div className="w-full sm:w-64">
-                    <SearchableSelect
-                        options={[
-                            { value: '', label: 'Semua Unit' },
-                            ...unitsList.map(u => ({ value: String(u.id), label: u.nama })),
-                        ]}
-                        value={selectedUnitId ? String(selectedUnitId) : ''}
-                        onChange={(val) => setSelectedUnitId(val ? Number(val) : undefined)}
-                        placeholder="Filter berdasarkan unit..."
-                        searchPlaceholder="Cari unit..."
-                    />
-                </div>
-            </div>
+            {/* Hero header */}
+            <DashboardHero
+                title="Dashboard Admin"
+                userName={userName}
+                badge={selectedUnit && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">
+                        <Building2 className="h-3 w-3" />
+                        {selectedUnit.nama}
+                    </span>
+                )}
+                actions={
+                    <div className="w-full sm:w-64">
+                        <SearchableSelect
+                            options={[
+                                { value: '', label: 'Semua Unit' },
+                                ...unitsList.map(u => ({ value: String(u.id), label: u.nama })),
+                            ]}
+                            value={selectedUnitId ? String(selectedUnitId) : ''}
+                            onChange={(val) => setSelectedUnitId(val ? Number(val) : undefined)}
+                            placeholder="Filter berdasarkan unit..."
+                            searchPlaceholder="Cari unit..."
+                        />
+                    </div>
+                }
+            />
 
             {/* Stat cards */}
             {statsLoading ? (
@@ -219,7 +280,7 @@ function AdminDashboard({ userName }: { userName: string }) {
                 </div>
             ) : (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-2 gap-4 lg:grid-cols-4"
@@ -264,7 +325,7 @@ function AdminDashboard({ userName }: { userName: string }) {
             {/* Additional stats for filtered unit */}
             {selectedUnitId && !statsLoading && (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-2 gap-4 lg:grid-cols-3"
@@ -303,7 +364,7 @@ function AdminDashboard({ userName }: { userName: string }) {
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Bar chart: Anggaran vs Realisasi */}
                 <motion.div
-                    {...fadeIn}
+                    {...slideFromLeft}
                     transition={{ duration: 0.3, delay: 0.2 }}
                     className="rounded-lg border border-slate-200 bg-white p-5"
                 >
@@ -363,7 +424,7 @@ function AdminDashboard({ userName }: { userName: string }) {
 
                 {/* Pie chart: Status Pengajuan */}
                 <motion.div
-                    {...fadeIn}
+                    {...slideFromRight}
                     transition={{ duration: 0.3, delay: 0.3 }}
                     className="rounded-lg border border-slate-200 bg-white p-5"
                 >
@@ -409,7 +470,7 @@ function AdminDashboard({ userName }: { userName: string }) {
 
             {/* Recent pengajuan table */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.4 }}
                 className="rounded-lg border border-slate-200 bg-white"
             >
@@ -501,40 +562,35 @@ function UnitDashboard({ userName }: { userName: string }) {
 
     return (
         <div className="space-y-6">
-            {/* Page header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                        Dashboard Unit
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Selamat datang, {userName}
-                        {stats.unit_nama && (
-                            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                                <Building2 className="h-3 w-3" />
-                                {stats.unit_nama}
-                            </span>
-                        )}
-                    </p>
-                </div>
-                {/* Quick actions */}
-                <div className="flex flex-wrap gap-2">
-                    <Link
-                        to="/pengajuan/create"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Buat Pengajuan
-                    </Link>
-                    <Link
-                        to="/lpj/create"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-                    >
-                        <FileCheck className="h-4 w-4" />
-                        Buat LPJ
-                    </Link>
-                </div>
-            </div>
+            {/* Hero header */}
+            <DashboardHero
+                title="Dashboard Unit"
+                userName={userName}
+                badge={stats.unit_nama && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">
+                        <Building2 className="h-3 w-3" />
+                        {stats.unit_nama}
+                    </span>
+                )}
+                actions={
+                    <>
+                        <Link
+                            to="/pengajuan/create"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Buat Pengajuan
+                        </Link>
+                        <Link
+                            to="/lpj/create"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20"
+                        >
+                            <FileCheck className="h-4 w-4" />
+                            Buat LPJ
+                        </Link>
+                    </>
+                }
+            />
 
             {/* Stat cards */}
             {statsLoading ? (
@@ -545,7 +601,7 @@ function UnitDashboard({ userName }: { userName: string }) {
                 </div>
             ) : (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-1 gap-4 sm:grid-cols-3"
@@ -581,7 +637,7 @@ function UnitDashboard({ userName }: { userName: string }) {
 
             {/* Bar chart: Pengajuan vs Realisasi per Bulan */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="rounded-lg border border-slate-200 bg-white p-5"
             >
@@ -645,7 +701,7 @@ function UnitDashboard({ userName }: { userName: string }) {
 
             {/* Recent pengajuan table */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.3 }}
                 className="rounded-lg border border-slate-200 bg-white"
             >
@@ -731,24 +787,20 @@ function ApproverDashboard({ userName }: { userName: string }) {
 
     return (
         <div className="space-y-6">
-            {/* Page header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                        Dashboard Persetujuan
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Selamat datang, {userName}
-                    </p>
-                </div>
-                <Link
-                    to="/approvals"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                    <ShieldCheck className="h-4 w-4" />
-                    Lihat Semua Approval
-                </Link>
-            </div>
+            {/* Hero header */}
+            <DashboardHero
+                title="Dashboard Persetujuan"
+                userName={userName}
+                actions={
+                    <Link
+                        to="/approvals"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30"
+                    >
+                        <ShieldCheck className="h-4 w-4" />
+                        Lihat Semua Approval
+                    </Link>
+                }
+            />
 
             {/* Stat cards */}
             {statsLoading ? (
@@ -759,7 +811,7 @@ function ApproverDashboard({ userName }: { userName: string }) {
                 </div>
             ) : (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-1 gap-4 sm:grid-cols-3"
@@ -796,7 +848,7 @@ function ApproverDashboard({ userName }: { userName: string }) {
 
             {/* Bar chart: Pengajuan vs Realisasi per Bulan */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="rounded-lg border border-slate-200 bg-white p-5"
             >
@@ -860,7 +912,7 @@ function ApproverDashboard({ userName }: { userName: string }) {
 
             {/* Approval queue */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="rounded-lg border border-slate-200 bg-white"
             >
@@ -952,15 +1004,8 @@ function FinanceDashboard({ userName }: { userName: string }) {
 
     return (
         <div className="space-y-6">
-            {/* Page header */}
-            <div>
-                <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                    Dashboard Keuangan
-                </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                    Selamat datang, {userName}
-                </p>
-            </div>
+            {/* Hero header */}
+            <DashboardHero title="Dashboard Keuangan" userName={userName} />
 
             {/* Stat cards */}
             {statsLoading ? (
@@ -971,7 +1016,7 @@ function FinanceDashboard({ userName }: { userName: string }) {
                 </div>
             ) : (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-2 gap-4 lg:grid-cols-4"
@@ -1016,7 +1061,7 @@ function FinanceDashboard({ userName }: { userName: string }) {
 
             {/* Bar chart: Anggaran vs Realisasi */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="rounded-lg border border-slate-200 bg-white p-5"
             >
@@ -1080,7 +1125,7 @@ function FinanceDashboard({ userName }: { userName: string }) {
 
             {/* Recent pengajuan / verification queue */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.3 }}
                 className="rounded-lg border border-slate-200 bg-white"
             >
@@ -1170,24 +1215,20 @@ function KasirDashboard({ userName }: { userName: string }) {
 
     return (
         <div className="space-y-6">
-            {/* Page header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                        Dashboard Kasir
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Selamat datang, {userName}
-                    </p>
-                </div>
-                <Link
-                    to="/approvals"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                    <FileText className="h-4 w-4" />
-                    Lihat Antrian Cetak
-                </Link>
-            </div>
+            {/* Hero header */}
+            <DashboardHero
+                title="Dashboard Kasir"
+                userName={userName}
+                actions={
+                    <Link
+                        to="/approvals"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30"
+                    >
+                        <FileText className="h-4 w-4" />
+                        Lihat Antrian Cetak
+                    </Link>
+                }
+            />
 
             {/* Stat cards */}
             {statsLoading ? (
@@ -1198,7 +1239,7 @@ function KasirDashboard({ userName }: { userName: string }) {
                 </div>
             ) : (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-1 gap-4 sm:grid-cols-3"
@@ -1234,7 +1275,7 @@ function KasirDashboard({ userName }: { userName: string }) {
 
             {/* Print queue */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="rounded-lg border border-slate-200 bg-white"
             >
@@ -1318,24 +1359,20 @@ function PaymentDashboard({ userName }: { userName: string }) {
 
     return (
         <div className="space-y-6">
-            {/* Page header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                        Dashboard Payment
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Selamat datang, {userName}
-                    </p>
-                </div>
-                <Link
-                    to="/approvals"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                    <DollarSign className="h-4 w-4" />
-                    Lihat Antrian Pembayaran
-                </Link>
-            </div>
+            {/* Hero header */}
+            <DashboardHero
+                title="Dashboard Payment"
+                userName={userName}
+                actions={
+                    <Link
+                        to="/approvals"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30"
+                    >
+                        <DollarSign className="h-4 w-4" />
+                        Lihat Antrian Pembayaran
+                    </Link>
+                }
+            />
 
             {/* Stat cards */}
             {statsLoading ? (
@@ -1346,7 +1383,7 @@ function PaymentDashboard({ userName }: { userName: string }) {
                 </div>
             ) : (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-1 gap-4 sm:grid-cols-3"
@@ -1382,7 +1419,7 @@ function PaymentDashboard({ userName }: { userName: string }) {
 
             {/* Payment queue */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="rounded-lg border border-slate-200 bg-white"
             >
@@ -1469,24 +1506,20 @@ function LeadershipDashboard({ userName }: { userName: string }) {
 
     return (
         <div className="space-y-6">
-            {/* Page header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                        Dashboard Pimpinan
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Selamat datang, {userName}
-                    </p>
-                </div>
-                <Link
-                    to="/approvals"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                    <ShieldCheck className="h-4 w-4" />
-                    Approval Center
-                </Link>
-            </div>
+            {/* Hero header */}
+            <DashboardHero
+                title="Dashboard Pimpinan"
+                userName={userName}
+                actions={
+                    <Link
+                        to="/approvals"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/30"
+                    >
+                        <ShieldCheck className="h-4 w-4" />
+                        Approval Center
+                    </Link>
+                }
+            />
 
             {/* Stat cards */}
             {statsLoading ? (
@@ -1497,7 +1530,7 @@ function LeadershipDashboard({ userName }: { userName: string }) {
                 </div>
             ) : (
                 <motion.div
-                    variants={staggerContainer}
+                    variants={staggerContainerSlow}
                     initial="initial"
                     animate="animate"
                     className="grid grid-cols-2 gap-4 lg:grid-cols-4"
@@ -1544,7 +1577,7 @@ function LeadershipDashboard({ userName }: { userName: string }) {
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Bar chart: Anggaran vs Realisasi */}
                 <motion.div
-                    {...fadeIn}
+                    {...slideFromLeft}
                     transition={{ duration: 0.3, delay: 0.2 }}
                     className="rounded-lg border border-slate-200 bg-white p-5"
                 >
@@ -1608,7 +1641,7 @@ function LeadershipDashboard({ userName }: { userName: string }) {
 
                 {/* Pie chart: Status Pengajuan */}
                 <motion.div
-                    {...fadeIn}
+                    {...slideFromRight}
                     transition={{ duration: 0.3, delay: 0.3 }}
                     className="rounded-lg border border-slate-200 bg-white p-5"
                 >
@@ -1654,7 +1687,7 @@ function LeadershipDashboard({ userName }: { userName: string }) {
 
             {/* Approval queue */}
             <motion.div
-                {...fadeIn}
+                {...slideFromLeft}
                 transition={{ duration: 0.3, delay: 0.4 }}
                 className="rounded-lg border border-slate-200 bg-white"
             >

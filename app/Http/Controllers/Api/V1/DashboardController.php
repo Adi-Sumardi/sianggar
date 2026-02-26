@@ -25,6 +25,7 @@ use App\Services\LpjApprovalService;
 use App\Services\RapbsApprovalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -123,33 +124,41 @@ class DashboardController extends Controller
         $startYear = AcademicYear::startYear($tahun);
         $endYear = AcademicYear::endYear($tahun);
 
+        // Use database-specific date extraction functions
+        $isSqlite = DB::connection()->getDriverName() === 'sqlite';
+        $yearExpr = $isSqlite ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $isSqlite ? "CAST(strftime('%m', created_at) AS INTEGER)" : 'MONTH(created_at)';
+
+        // Batch: single query for all pengajuan sums grouped by year+month
+        $pengajuanSums = PengajuanAnggaran::where('unit_id', $unitId)
+            ->where('tahun', $tahun)
+            ->whereIn('status_proses', [
+                'approved-level-1', 'approved-level-2', 'approved-level-3',
+                'final-approved', 'done', 'paid',
+            ])
+            ->selectRaw("{$yearExpr} as yr, {$monthExpr} as mo, SUM(jumlah_pengajuan_total) as total")
+            ->groupByRaw("{$yearExpr}, {$monthExpr}")
+            ->get()
+            ->keyBy(fn ($row) => $row->yr . '-' . $row->mo);
+
+        // Batch: single query for all realisasi sums grouped by year+month
+        $realisasiSums = RealisasiAnggaran::where('unit_id', $unitId)
+            ->where('tahun', $tahun)
+            ->selectRaw("{$yearExpr} as yr, {$monthExpr} as mo, SUM(jumlah_realisasi) as total")
+            ->groupByRaw("{$yearExpr}, {$monthExpr}")
+            ->get()
+            ->keyBy(fn ($row) => $row->yr . '-' . $row->mo);
+
         $chartData = [];
 
         foreach ($months as $monthNum => $monthLabel) {
             $year = $monthNum >= 7 ? $startYear : $endYear;
-
-            // Sum pengajuan amounts for this month (approved/final-approved/done/paid)
-            $pengajuan = PengajuanAnggaran::where('unit_id', $unitId)
-                ->where('tahun', $tahun)
-                ->whereIn('status_proses', [
-                    'approved-level-1', 'approved-level-2', 'approved-level-3',
-                    'final-approved', 'done', 'paid',
-                ])
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $monthNum)
-                ->sum('jumlah_pengajuan_total');
-
-            // Sum realisasi for this month
-            $realisasi = RealisasiAnggaran::where('unit_id', $unitId)
-                ->where('tahun', $tahun)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $monthNum)
-                ->sum('jumlah_realisasi');
+            $key = $year . '-' . $monthNum;
 
             $chartData[] = [
                 'bulan' => $monthLabel . ' ' . $year,
-                'pengajuan' => (float) $pengajuan,
-                'realisasi' => (float) $realisasi,
+                'pengajuan' => (float) ($pengajuanSums[$key]->total ?? 0),
+                'realisasi' => (float) ($realisasiSums[$key]->total ?? 0),
             ];
         }
 
@@ -247,13 +256,20 @@ class DashboardController extends Controller
             'rejected' => '#ef4444',
         ];
 
+        // Single GROUP BY query instead of N separate COUNT queries
+        $query = PengajuanAnggaran::whereIn('status_proses', $statuses)
+            ->selectRaw('status_proses, COUNT(*) as total')
+            ->groupBy('status_proses');
+
+        if ($unitId) {
+            $query->where('unit_id', $unitId);
+        }
+
+        $counts = $query->pluck('total', 'status_proses');
+
         $data = [];
         foreach ($statuses as $status) {
-            $query = PengajuanAnggaran::where('status_proses', $status);
-            if ($unitId) {
-                $query->where('unit_id', $unitId);
-            }
-            $count = $query->count();
+            $count = $counts[$status] ?? 0;
             if ($count > 0) {
                 $data[] = [
                     'name' => $statusLabels[$status] ?? $status,

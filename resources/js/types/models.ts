@@ -748,6 +748,8 @@ export interface Rapbs {
     can_edit?: boolean;
     can_submit?: boolean;
     can_approve_action?: boolean;
+    total_plafon?: number;
+    is_over_budget?: boolean;
     expected_flow?: RapbsExpectedStage[];
 
     // Relations

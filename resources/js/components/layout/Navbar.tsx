@@ -21,6 +21,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuthStore, getAcademicYearOptions } from '@/stores/authStore';
 import { useSidebarStore } from '@/stores/sidebarStore';
+import { NavbarScene } from './NavbarScene';
 import { getRoleLabel } from '@/types/enums';
 import { useNotifications, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from '@/hooks/useNotifications';
 import api from '@/lib/api';
@@ -200,8 +201,11 @@ export function Navbar() {
     const yearOptions = getAcademicYearOptions();
 
     return (
-        <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b-2 border-primary-600 bg-white shadow-sm">
-            <div className="flex h-full w-full items-center gap-4 px-4">
+        <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center overflow-hidden border-b border-primary-200 bg-white/95 shadow-sm">
+            {/* Animated background scene */}
+            <NavbarScene />
+
+            <div className="relative z-10 flex h-full w-full items-center gap-4 px-4">
                 {/* --- Left: Toggle buttons + breadcrumbs --- */}
                 <div className="flex items-center gap-2">
                     {/* Mobile hamburger */}

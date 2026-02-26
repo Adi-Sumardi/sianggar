@@ -107,6 +107,31 @@ class ReportService
             ->with(['mataAnggaran', 'subMataAnggaran'])
             ->get();
 
+        $detailIds = $details->pluck('id');
+
+        // Batch: single query for all pengajuan sums grouped by detail_mata_anggaran_id
+        $pengajuanSums = DetailPengajuan::whereIn('detail_mata_anggaran_id', $detailIds)
+            ->whereHas('pengajuanAnggaran', function ($q) use ($startDate, $endDate) {
+                $q->whereDate('tanggal', '>=', $startDate)
+                    ->whereDate('tanggal', '<=', $endDate)
+                    ->whereIn('status_proses', [
+                        ProposalStatus::Approved->value,
+                        ProposalStatus::Paid->value,
+                    ]);
+            })
+            ->selectRaw('detail_mata_anggaran_id, SUM(jumlah) as total')
+            ->groupBy('detail_mata_anggaran_id')
+            ->pluck('total', 'detail_mata_anggaran_id');
+
+        // Batch: single query for all realisasi sums grouped by detail_mata_anggaran_id
+        $realisasiSums = DB::table('realisasi_anggarans')
+            ->whereIn('detail_mata_anggaran_id', $detailIds)
+            ->whereDate('tanggal', '>=', $startDate)
+            ->whereDate('tanggal', '<=', $endDate)
+            ->selectRaw('detail_mata_anggaran_id, SUM(jumlah) as total')
+            ->groupBy('detail_mata_anggaran_id')
+            ->pluck('total', 'detail_mata_anggaran_id');
+
         $items = [];
         $totalAnggaran = 0.0;
         $totalPengajuan = 0.0;
@@ -115,25 +140,8 @@ class ReportService
 
         foreach ($details as $detail) {
             $anggaran = (float) $detail->anggaran;
-
-            // Sum pengajuan amounts in the cawu period
-            $pengajuan = (float) DetailPengajuan::where('detail_mata_anggaran_id', $detail->id)
-                ->whereHas('pengajuanAnggaran', function ($q) use ($startDate, $endDate) {
-                    $q->whereDate('tanggal', '>=', $startDate)
-                        ->whereDate('tanggal', '<=', $endDate)
-                        ->whereIn('status_proses', [
-                            ProposalStatus::Approved->value,
-                            ProposalStatus::Paid->value,
-                        ]);
-                })
-                ->sum('jumlah');
-
-            // Sum realisasi in the cawu period
-            $realisasi = (float) DB::table('realisasi_anggarans')
-                ->where('detail_mata_anggaran_id', $detail->id)
-                ->whereDate('tanggal', '>=', $startDate)
-                ->whereDate('tanggal', '<=', $endDate)
-                ->sum('jumlah');
+            $pengajuan = (float) ($pengajuanSums[$detail->id] ?? 0);
+            $realisasi = (float) ($realisasiSums[$detail->id] ?? 0);
 
             $sisa = $anggaran - $realisasi;
             $persentase = $anggaran > 0 ? round(($realisasi / $anggaran) * 100, 2) : 0.0;

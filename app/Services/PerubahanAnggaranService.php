@@ -34,6 +34,9 @@ class PerubahanAnggaranService
             throw new \RuntimeException('Minimal harus ada 1 item perubahan anggaran.');
         }
 
+        // Eager-load items with sourceDetailMataAnggaran to prevent N+1
+        $perubahan->load('items.sourceDetailMataAnggaran');
+
         // Check all source budgets have sufficient balance
         foreach ($perubahan->items as $item) {
             if (! $item->hasEnoughSourceBalance()) {
@@ -74,6 +77,9 @@ class PerubahanAnggaranService
      */
     public function resubmit(PerubahanAnggaran $perubahan): void
     {
+        // Eager-load items with sourceDetailMataAnggaran to prevent N+1
+        $perubahan->load('items.sourceDetailMataAnggaran');
+
         // Re-check balances
         foreach ($perubahan->items as $item) {
             if (! $item->hasEnoughSourceBalance()) {
@@ -241,6 +247,9 @@ class PerubahanAnggaranService
      */
     public function executeTransfer(PerubahanAnggaran $perubahan, User $executor): void
     {
+        // Eager-load items to prevent N+1 in the loop
+        $perubahan->load('items');
+
         DB::transaction(function () use ($perubahan, $executor) {
             foreach ($perubahan->items as $item) {
                 $this->executeItemTransfer($perubahan, $item, $executor);

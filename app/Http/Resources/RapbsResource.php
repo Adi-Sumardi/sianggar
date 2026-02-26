@@ -58,6 +58,8 @@ class RapbsResource extends JsonResource
             'items_count' => $this->whenCounted('items'),
             'can_edit' => $this->canEdit(),
             'can_submit' => $this->canSubmit(),
+            'total_plafon' => $this->getTotalPlafon(),
+            'is_over_budget' => $this->isOverBudget(),
             'expected_flow' => collect($this->getExpectedFlow())->map(fn ($stage) => [
                 'value' => $stage->value,
                 'label' => $stage->label(),

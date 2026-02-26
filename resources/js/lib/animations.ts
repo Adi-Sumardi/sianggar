@@ -84,3 +84,47 @@ export const mobileSidebarVariants = {
     visible: { x: 0, transition: { duration: 0.25, ease: 'easeOut' as const } },
     exit: { x: -272, transition: { duration: 0.2, ease: 'easeIn' as const } },
 };
+
+// ---------------------------------------------------------------------------
+// Bounce in — playful stat cards
+// ---------------------------------------------------------------------------
+
+export const bounceIn = {
+    initial: { opacity: 0, scale: 0.8, y: 20 },
+    animate: { opacity: 1, scale: 1, y: 0 },
+    transition: { type: 'spring' as const, stiffness: 300, damping: 20 },
+};
+
+// ---------------------------------------------------------------------------
+// Slow stagger — dramatic reveal
+// ---------------------------------------------------------------------------
+
+export const staggerContainerSlow = {
+    initial: {},
+    animate: { transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
+};
+
+// ---------------------------------------------------------------------------
+// Directional slides — chart sections
+// ---------------------------------------------------------------------------
+
+export const slideFromLeft = {
+    initial: { opacity: 0, x: -30 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+};
+
+export const slideFromRight = {
+    initial: { opacity: 0, x: 30 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+};
+
+// ---------------------------------------------------------------------------
+// Float — decorative elements
+// ---------------------------------------------------------------------------
+
+export const float = {
+    animate: { y: [0, -6, 0] },
+    transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' as const },
+};

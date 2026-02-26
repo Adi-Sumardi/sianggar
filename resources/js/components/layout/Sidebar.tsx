@@ -35,6 +35,7 @@ import { useSidebarStore } from '@/stores/sidebarStore';
 import { sidebarVariants } from '@/lib/animations';
 import { getRoleLabel, UserRole } from '@/types/enums';
 import { Permission } from '@/types/permissions';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { History, Printer as PrinterIcon } from 'lucide-react';
 import { useLpjStats } from '@/hooks/useLpj';
 import { LpjLimitModal } from '@/components/common/LpjLimitModal';
@@ -287,58 +288,72 @@ export function Sidebar() {
                                     }
                                 };
 
+                                const navLinkContent = (
+                                    <NavLink
+                                        to={item.to}
+                                        onClick={handleClick}
+                                        className={cn(
+                                            'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                            active
+                                                ? 'bg-primary-50 text-primary-600'
+                                                : 'text-sidebar-foreground hover:bg-primary-50/50 hover:text-primary-600',
+                                            isCollapsed && 'justify-center px-0',
+                                            isLpjLimited && 'opacity-60',
+                                        )}
+                                    >
+                                        {/* Active indicator bar */}
+                                        {active && (
+                                            <motion.div
+                                                layoutId="sidebar-active-indicator"
+                                                className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-primary-600"
+                                                transition={{
+                                                    type: 'spring',
+                                                    stiffness: 350,
+                                                    damping: 30,
+                                                }}
+                                            />
+                                        )}
+
+                                        <Icon
+                                            className={cn(
+                                                'h-5 w-5 shrink-0',
+                                                active
+                                                    ? 'text-primary-600'
+                                                    : 'text-muted-foreground group-hover:text-primary-600',
+                                            )}
+                                        />
+
+                                        <AnimatePresence mode="wait">
+                                            {!isCollapsed && (
+                                                <motion.span
+                                                    key={`label-${item.to}`}
+                                                    initial={{ opacity: 0, width: 0 }}
+                                                    animate={{ opacity: 1, width: 'auto' }}
+                                                    exit={{ opacity: 0, width: 0 }}
+                                                    transition={{ duration: 0.15 }}
+                                                    className="truncate"
+                                                >
+                                                    {item.label}
+                                                </motion.span>
+                                            )}
+                                        </AnimatePresence>
+                                    </NavLink>
+                                );
+
                                 return (
                                     <li key={item.to}>
-                                        <NavLink
-                                            to={item.to}
-                                            title={isCollapsed ? item.label : undefined}
-                                            onClick={handleClick}
-                                            className={cn(
-                                                'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                                                active
-                                                    ? 'bg-primary-50 text-primary-600'
-                                                    : 'text-sidebar-foreground hover:bg-primary-50/50 hover:text-primary-600',
-                                                isCollapsed && 'justify-center px-0',
-                                                isLpjLimited && 'opacity-60',
-                                            )}
-                                        >
-                                            {/* Active indicator bar */}
-                                            {active && (
-                                                <motion.div
-                                                    layoutId="sidebar-active-indicator"
-                                                    className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-primary-600"
-                                                    transition={{
-                                                        type: 'spring',
-                                                        stiffness: 350,
-                                                        damping: 30,
-                                                    }}
-                                                />
-                                            )}
-
-                                            <Icon
-                                                className={cn(
-                                                    'h-5 w-5 shrink-0',
-                                                    active
-                                                        ? 'text-primary-600'
-                                                        : 'text-muted-foreground group-hover:text-primary-600',
-                                                )}
-                                            />
-
-                                            <AnimatePresence mode="wait">
-                                                {!isCollapsed && (
-                                                    <motion.span
-                                                        key={`label-${item.to}`}
-                                                        initial={{ opacity: 0, width: 0 }}
-                                                        animate={{ opacity: 1, width: 'auto' }}
-                                                        exit={{ opacity: 0, width: 0 }}
-                                                        transition={{ duration: 0.15 }}
-                                                        className="truncate"
-                                                    >
-                                                        {item.label}
-                                                    </motion.span>
-                                                )}
-                                            </AnimatePresence>
-                                        </NavLink>
+                                        {isCollapsed ? (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    {navLinkContent}
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={8}>
+                                                    {item.label}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            navLinkContent
+                                        )}
                                     </li>
                                 );
                             })}
@@ -349,33 +364,41 @@ export function Sidebar() {
 
             {/* ---- Collapse toggle ---- */}
             <div className="border-t border-sidebar-border p-3">
-                <button
-                    type="button"
-                    onClick={toggleCollapse}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary-50/50 hover:text-primary-600"
-                    title={isCollapsed ? 'Perluas sidebar' : 'Perkecil sidebar'}
-                >
-                    <motion.div
-                        animate={{ rotate: isCollapsed ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </motion.div>
-                    <AnimatePresence mode="wait">
-                        {!isCollapsed && (
-                            <motion.span
-                                key="collapse-label"
-                                initial={{ opacity: 0, width: 0 }}
-                                animate={{ opacity: 1, width: 'auto' }}
-                                exit={{ opacity: 0, width: 0 }}
-                                transition={{ duration: 0.15 }}
-                                className="truncate"
+                {isCollapsed ? (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                type="button"
+                                onClick={toggleCollapse}
+                                className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary-50/50 hover:text-primary-600"
                             >
-                                Perkecil
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
-                </button>
+                                <motion.div
+                                    animate={{ rotate: 180 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <ChevronLeft className="h-5 w-5" />
+                                </motion.div>
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" sideOffset={8}>
+                            Perluas sidebar
+                        </TooltipContent>
+                    </Tooltip>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={toggleCollapse}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary-50/50 hover:text-primary-600"
+                    >
+                        <motion.div
+                            animate={{ rotate: 0 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </motion.div>
+                        <span className="truncate">Perkecil</span>
+                    </button>
+                )}
             </div>
 
             {/* ---- User info ---- */}
@@ -387,14 +410,35 @@ export function Sidebar() {
                     )}
                 >
                     {/* Avatar */}
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
-                        {user?.name
-                            ?.split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .slice(0, 2)
-                            .toUpperCase() ?? '?'}
-                    </div>
+                    {isCollapsed ? (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+                                    {user?.name
+                                        ?.split(' ')
+                                        .map((n: string) => n[0])
+                                        .join('')
+                                        .slice(0, 2)
+                                        .toUpperCase() ?? '?'}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" sideOffset={8}>
+                                <p className="font-medium">{user?.name ?? 'User'}</p>
+                                <p className="text-[10px] capitalize text-muted-foreground">
+                                    {user?.role ? getRoleLabel(user.role) : 'User'}
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+                            {user?.name
+                                ?.split(' ')
+                                .map((n: string) => n[0])
+                                .join('')
+                                .slice(0, 2)
+                                .toUpperCase() ?? '?'}
+                        </div>
+                    )}
 
                     <AnimatePresence mode="wait">
                         {!isCollapsed && (

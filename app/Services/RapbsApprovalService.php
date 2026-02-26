@@ -207,6 +207,10 @@ class RapbsApprovalService
      */
     protected function generateApbs(Rapbs $rapbs): Apbs
     {
+        // Eager-load items with detailMataAnggaran to prevent N+1 in the loop below
+        // Also load unit for generateApbsNumber()
+        $rapbs->load(['items.detailMataAnggaran', 'unit']);
+
         // Update RAPBS status to ApbsGenerated
         $rapbs->update(['status' => RapbsStatus::ApbsGenerated]);
 
@@ -280,7 +284,7 @@ class RapbsApprovalService
                     ->orWhere('status', RapbsStatus::Verified)
                     ->orWhere('status', RapbsStatus::InReview);
             })
-                ->with(['unit', 'items', 'currentApproval', 'submitter'])
+                ->with(['unit.mataAnggarans', 'items', 'currentApproval', 'submitter'])
                 ->orderBy('submitted_at')
                 ->get();
         }
@@ -301,7 +305,7 @@ class RapbsApprovalService
                     ->orWhere('status', RapbsStatus::Verified)
                     ->orWhere('status', RapbsStatus::InReview);
             })
-            ->with(['unit', 'items', 'currentApproval', 'submitter'])
+            ->with(['unit.mataAnggarans', 'items', 'currentApproval', 'submitter'])
             ->orderBy('submitted_at')
             ->get();
     }

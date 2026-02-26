@@ -27,7 +27,7 @@ class RapbsApprovalController extends Controller
         /** @var \App\Models\User $user */
         $user = $request->user();
 
-        $query = Rapbs::with(['unit', 'submitter', 'items'])
+        $query = Rapbs::with(['unit.mataAnggarans', 'submitter', 'items'])
             ->withCount('items');
 
         // Filter by user's unit if they should only see their own data
@@ -67,7 +67,7 @@ class RapbsApprovalController extends Controller
     public function show(Rapbs $rapbs, Request $request): JsonResponse
     {
         $rapbs->load([
-            'unit',
+            'unit.mataAnggarans',
             'items.mataAnggaran',
             'items.subMataAnggaran',
             'items.detailMataAnggaran',
@@ -97,9 +97,17 @@ class RapbsApprovalController extends Controller
      */
     public function submit(Rapbs $rapbs, Request $request): JsonResponse
     {
+        $rapbs->load('unit.mataAnggarans');
+
         if (!$rapbs->canSubmit()) {
             return response()->json([
                 'message' => 'RAPBS tidak dapat disubmit. Pastikan status draft dan memiliki item.',
+            ], 422);
+        }
+
+        if ($rapbs->isOverBudget()) {
+            return response()->json([
+                'message' => 'Total Anggaran melebihi Total Plafon. Sesuaikan anggaran terlebih dahulu.',
             ], 422);
         }
 
@@ -107,7 +115,7 @@ class RapbsApprovalController extends Controller
 
         return response()->json([
             'message' => 'RAPBS berhasil diajukan untuk approval',
-            'data' => new RapbsResource($rapbs->fresh(['unit', 'currentApproval'])),
+            'data' => new RapbsResource($rapbs->fresh(['unit.mataAnggarans', 'currentApproval', 'submitter'])),
         ]);
     }
 
@@ -125,7 +133,7 @@ class RapbsApprovalController extends Controller
 
             return response()->json([
                 'message' => 'RAPBS berhasil disetujui',
-                'data' => new RapbsResource($rapbs->fresh(['unit', 'approvals', 'currentApproval'])),
+                'data' => new RapbsResource($rapbs->fresh(['unit.mataAnggarans', 'approvals', 'currentApproval', 'submitter'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -148,7 +156,7 @@ class RapbsApprovalController extends Controller
 
             return response()->json([
                 'message' => 'RAPBS dikembalikan untuk revisi',
-                'data' => new RapbsResource($rapbs->fresh(['unit', 'approvals'])),
+                'data' => new RapbsResource($rapbs->fresh(['unit.mataAnggarans', 'approvals', 'submitter'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -171,7 +179,7 @@ class RapbsApprovalController extends Controller
 
             return response()->json([
                 'message' => 'RAPBS ditolak',
-                'data' => new RapbsResource($rapbs->fresh(['unit', 'approvals'])),
+                'data' => new RapbsResource($rapbs->fresh(['unit.mataAnggarans', 'approvals', 'submitter'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([

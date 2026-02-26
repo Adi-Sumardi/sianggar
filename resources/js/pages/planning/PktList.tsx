@@ -247,8 +247,9 @@ export default function PktList() {
                             e.stopPropagation();
                             navigate(`/planning/pkt/${row.original.id}/edit`);
                         }}
-                        className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
-                        title="Edit"
+                        disabled={rapbsLocked}
+                        className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                        title={rapbsLocked ? 'RAPBS sedang diajukan' : 'Edit'}
                     >
                         <Pencil className="h-4 w-4" />
                     </button>
@@ -258,8 +259,9 @@ export default function PktList() {
                             e.stopPropagation();
                             setDeleteDialog({ open: true, item: row.original });
                         }}
-                        className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                        title="Hapus"
+                        disabled={rapbsLocked}
+                        className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                        title={rapbsLocked ? 'RAPBS sedang diajukan' : 'Hapus'}
                     >
                         <Trash2 className="h-4 w-4" />
                     </button>
@@ -282,7 +284,7 @@ export default function PktList() {
                         actions={
                             <div className="flex items-center gap-3">
                                 {rapbsLocked && (
-                                    <span className={`text-xs ${rapbsApproved ? 'text-green-600' : 'text-amber-600'}`}>
+                                    <span className={`text-xs ${rapbsApproved ? 'text-green-300' : 'text-amber-300'}`}>
                                         {rapbsApproved
                                             ? 'RAPBS sudah diapprove, pengisian PKT ditutup'
                                             : 'RAPBS sedang diajukan'}

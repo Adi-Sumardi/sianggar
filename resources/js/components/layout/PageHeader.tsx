@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ChevronRight, Home } from 'lucide-react';
-import { slideUp } from '@/lib/animations';
+import { float } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -67,63 +67,84 @@ export function PageHeader({
 
     return (
         <motion.div
-            initial={slideUp.initial}
-            animate={slideUp.animate}
-            transition={slideUp.transition}
-            className={cn('mb-6 space-y-1', className)}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className={cn(
+                'relative mb-6 overflow-hidden rounded-xl bg-gradient-to-r from-[#063E66] to-[#1C61A2] px-6 py-5 text-white shadow-lg print:bg-white print:py-2 print:text-slate-900 print:shadow-none sm:px-8 sm:py-6',
+                className,
+            )}
         >
-            {/* Breadcrumbs */}
-            <nav className="flex items-center gap-1 text-sm text-muted-foreground print:hidden">
-                <Link
-                    to="/dashboard"
-                    className="flex items-center gap-1 transition-colors hover:text-foreground"
-                >
-                    <Home className="h-3.5 w-3.5" />
-                </Link>
+            {/* Decorative floating circles */}
+            <motion.div
+                {...float}
+                className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/5 print:hidden"
+            />
+            <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="pointer-events-none absolute -bottom-4 right-20 h-20 w-20 rounded-full bg-white/5 print:hidden"
+            />
+            <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="pointer-events-none absolute left-1/3 top-2 h-12 w-12 rounded-full bg-white/[0.03] print:hidden"
+            />
 
-                {segments.map((segment, index) => {
-                    const path = '/' + segments.slice(0, index + 1).join('/');
-                    const isLast = index === segments.length - 1;
-                    const label = segmentLabel(segment);
+            <div className="relative z-10 space-y-1">
+                {/* Breadcrumbs */}
+                <nav className="flex items-center gap-1 text-sm text-white/60 print:hidden">
+                    <Link
+                        to="/dashboard"
+                        className="flex items-center gap-1 transition-colors hover:text-white"
+                    >
+                        <Home className="h-3.5 w-3.5" />
+                    </Link>
 
-                    return (
-                        <span key={path} className="flex items-center gap-1">
-                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                            {isLast ? (
-                                <span className="font-medium text-foreground">
-                                    {label}
-                                </span>
-                            ) : (
-                                <Link
-                                    to={path}
-                                    className="transition-colors hover:text-foreground"
-                                >
-                                    {label}
-                                </Link>
-                            )}
-                        </span>
-                    );
-                })}
-            </nav>
+                    {segments.map((segment, index) => {
+                        const path = '/' + segments.slice(0, index + 1).join('/');
+                        const isLast = index === segments.length - 1;
+                        const label = segmentLabel(segment);
 
-            {/* Title row */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                    <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                        {title}
-                    </h1>
-                    {description && (
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            {description}
-                        </p>
+                        return (
+                            <span key={path} className="flex items-center gap-1">
+                                <ChevronRight className="h-3.5 w-3.5 text-white/30" />
+                                {isLast ? (
+                                    <span className="font-medium text-white">
+                                        {label}
+                                    </span>
+                                ) : (
+                                    <Link
+                                        to={path}
+                                        className="transition-colors hover:text-white"
+                                    >
+                                        {label}
+                                    </Link>
+                                )}
+                            </span>
+                        );
+                    })}
+                </nav>
+
+                {/* Title row */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+                            {title}
+                        </h1>
+                        {description && (
+                            <p className="mt-1 text-sm text-white/70 print:text-slate-500">
+                                {description}
+                            </p>
+                        )}
+                    </div>
+
+                    {actions && (
+                        <div className="flex flex-wrap items-center gap-2 print:hidden">
+                            {actions}
+                        </div>
                     )}
                 </div>
-
-                {actions && (
-                    <div className="flex flex-wrap items-center gap-2 print:hidden">
-                        {actions}
-                    </div>
-                )}
             </div>
         </motion.div>
     );

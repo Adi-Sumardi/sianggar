@@ -121,6 +121,35 @@ class Rapbs extends Model
     }
 
     /**
+     * Get total plafon for this RAPBS's unit.
+     * Plafon = sum of (asumsi_realisasi * 1.05) for each mata anggaran.
+     */
+    public function getTotalPlafon(): float
+    {
+        if (!$this->relationLoaded('unit') || !$this->unit) {
+            return 0.0;
+        }
+
+        $mataAnggarans = $this->unit->relationLoaded('mataAnggarans')
+            ? $this->unit->mataAnggarans
+            : $this->unit->mataAnggarans()->get();
+
+        return (float) $mataAnggarans->sum(function (MataAnggaran $ma) {
+            return (float) $ma->asumsi_realisasi * 1.05;
+        });
+    }
+
+    /**
+     * Check if total anggaran exceeds total plafon.
+     */
+    public function isOverBudget(): bool
+    {
+        $plafon = $this->getTotalPlafon();
+
+        return $plafon > 0 && (float) $this->total_anggaran > $plafon;
+    }
+
+    /**
      * Check if RAPBS can be edited.
      */
     public function canEdit(): bool

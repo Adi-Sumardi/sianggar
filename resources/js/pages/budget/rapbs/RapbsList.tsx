@@ -102,21 +102,12 @@ export default function RapbsList() {
         [updateBudgetComparison]
     );
 
-    // Check if a unit's total anggaran exceeds total plafon
-    const isUnitOverBudget = useCallback((unitId: number) => {
-        const unitData = (rapbsData || []).find(u => u.unit_id === unitId);
-        if (!unitData) return false;
-        const plafon = unitData.mata_anggarans.reduce((s, ma) => s + (ma.plafon_apbs ?? 0), 0);
-        const anggaran = unitData.mata_anggarans.reduce((s, ma) => s + ma.total, 0);
-        return plafon > 0 && anggaran > plafon;
-    }, [rapbsData]);
-
     const handleSubmitRapbs = (rapbs: Rapbs) => {
         if (!rapbs.can_submit) {
             toast.error('RAPBS tidak dapat disubmit');
             return;
         }
-        if (isUnitOverBudget(rapbs.unit_id)) {
+        if (rapbs.is_over_budget) {
             toast.error('Total Anggaran melebihi Total Plafon. Sesuaikan anggaran terlebih dahulu.');
             return;
         }
@@ -360,7 +351,7 @@ export default function RapbsList() {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleSubmitRapbs(rapbs)}
-                                                        disabled={submitRapbs.isPending || isUnitOverBudget(rapbs.unit_id)}
+                                                        disabled={submitRapbs.isPending || !!rapbs.is_over_budget}
                                                         className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
                                                         {submitRapbs.isPending ? (
@@ -370,7 +361,7 @@ export default function RapbsList() {
                                                         )}
                                                         Submit untuk Approval
                                                     </button>
-                                                    {isUnitOverBudget(rapbs.unit_id) && (
+                                                    {rapbs.is_over_budget && (
                                                         <div className="absolute right-0 top-full z-10 mt-2 w-64 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
                                                             <p className="font-semibold">Total Anggaran melebihi Total Plafon</p>
                                                             <p className="mt-1">Sesuaikan anggaran agar tidak melebihi plafon sebelum mengajukan.</p>
