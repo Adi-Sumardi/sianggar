@@ -3,6 +3,13 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Allow service worker from /build/ to control root scope
+    <IfModule mod_headers.c>
+        <FilesMatch "sw\.js$">
+            Header set Service-Worker-Allowed "/"
+        </FilesMatch>
+    </IfModule>
+
     RewriteEngine On
 
     # Force HTTPS (handles both direct and CDN/reverse-proxy)
