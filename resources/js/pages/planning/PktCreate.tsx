@@ -208,8 +208,13 @@ export default function PktCreate() {
 
     // Submit handler
     const handleSubmit = async () => {
-        if (!form.tahun || !form.strategy_id || !form.indikator_id || !form.proker_id || !form.kegiatan_id || !form.mata_anggaran_id) {
+        if (!form.tahun || !form.strategy_id || !form.indikator_id || !form.proker_id || !form.kegiatan_id || !form.mata_anggaran_id || !form.sub_mata_anggaran_id) {
             toast.error('Field yang wajib harus diisi');
+            return;
+        }
+
+        if (!form.saldo_anggaran || form.saldo_anggaran <= 0) {
+            toast.error('Nilai Anggaran Awal yang Diajukan wajib diisi dan harus lebih dari 0');
             return;
         }
 
@@ -237,7 +242,7 @@ export default function PktCreate() {
     };
 
     const isSubmitting = createPkt.isPending;
-    const canSubmit = form.tahun && form.kegiatan_id && form.mata_anggaran_id;
+    const canSubmit = form.tahun && form.kegiatan_id && form.mata_anggaran_id && form.sub_mata_anggaran_id && form.saldo_anggaran > 0;
 
     return (
         <PageTransition>
@@ -384,7 +389,7 @@ export default function PktCreate() {
                                 </div>
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-slate-700">
-                                        Sub Mata Anggaran
+                                        Sub Mata Anggaran <span className="text-red-500">*</span>
                                     </label>
                                     <SearchableSelect
                                         options={subMataAnggaranOptions}
@@ -393,7 +398,7 @@ export default function PktCreate() {
                                             ...prev,
                                             sub_mata_anggaran_id: val ? parseInt(val) : null,
                                         }))}
-                                        placeholder={form.mata_anggaran_id ? 'Pilih sub mata anggaran (opsional)...' : 'Pilih mata anggaran terlebih dahulu'}
+                                        placeholder={form.mata_anggaran_id ? 'Pilih sub mata anggaran...' : 'Pilih mata anggaran terlebih dahulu'}
                                         searchPlaceholder="Cari sub mata anggaran..."
                                         disabled={!form.mata_anggaran_id}
                                         isLoading={subMataAnggaransLoading}
@@ -440,10 +445,10 @@ export default function PktCreate() {
                                 </div>
                             </div>
 
-                            {/* Row: Saldo Anggaran */}
+                            {/* Row: Nilai Anggaran Awal yang Diajukan */}
                             <div className="max-w-sm">
                                 <CurrencyInput
-                                    label="Saldo Anggaran"
+                                    label={<>Nilai Anggaran Awal yang Diajukan <span className="text-red-500">*</span></>}
                                     value={form.saldo_anggaran}
                                     onChange={(val) => setForm((prev) => ({
                                         ...prev,

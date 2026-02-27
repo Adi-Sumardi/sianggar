@@ -228,7 +228,7 @@ export default function PktList() {
         },
         {
             accessorKey: 'saldo_anggaran',
-            header: 'Saldo Anggaran',
+            header: 'Nilai Anggaran Awal yang Diajukan',
             cell: ({ row }) => (
                 <span className="font-semibold text-emerald-600">
                     {formatRupiah(row.original.saldo_anggaran)}
@@ -339,7 +339,7 @@ export default function PktList() {
                             <p className="text-lg font-bold text-blue-700">{filteredData.length} item</p>
                         </div>
                         <div>
-                            <p className="text-xs font-medium text-blue-600">Total Saldo Anggaran</p>
+                            <p className="text-xs font-medium text-blue-600">Total Nilai Anggaran Awal</p>
                             <p className="text-lg font-bold text-blue-700">{formatRupiah(totalSaldo)}</p>
                         </div>
                     </div>

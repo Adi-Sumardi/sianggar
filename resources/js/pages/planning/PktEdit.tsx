@@ -79,6 +79,11 @@ export default function PktEdit() {
     const handleSubmit = async () => {
         if (!pktId) return;
 
+        if (!form.saldo_anggaran || form.saldo_anggaran <= 0) {
+            toast.error('Nilai Anggaran Awal yang Diajukan wajib diisi dan harus lebih dari 0');
+            return;
+        }
+
         try {
             await updatePkt.mutateAsync({
                 id: pktId,
@@ -154,7 +159,7 @@ export default function PktEdit() {
                         <div className="border-b border-slate-200 px-6 py-4">
                             <h2 className="text-lg font-semibold text-slate-900">Informasi PKT</h2>
                             <p className="mt-1 text-sm text-slate-500">
-                                Anda dapat mengubah Deskripsi, Tujuan, Saldo Anggaran, Volume, dan Satuan
+                                Anda dapat mengubah Deskripsi, Tujuan, Nilai Anggaran Awal yang Diajukan, Volume, dan Satuan
                             </p>
                         </div>
 
@@ -271,10 +276,10 @@ export default function PktEdit() {
                                 </div>
                             </div>
 
-                            {/* Row: Saldo Anggaran */}
+                            {/* Row: Nilai Anggaran Awal yang Diajukan */}
                             <div className="max-w-sm">
                                 <CurrencyInput
-                                    label="Saldo Anggaran"
+                                    label={<>Nilai Anggaran Awal yang Diajukan <span className="text-red-500">*</span></>}
                                     value={form.saldo_anggaran}
                                     onChange={(val) => setForm((prev) => ({
                                         ...prev,
