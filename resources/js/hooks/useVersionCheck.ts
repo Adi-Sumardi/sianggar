@@ -5,65 +5,53 @@ import { useEffect, useRef, useState } from 'react';
 // =============================================================================
 
 /**
- * Extracts the hash portion from Vite-bundled script filenames.
+ * Extracts the hash portion from Vite-bundled script filenames in raw HTML.
  * E.g. from `<script src="/build/assets/app-DO2FFU2V.js">` → "DO2FFU2V"
  */
-function extractScriptHashes(html: string): string[] {
+function extractScriptHashes(html: string): string {
     const matches = [...html.matchAll(/\/build\/assets\/[^"']*?-([A-Za-z0-9_-]+)\.(js|css)/g)];
-    return matches.map((m) => m[1]).sort();
+    return matches.map((m) => m[1]).sort().join(',');
 }
 
-function getCurrentHashes(): string[] {
-    const scripts = document.querySelectorAll('script[src*="/build/assets/"]');
-    const links = document.querySelectorAll('link[href*="/build/assets/"]');
-    const hashes: string[] = [];
-
-    scripts.forEach((el) => {
-        const src = el.getAttribute('src') || '';
-        const match = src.match(/-([A-Za-z0-9_-]+)\.js/);
-        if (match) hashes.push(match[1]);
-    });
-
-    links.forEach((el) => {
-        const href = el.getAttribute('href') || '';
-        const match = href.match(/-([A-Za-z0-9_-]+)\.css/);
-        if (match) hashes.push(match[1]);
-    });
-
-    return hashes.sort();
+async function fetchPageHash(): Promise<string | null> {
+    try {
+        const res = await fetch('/?_vc=' + Date.now(), {
+            cache: 'no-store',
+            headers: { Accept: 'text/html' },
+        });
+        if (!res.ok) return null;
+        const html = await res.text();
+        const hash = extractScriptHashes(html);
+        return hash || null;
+    } catch {
+        return null;
+    }
 }
 
-const CHECK_INTERVAL = 60 * 1000; // check every 60 seconds
+const CHECK_INTERVAL = 5 * 60 * 1000; // check every 5 minutes
 
 export function useVersionCheck() {
     const [updateAvailable, setUpdateAvailable] = useState(false);
-    const initialHashes = useRef<string[]>(getCurrentHashes());
+    const baselineHash = useRef<string | null>(null);
+    const initialized = useRef(false);
 
     useEffect(() => {
         // Don't run in development
         if (import.meta.env.DEV) return;
 
+        // Fetch baseline on mount
+        const init = async () => {
+            baselineHash.current = await fetchPageHash();
+            initialized.current = true;
+        };
+        init();
+
         const check = async () => {
-            try {
-                const res = await fetch('/?_version_check=' + Date.now(), {
-                    cache: 'no-store',
-                    headers: { Accept: 'text/html' },
-                });
-                if (!res.ok) return;
+            if (!initialized.current || !baselineHash.current) return;
 
-                const html = await res.text();
-                const newHashes = extractScriptHashes(html);
-                const currentHashes = initialHashes.current;
-
-                if (
-                    currentHashes.length > 0 &&
-                    newHashes.length > 0 &&
-                    currentHashes.join(',') !== newHashes.join(',')
-                ) {
-                    setUpdateAvailable(true);
-                }
-            } catch {
-                // Silently ignore network errors
+            const currentHash = await fetchPageHash();
+            if (currentHash && currentHash !== baselineHash.current) {
+                setUpdateAvailable(true);
             }
         };
 

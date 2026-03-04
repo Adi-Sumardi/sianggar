@@ -24,9 +24,17 @@ class RapbsController extends Controller
         $user = $request->user();
         $tahun = $request->query('tahun', AcademicYear::current());
 
-        $query = Unit::with(['apbs' => function ($q) use ($tahun) {
-            $q->where('tahun', $tahun);
-        }, 'mataAnggarans.subMataAnggarans.detailMataAnggarans']);
+        $query = Unit::with([
+            'apbs' => function ($q) use ($tahun) {
+                $q->where('tahun', $tahun);
+            },
+            'mataAnggarans' => function ($q) use ($tahun) {
+                $q->where('tahun', $tahun);
+            },
+            'mataAnggarans.subMataAnggarans.detailMataAnggarans' => function ($q) use ($tahun) {
+                $q->where('tahun', $tahun);
+            },
+        ]);
 
         // Auto-filter by user's unit_id if they should only see their own data
         if ($user->role->shouldFilterByOwnData() && $user->unit_id !== null) {
@@ -76,7 +84,12 @@ class RapbsController extends Controller
         $tahun = $request->query('tahun', AcademicYear::current());
 
         $unit->load([
-            'mataAnggarans.subMataAnggarans.detailMataAnggarans',
+            'mataAnggarans' => function ($q) use ($tahun) {
+                $q->where('tahun', $tahun);
+            },
+            'mataAnggarans.subMataAnggarans.detailMataAnggarans' => function ($q) use ($tahun) {
+                $q->where('tahun', $tahun);
+            },
             'apbs' => function ($q) use ($tahun) {
                 $q->where('tahun', $tahun);
             },
