@@ -5,6 +5,7 @@ import { Navbar } from './Navbar';
 import { Sidebar, MobileSidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { GlobalDiscussionButton } from '@/components/common/GlobalDiscussionButton';
+import { UpdateNotification } from '@/components/common/UpdateNotification';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { pageVariants, pageTransition } from '@/lib/animations';
@@ -21,6 +22,9 @@ export function AppLayout() {
 
     return (
         <div className="min-h-screen bg-background">
+            {/* Update notification banner */}
+            <UpdateNotification />
+
             {/* Top navbar */}
             <div className="print:hidden">
                 <Navbar />
