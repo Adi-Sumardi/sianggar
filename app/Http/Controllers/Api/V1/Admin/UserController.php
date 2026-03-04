@@ -93,6 +93,28 @@ class UserController extends Controller
      */
     public function destroy(User $user): JsonResponse
     {
+        // Prevent deletion if user has related financial data
+        $dependencies = [];
+
+        if ($user->pengajuanAnggarans()->exists()) {
+            $dependencies[] = 'Pengajuan Anggaran';
+        }
+        if (\App\Models\PerubahanAnggaran::where('user_id', $user->id)->exists()) {
+            $dependencies[] = 'Perubahan Anggaran';
+        }
+        if (\App\Models\Lpj::where('user_id', $user->id)->exists()) {
+            $dependencies[] = 'LPJ';
+        }
+        if ($user->approvals()->exists()) {
+            $dependencies[] = 'Approval';
+        }
+
+        if (!empty($dependencies)) {
+            return response()->json([
+                'message' => 'User tidak dapat dihapus karena masih memiliki data: ' . implode(', ', $dependencies) . '. Nonaktifkan user sebagai gantinya.',
+            ], 422);
+        }
+
         $user->delete();
 
         return response()->json([

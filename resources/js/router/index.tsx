@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PermissionGuard } from './PermissionGuard';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Permission } from '@/types/permissions';
 
 // =============================================================================
@@ -88,6 +89,7 @@ const Settings = lazy(() => import('@/pages/settings/Settings'));
 
 export function AppRouter() {
     return (
+        <ErrorBoundary>
         <Suspense fallback={null}>
             <Routes>
                 {/* ---- Public routes ---- */}
@@ -498,5 +500,6 @@ export function AppRouter() {
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
         </Suspense>
+        </ErrorBoundary>
     );
 }

@@ -11,7 +11,8 @@
  */
 
 error_reporting(E_ALL);
-ini_set('display_errors', '1');
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 set_time_limit(300);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -26,9 +27,7 @@ $appPath = $domainPath . '/sianggar';
 $publicPath = $domainPath . '/public_html';
 $envFile = $appPath . '/.env';
 
-echo "==> Domain path: {$domainPath}\n";
-echo "==> App path: {$appPath}\n";
-echo "==> Public path: {$publicPath}\n\n";
+echo "==> Deploy webhook started.\n\n";
 
 // Ensure app directory exists
 if (!is_dir($appPath)) {

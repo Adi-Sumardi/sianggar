@@ -242,6 +242,14 @@ class PerubahanAnggaranController extends Controller
      */
     public function submit(PerubahanAnggaran $perubahanAnggaran): JsonResponse
     {
+        // Only owner or admin can submit
+        $user = Auth::user();
+        if ($perubahanAnggaran->user_id !== $user->id && ! $user->hasEnumRole(\App\Enums\UserRole::Admin)) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk mengajukan perubahan anggaran ini.',
+            ], 403);
+        }
+
         if (! $perubahanAnggaran->isSubmittable()) {
             return response()->json([
                 'message' => 'Perubahan anggaran tidak dapat diajukan pada status ini.',
@@ -275,6 +283,14 @@ class PerubahanAnggaranController extends Controller
      */
     public function resubmit(PerubahanAnggaran $perubahanAnggaran): JsonResponse
     {
+        // Only owner or admin can resubmit
+        $user = Auth::user();
+        if ($perubahanAnggaran->user_id !== $user->id && ! $user->hasEnumRole(\App\Enums\UserRole::Admin)) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk mengajukan ulang perubahan anggaran ini.',
+            ], 403);
+        }
+
         if (! $perubahanAnggaran->isSubmittable()) {
             return response()->json([
                 'message' => 'Perubahan anggaran tidak dapat diajukan ulang pada status ini.',
@@ -442,6 +458,14 @@ class PerubahanAnggaranController extends Controller
      */
     public function uploadAttachment(Request $request, PerubahanAnggaran $perubahanAnggaran): JsonResponse
     {
+        // Only owner or admin can upload attachments
+        $user = Auth::user();
+        if ($perubahanAnggaran->user_id !== $user->id && ! $user->hasEnumRole(\App\Enums\UserRole::Admin)) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk mengunggah lampiran pada perubahan anggaran ini.',
+            ], 403);
+        }
+
         if (! $perubahanAnggaran->isEditable()) {
             return response()->json([
                 'message' => 'Tidak dapat menambah lampiran pada perubahan anggaran yang sudah diproses.',
@@ -483,6 +507,14 @@ class PerubahanAnggaranController extends Controller
      */
     public function deleteAttachment(Request $request, PerubahanAnggaran $perubahanAnggaran, Attachment $attachment): JsonResponse
     {
+        // Only owner or admin can delete attachments
+        $user = Auth::user();
+        if ($perubahanAnggaran->user_id !== $user->id && ! $user->hasEnumRole(\App\Enums\UserRole::Admin)) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk menghapus lampiran pada perubahan anggaran ini.',
+            ], 403);
+        }
+
         if ($attachment->attachable_type !== PerubahanAnggaran::class || $attachment->attachable_id !== $perubahanAnggaran->id) {
             return response()->json([
                 'message' => 'Attachment tidak ditemukan untuk perubahan anggaran ini.',

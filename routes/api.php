@@ -63,6 +63,8 @@ Route::prefix('v1')->group(function () {
         // ---------------------------------------------------------------------
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::put('auth/password', [AuthController::class, 'changePassword']);
+        Route::put('auth/profile', [AuthController::class, 'updateProfile']);
 
         // ---------------------------------------------------------------------
         // Notifications
@@ -337,6 +339,9 @@ Route::prefix('v1')->group(function () {
             Route::get('rapbs-list', [RapbsApprovalController::class, 'index']);
             Route::get('rapbs/{rapbs}/detail', [RapbsApprovalController::class, 'show']);
             Route::get('rapbs/{rapbs}/history', [RapbsApprovalController::class, 'history']);
+        });
+
+        Route::middleware('permission:manage-planning')->group(function () {
             Route::post('rapbs/{rapbs}/submit', [RapbsApprovalController::class, 'submit']);
         });
 
@@ -350,8 +355,10 @@ Route::prefix('v1')->group(function () {
         // ---------------------------------------------------------------------
         // Revision Comments (Diskusi Revisi)
         // ---------------------------------------------------------------------
-        Route::get('revision-comments/{type}/{id}', [RevisionCommentController::class, 'index']);
-        Route::post('revision-comments/{type}/{id}', [RevisionCommentController::class, 'store']);
+        Route::middleware('permission:view-proposals')->group(function () {
+            Route::get('revision-comments/{type}/{id}', [RevisionCommentController::class, 'index']);
+            Route::post('revision-comments/{type}/{id}', [RevisionCommentController::class, 'store']);
+        });
 
         // ---------------------------------------------------------------------
         // Communication - Email / Surat

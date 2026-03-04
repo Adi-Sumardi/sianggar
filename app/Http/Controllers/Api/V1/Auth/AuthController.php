@@ -10,6 +10,8 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -70,6 +72,56 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout berhasil.',
+        ]);
+    }
+
+    /**
+     * Change the authenticated user's password.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', Password::min(8), 'confirmed'],
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        if (!Hash::check($request->input('current_password'), $user->password)) {
+            return response()->json([
+                'message' => 'Password lama tidak sesuai.',
+                'errors' => ['current_password' => ['Password lama tidak sesuai.']],
+            ], 422);
+        }
+
+        $user->update([
+            'password' => $request->input('password'),
+        ]);
+
+        return response()->json([
+            'message' => 'Password berhasil diperbarui.',
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's profile.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        $user->update($request->only(['name', 'email']));
+        $user->load('unit');
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'data' => new UserResource($user),
         ]);
     }
 }

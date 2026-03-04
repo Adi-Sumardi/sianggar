@@ -104,6 +104,25 @@ class UnitController extends Controller
      */
     public function destroy(Unit $unit): JsonResponse
     {
+        // Prevent deletion if unit has related data
+        $dependencies = [];
+
+        if ($unit->users()->exists()) {
+            $dependencies[] = 'User';
+        }
+        if ($unit->mataAnggarans()->exists()) {
+            $dependencies[] = 'Mata Anggaran';
+        }
+        if (\App\Models\Apbs::where('unit_id', $unit->id)->exists()) {
+            $dependencies[] = 'APBS';
+        }
+
+        if (!empty($dependencies)) {
+            return response()->json([
+                'message' => 'Unit tidak dapat dihapus karena masih memiliki data: ' . implode(', ', $dependencies) . '.',
+            ], 422);
+        }
+
         $unit->delete();
 
         return response()->json([

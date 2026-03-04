@@ -138,12 +138,13 @@ class EmailController extends Controller
     }
 
     /**
-     * Generate nomor surat.
+     * Generate nomor surat with locking to prevent race conditions.
+     * Must be called within a DB transaction.
      */
     protected function generateNoSurat(): string
     {
         $year = date('Y');
-        $count = Email::whereYear('created_at', $year)->count() + 1;
+        $count = Email::whereYear('created_at', $year)->lockForUpdate()->count() + 1;
 
         return sprintf('SI/%s/%03d', $year, $count);
     }
