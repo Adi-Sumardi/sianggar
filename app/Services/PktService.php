@@ -108,8 +108,14 @@ class PktService
             // Log activity before deletion
             ActivityLog::log($pkt, 'deleted', $pkt->toArray(), null, $deleter->id);
 
-            // Delete related RAPBS items
+            // Collect RAPBS IDs before deleting items (for recalculation)
+            $rapbsIds = $pkt->rapbsItems()->pluck('rapbs_id')->unique();
+
+            // Delete related RAPBS items (bulk delete skips model events)
             $pkt->rapbsItems()->delete();
+
+            // Recalculate RAPBS totals since bulk delete doesn't trigger model events
+            Rapbs::whereIn('id', $rapbsIds)->each(fn (Rapbs $rapbs) => $rapbs->recalculateTotal());
 
             // Delete related DetailMataAnggaran
             if ($pkt->detail_mata_anggaran_id) {
