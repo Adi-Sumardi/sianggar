@@ -31,6 +31,7 @@ export function useCreatePengajuan() {
         mutationFn: (dto: CreatePengajuanDTO) => proposalService.createPengajuan(dto),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -43,6 +44,7 @@ export function useUpdatePengajuan() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
             queryClient.invalidateQueries({ queryKey: ['pengajuans', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -53,6 +55,7 @@ export function useDeletePengajuan() {
         mutationFn: (id: number) => proposalService.deletePengajuan(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -66,6 +69,7 @@ export function useSubmitPengajuan() {
             queryClient.invalidateQueries({ queryKey: ['pengajuans', id] });
             queryClient.invalidateQueries({ queryKey: ['approvals'] });
             queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -80,6 +84,7 @@ export function useResubmitPengajuan() {
             queryClient.invalidateQueries({ queryKey: ['approvals'] });
             queryClient.invalidateQueries({ queryKey: ['lpj-stats'] });
             queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }

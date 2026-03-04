@@ -61,6 +61,10 @@ export function useDeleteStrategy() {
         mutationFn: (id: number) => planningService.deleteStrategy(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['strategies'] });
+            queryClient.invalidateQueries({ queryKey: ['indikators'] });
+            queryClient.invalidateQueries({ queryKey: ['prokers'] });
+            queryClient.invalidateQueries({ queryKey: ['kegiatans'] });
+            queryClient.invalidateQueries({ queryKey: ['pkts'] });
         },
     });
 }
@@ -112,6 +116,9 @@ export function useDeleteIndikator() {
         mutationFn: (id: number) => planningService.deleteIndikator(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['indikators'] });
+            queryClient.invalidateQueries({ queryKey: ['prokers'] });
+            queryClient.invalidateQueries({ queryKey: ['kegiatans'] });
+            queryClient.invalidateQueries({ queryKey: ['pkts'] });
         },
     });
 }
@@ -165,6 +172,8 @@ export function useDeleteProker() {
         mutationFn: (id: number) => planningService.deleteProker(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['prokers'] });
+            queryClient.invalidateQueries({ queryKey: ['kegiatans'] });
+            queryClient.invalidateQueries({ queryKey: ['pkts'] });
         },
     });
 }
@@ -224,6 +233,7 @@ export function useDeleteKegiatan() {
         mutationFn: (id: number) => planningService.deleteKegiatan(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['kegiatans'] });
+            queryClient.invalidateQueries({ queryKey: ['pkts'] });
         },
     });
 }
@@ -262,6 +272,7 @@ export function useCreatePkt() {
         mutationFn: (dto: CreatePktDTO) => planningService.createPkt(dto),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pkts'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -274,6 +285,7 @@ export function useUpdatePkt() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['pkts'] });
             queryClient.invalidateQueries({ queryKey: ['pkts', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -284,6 +296,7 @@ export function useDeletePkt() {
         mutationFn: (id: number) => planningService.deletePkt(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pkts'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -295,6 +308,8 @@ export function useSubmitPkt() {
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: ['pkts'] });
             queryClient.invalidateQueries({ queryKey: ['pkts', id] });
+            queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }

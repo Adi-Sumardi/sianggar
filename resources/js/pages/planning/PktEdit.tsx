@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, Loader2, Save, AlertCircle, Info } from 'lucide-react';
@@ -6,17 +6,20 @@ import { toast } from 'sonner';
 
 import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { CurrencyInput } from '@/components/common/CurrencyInput';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 import { usePkt, useUpdatePkt } from '@/hooks/usePlanning';
+import { useSubMataAnggarans } from '@/hooks/useBudget';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface FormData {
+    sub_mata_anggaran_id: number | null;
     deskripsi_kegiatan: string;
     tujuan_kegiatan: string;
     saldo_anggaran: number;
@@ -47,8 +50,9 @@ export default function PktEdit() {
     const pktId = id ? parseInt(id) : null;
     const { data: pkt, isLoading: pktLoading } = usePkt(pktId);
 
-    // Form state — only editable fields
+    // Form state — editable fields
     const [form, setForm] = useState<FormData>({
+        sub_mata_anggaran_id: null,
         deskripsi_kegiatan: '',
         tujuan_kegiatan: '',
         saldo_anggaran: 0,
@@ -62,6 +66,7 @@ export default function PktEdit() {
     useEffect(() => {
         if (pkt && !isInitialized) {
             setForm({
+                sub_mata_anggaran_id: pkt.sub_mata_anggaran_id ?? null,
                 deskripsi_kegiatan: pkt.deskripsi_kegiatan || '',
                 tujuan_kegiatan: pkt.tujuan_kegiatan || '',
                 saldo_anggaran: pkt.saldo_anggaran || 0,
@@ -75,9 +80,30 @@ export default function PktEdit() {
     // Mutations
     const updatePkt = useUpdatePkt();
 
+    // Fetch sub mata anggarans for the PKT's mata anggaran
+    const mataAnggaranId = pkt?.mata_anggaran_id ?? null;
+    const { data: subMataAnggaransData, isLoading: subMataAnggaransLoading } = useSubMataAnggarans(
+        mataAnggaranId,
+        undefined
+    );
+
+    const subMataAnggaranOptions = useMemo(() => {
+        const data = subMataAnggaransData?.data ?? subMataAnggaransData ?? [];
+        if (!Array.isArray(data)) return [];
+        return data.map((s: { id: number; kode: string; nama: string }) => ({
+            value: s.id.toString(),
+            label: `${s.kode} - ${s.nama}`,
+        }));
+    }, [subMataAnggaransData]);
+
     // Handlers
     const handleSubmit = async () => {
         if (!pktId) return;
+
+        if (!form.sub_mata_anggaran_id) {
+            toast.error('Sub Mata Anggaran wajib dipilih');
+            return;
+        }
 
         if (!form.saldo_anggaran || form.saldo_anggaran <= 0) {
             toast.error('Nilai Anggaran Awal yang Diajukan wajib diisi dan harus lebih dari 0');
@@ -88,6 +114,7 @@ export default function PktEdit() {
             await updatePkt.mutateAsync({
                 id: pktId,
                 dto: {
+                    sub_mata_anggaran_id: form.sub_mata_anggaran_id,
                     deskripsi_kegiatan: form.deskripsi_kegiatan || undefined,
                     tujuan_kegiatan: form.tujuan_kegiatan || undefined,
                     saldo_anggaran: form.saldo_anggaran,
@@ -159,7 +186,7 @@ export default function PktEdit() {
                         <div className="border-b border-slate-200 px-6 py-4">
                             <h2 className="text-lg font-semibold text-slate-900">Informasi PKT</h2>
                             <p className="mt-1 text-sm text-slate-500">
-                                Anda dapat mengubah Deskripsi, Tujuan, Nilai Anggaran Awal yang Diajukan, Volume, dan Satuan
+                                Anda dapat mengubah Sub Mata Anggaran, Deskripsi, Tujuan, Nilai Anggaran Awal yang Diajukan, Volume, dan Satuan
                             </p>
                         </div>
 
@@ -216,23 +243,33 @@ export default function PktEdit() {
                                 </div>
                             </div>
 
-                            {/* Mata Anggaran (Read-only) */}
+                            {/* Mata Anggaran */}
                             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
                                 <div className="mb-3 text-sm font-medium text-slate-700">
-                                    Mata Anggaran (tidak dapat diubah)
+                                    Mata Anggaran
                                 </div>
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <div>
-                                        <span className="text-xs font-medium text-slate-500">Mata Anggaran</span>
+                                        <span className="text-xs font-medium text-slate-500">Mata Anggaran (tidak dapat diubah)</span>
                                         <p className="mt-0.5 text-sm font-medium text-slate-800">
                                             {pkt.mata_anggaran?.kode || '-'} - {pkt.mata_anggaran?.nama || '-'}
                                         </p>
                                     </div>
                                     <div>
-                                        <span className="text-xs font-medium text-slate-500">Sub Mata Anggaran</span>
-                                        <p className="mt-0.5 text-sm font-medium text-slate-800">
-                                            {pkt.sub_mata_anggaran ? `${pkt.sub_mata_anggaran.kode} - ${pkt.sub_mata_anggaran.nama}` : '-'}
-                                        </p>
+                                        <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                                            Sub Mata Anggaran <span className="text-red-500">*</span>
+                                        </label>
+                                        <SearchableSelect
+                                            options={subMataAnggaranOptions}
+                                            value={form.sub_mata_anggaran_id?.toString() || ''}
+                                            onChange={(val) => setForm((prev) => ({
+                                                ...prev,
+                                                sub_mata_anggaran_id: val ? parseInt(val) : null,
+                                            }))}
+                                            placeholder="Pilih sub mata anggaran..."
+                                            searchPlaceholder="Cari sub mata anggaran..."
+                                            isLoading={subMataAnggaransLoading}
+                                        />
                                     </div>
                                 </div>
                             </div>

@@ -114,6 +114,8 @@ export function useUpdateMataAnggaran() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
             queryClient.invalidateQueries({ queryKey: ['mata-anggarans', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['rapbs'] });
+            queryClient.invalidateQueries({ queryKey: ['coa-by-unit'] });
         },
     });
 }
@@ -124,6 +126,10 @@ export function useDeleteMataAnggaran() {
         mutationFn: (id: number) => budgetService.deleteMataAnggaran(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['rapbs'] });
+            queryClient.invalidateQueries({ queryKey: ['coa-by-unit'] });
         },
     });
 }
@@ -154,6 +160,7 @@ export function useCreateSubMataAnggaran() {
         mutationFn: (dto: CreateSubMataAnggaranDTO) => budgetService.createSubMataAnggaran(dto),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
         },
     });
 }
@@ -166,6 +173,7 @@ export function useUpdateSubMataAnggaran() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans'] });
             queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
         },
     });
 }
@@ -176,6 +184,7 @@ export function useDeleteSubMataAnggaran() {
         mutationFn: (id: number) => budgetService.deleteSubMataAnggaran(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
         },
     });
 }
@@ -209,6 +218,8 @@ export function useCreateDetailMataAnggaran() {
             budgetService.createDetailMataAnggaran(dto),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
         },
     });
 }
@@ -221,6 +232,8 @@ export function useUpdateDetailMataAnggaran() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
             queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
         },
     });
 }
@@ -231,6 +244,8 @@ export function useDeleteDetailMataAnggaran() {
         mutationFn: (id: number) => budgetService.deleteDetailMataAnggaran(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['sub-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['mata-anggarans'] });
         },
     });
 }
@@ -382,6 +397,7 @@ export function useUpdatePenerimaan() {
             budgetService.updatePenerimaan(id, dto),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['coa-penerimaan'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -392,6 +408,7 @@ export function useDeletePenerimaan() {
         mutationFn: (id: number) => budgetService.deletePenerimaan(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['coa-penerimaan'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -424,6 +441,7 @@ export function useUpdateRealisasi() {
             budgetService.updateRealisasi(id, dto),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['coa-realisasi'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -434,6 +452,7 @@ export function useDeleteRealisasi() {
         mutationFn: (id: number) => budgetService.deleteRealisasi(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['coa-realisasi'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }

@@ -47,8 +47,8 @@ export function useCreateLpj() {
         mutationFn: (dto: CreateLpjDTO) => reportService.createLpj(dto),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
-            // Also invalidate pengajuan available-for-lpj so dropdown refreshes
             queryClient.invalidateQueries({ queryKey: ['pengajuans', 'available-for-lpj'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -61,6 +61,7 @@ export function useUpdateLpj() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
             queryClient.invalidateQueries({ queryKey: ['lpjs', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -71,6 +72,7 @@ export function useDeleteLpj() {
         mutationFn: (id: number) => reportService.deleteLpj(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -83,6 +85,7 @@ export function useSubmitLpj() {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
             queryClient.invalidateQueries({ queryKey: ['lpjs', id] });
             queryClient.invalidateQueries({ queryKey: ['approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -95,6 +98,7 @@ export function useResubmitLpj() {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
             queryClient.invalidateQueries({ queryKey: ['lpjs', id] });
             queryClient.invalidateQueries({ queryKey: ['approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
