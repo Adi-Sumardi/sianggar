@@ -37,13 +37,9 @@ export default defineConfig({
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
                 navigateFallback: null,
-                // Don't cache API responses - always fetch fresh data
-                runtimeCaching: [
-                    {
-                        urlPattern: /^https?:\/\/.*\/api\/v1\//,
-                        handler: 'NetworkOnly',
-                    },
-                ],
+                // Exclude API routes from service worker — let browser handle them directly
+                // This prevents Workbox "no-response" errors when network is temporarily unavailable
+                navigateFallbackDenylist: [/^\/api\//],
             },
         }),
     ],
