@@ -131,7 +131,7 @@ export default function PktList() {
     // API Queries
     const { data: pktsData, isLoading: pktsLoading } = usePkts({
         tahun: filterValues.tahun || undefined,
-        unit: filterValues.unit || undefined,
+        unit_id: filterValues.unit_id || undefined,
     });
     const { data: unitsData } = useUnitsList();
 
@@ -154,7 +154,7 @@ export default function PktList() {
 
     // Transform data for selects
     const unitOptions = useMemo(() => {
-        return unitsData?.map((u) => ({ value: u.kode, label: `${u.kode} - ${u.nama}` })) ?? [];
+        return unitsData?.map((u) => ({ value: String(u.id), label: `${u.kode} - ${u.nama}` })) ?? [];
     }, [unitsData]);
 
     // Generate tahun anggaran filter options
@@ -167,7 +167,7 @@ export default function PktList() {
 
     const filters = [
         { key: 'tahun', label: 'Semua TA', type: 'select' as const, options: tahunOptions },
-        ...(isAdmin ? [{ key: 'unit', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
+        ...(isAdmin ? [{ key: 'unit_id', label: 'Semua Unit', type: 'select' as const, options: unitOptions }] : []),
     ];
 
     const pkts = pktsData?.data ?? [];

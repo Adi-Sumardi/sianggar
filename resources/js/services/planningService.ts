@@ -160,7 +160,7 @@ export async function getPkts(
         proker_id?: number;
         kegiatan_id?: number;
         tahun?: string;
-        unit?: string;
+        unit_id?: string;
     },
 ): Promise<PaginatedResponse<Pkt>> {
     const { data } = await api.get<PaginatedResponse<Pkt>>('/pkt', { params });
