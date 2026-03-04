@@ -59,6 +59,9 @@ jobs:
         run: cd public && shopt -s dotglob && tar czf ../deploy-public.tar.gz *
 
       # 8. Upload archives via FTP (only 2 files = reliable)
+      - name: Install lftp
+        run: sudo apt-get install -y -qq lftp
+
       - name: Upload files via FTP
         run: |
           lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
