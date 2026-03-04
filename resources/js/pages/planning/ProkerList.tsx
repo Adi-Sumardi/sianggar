@@ -66,7 +66,7 @@ export default function ProkerList() {
     });
     const { data: prokersData, isLoading, isError } = useProkers({
         unit_id: filterValues.unit ? Number(filterValues.unit) : undefined,
-        per_page: 100,
+        per_page: 500,
     });
     const createProker = useCreateProker();
     const updateProker = useUpdateProker();

@@ -76,7 +76,7 @@ export default function ActivityList() {
     const { data: kegiatansData, isLoading: loadingKegiatans, error: kegiatansError } = useKegiatans({
         unit_id: filterValues.unit ? Number(filterValues.unit) : undefined,
         jenis_kegiatan: filterValues.jenis || undefined,
-        per_page: 100,
+        per_page: 500,
     });
 
     // Mutations

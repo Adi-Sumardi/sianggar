@@ -56,7 +56,7 @@ export default function IndicatorList() {
     const { data: strategiesData } = useStrategies();
     const { data: indikatorsData, isLoading, isError } = useIndikators({
         strategy_id: filterValues.strategy ? Number(filterValues.strategy) : undefined,
-        per_page: 100,
+        per_page: 500,
     });
     const createIndikator = useCreateIndikator();
     const updateIndikator = useUpdateIndikator();

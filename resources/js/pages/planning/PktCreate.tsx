@@ -112,7 +112,7 @@ export default function PktCreate() {
     }, [rapbsLocked, rapbsApproved, navigate]);
 
     // API Queries — fetch all kegiatans for user's unit (backend auto-filters by unit)
-    const { data: kegiatansData, isLoading: kegiatansLoading } = useKegiatans({ per_page: 100 });
+    const { data: kegiatansData, isLoading: kegiatansLoading } = useKegiatans({ per_page: 500 });
 
     // Mata Anggaran filtered by user's unit
     const { data: mataAnggaransData, isLoading: mataAnggaransLoading } = useMataAnggarans(
