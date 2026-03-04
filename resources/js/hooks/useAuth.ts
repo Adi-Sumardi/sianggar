@@ -29,6 +29,7 @@ export function useAuth() {
         queryFn: authService.getUser,
         retry: false,
         staleTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
     });
 
     useEffect(() => {
