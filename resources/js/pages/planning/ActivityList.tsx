@@ -126,14 +126,18 @@ export default function ActivityList() {
         }));
     }, [prokersData]);
 
-    // Reset dependent fields when parent changes
+    // Reset dependent fields when parent changes (only in create mode)
     useEffect(() => {
-        setFormIndikatorId('');
-        setFormProkerId('');
+        if (!editItem) {
+            setFormIndikatorId('');
+            setFormProkerId('');
+        }
     }, [formStrategyId]);
 
     useEffect(() => {
-        setFormProkerId('');
+        if (!editItem) {
+            setFormProkerId('');
+        }
     }, [formIndikatorId]);
 
     // Filters for SearchFilter component
@@ -334,9 +338,9 @@ export default function ActivityList() {
                 onOpenChange={setDialogOpen}
                 title={editItem ? 'Edit Kegiatan' : 'Tambah Kegiatan'}
                 description={editItem ? 'Ubah data kegiatan.' : 'Tambahkan kegiatan baru.'}
-                confirmLabel={isSaving ? 'Menyimpan...' : (editItem ? 'Simpan' : 'Tambah')}
+                confirmLabel={editItem ? 'Simpan' : 'Tambah'}
                 onConfirm={handleSave}
-                confirmDisabled={isSaving}
+                isLoading={isSaving}
             >
                 <div className="space-y-3">
                     {!editItem && (
@@ -387,10 +391,10 @@ export default function ActivityList() {
                 onOpenChange={(open) => setDeleteDialog({ open, item: deleteDialog.item })}
                 title="Hapus Kegiatan"
                 description={`Apakah Anda yakin ingin menghapus "${deleteDialog.item?.nama ?? ''}"?`}
-                confirmLabel={isDeleting ? 'Menghapus...' : 'Hapus'}
+                confirmLabel="Hapus"
                 variant="destructive"
                 onConfirm={handleDelete}
-                confirmDisabled={isDeleting}
+                isLoading={isDeleting}
             />
 
             <ImportDialog
