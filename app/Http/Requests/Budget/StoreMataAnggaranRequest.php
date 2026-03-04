@@ -24,12 +24,14 @@ class StoreMataAnggaranRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
+
         return [
-            'unit_id' => ['required', 'integer', Rule::exists('units', 'id')],
+            'unit_id' => [$isUpdate ? 'sometimes' : 'required', 'integer', Rule::exists('units', 'id')],
             'no_mata_anggaran_id' => ['nullable', 'integer', Rule::exists('no_mata_anggarans', 'id')],
             'kode' => ['required', 'string', 'max:50'],
             'nama' => ['required', 'string', 'max:255'],
-            'tahun' => ['required', 'string', 'max:9'],
+            'tahun' => [$isUpdate ? 'sometimes' : 'required', 'string', 'max:9'],
             'jenis' => ['nullable', 'string', 'max:100'],
             'keterangan' => ['nullable', 'string'],
         ];
