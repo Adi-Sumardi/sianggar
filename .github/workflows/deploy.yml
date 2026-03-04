@@ -22,7 +22,14 @@ jobs:
           extensions: mbstring, xml, ctype, json, bcmath, pdo, pdo_mysql
           coverage: none
 
-      # 3. Install Composer dependencies
+      # 3. Cache & install Composer dependencies
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
@@ -52,9 +59,6 @@ jobs:
         run: cd public && shopt -s dotglob && tar czf ../deploy-public.tar.gz *
 
       # 8. Upload archives via FTP (only 2 files = reliable)
-      - name: Install lftp
-        run: sudo apt-get install -y lftp
-
       - name: Upload files via FTP
         run: |
           lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
