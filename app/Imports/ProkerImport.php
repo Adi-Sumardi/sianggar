@@ -9,9 +9,10 @@ use App\Models\Proker;
 use App\Models\Strategy;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class ProkerImport implements ToCollection, WithHeadingRow
+class ProkerImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
 {
     protected int $imported = 0;
 
@@ -20,7 +21,13 @@ class ProkerImport implements ToCollection, WithHeadingRow
 
     public function __construct(
         protected ?int $unitId,
+        protected string $csvDelimiter = ',',
     ) {}
+
+    public function getCsvSettings(): array
+    {
+        return ['delimiter' => $this->csvDelimiter];
+    }
 
     public function collection(Collection $rows): void
     {

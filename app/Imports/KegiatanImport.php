@@ -10,9 +10,10 @@ use App\Models\Proker;
 use App\Models\Strategy;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class KegiatanImport implements ToCollection, WithHeadingRow
+class KegiatanImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
 {
     protected int $imported = 0;
 
@@ -21,7 +22,13 @@ class KegiatanImport implements ToCollection, WithHeadingRow
 
     public function __construct(
         protected ?int $unitId,
+        protected string $csvDelimiter = ',',
     ) {}
+
+    public function getCsvSettings(): array
+    {
+        return ['delimiter' => $this->csvDelimiter];
+    }
 
     public function collection(Collection $rows): void
     {
@@ -51,11 +58,9 @@ class KegiatanImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            // Validate jenis_kegiatan
+            // Normalize jenis_kegiatan: default to 'non-unggulan' if not recognized
             if (! in_array($jenisKegiatan, ['unggulan', 'non-unggulan'], true)) {
-                $this->errors[] = "Baris {$rowNum}: Jenis kegiatan harus 'unggulan' atau 'non-unggulan', diterima: '{$jenisKegiatan}'.";
-
-                continue;
+                $jenisKegiatan = 'non-unggulan';
             }
 
             // Lookup strategy

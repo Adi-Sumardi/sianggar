@@ -159,7 +159,8 @@ class ActivityController extends Controller
             /** @var \App\Models\User $user */
             $user = $request->user();
 
-            $import = new KegiatanImport($user->unit_id);
+            $delimiter = $this->detectCsvDelimiter($request->file('file'));
+            $import = new KegiatanImport($user->unit_id, $delimiter);
             Excel::import($import, $request->file('file'));
 
             $errorCount = count($import->getErrors());
@@ -176,5 +177,17 @@ class ActivityController extends Controller
                 'message' => 'Terjadi kesalahan saat mengimpor file. Silakan hubungi administrator.',
             ], 500);
         }
+    }
+
+    protected function detectCsvDelimiter(\Illuminate\Http\UploadedFile $file): string
+    {
+        $ext = strtolower($file->getClientOriginalExtension());
+        if (! in_array($ext, ['csv', 'txt'], true)) {
+            return ',';
+        }
+
+        $firstLine = fgets(fopen($file->getRealPath(), 'r'));
+
+        return ($firstLine && substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
     }
 }
