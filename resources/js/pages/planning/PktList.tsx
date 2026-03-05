@@ -132,6 +132,7 @@ export default function PktList() {
     const { data: pktsData, isLoading: pktsLoading } = usePkts({
         tahun: filterValues.tahun || undefined,
         unit_id: filterValues.unit_id || undefined,
+        per_page: 500,
     });
     const { data: unitsData } = useUnitsList();
 

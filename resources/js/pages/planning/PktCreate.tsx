@@ -116,12 +116,12 @@ export default function PktCreate() {
 
     // Mata Anggaran filtered by user's unit
     const { data: mataAnggaransData, isLoading: mataAnggaransLoading } = useMataAnggarans(
-        form.unit_id ? { unit_id: form.unit_id, tahun: form.tahun } : undefined
+        form.unit_id ? { unit_id: form.unit_id, tahun: form.tahun, per_page: 500 } : undefined
     );
 
     const { data: subMataAnggaransData, isLoading: subMataAnggaransLoading } = useSubMataAnggarans(
         form.mata_anggaran_id,
-        undefined
+        { per_page: 500 }
     );
 
     // Mutations

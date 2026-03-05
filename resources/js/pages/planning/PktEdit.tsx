@@ -84,7 +84,7 @@ export default function PktEdit() {
     const mataAnggaranId = pkt?.mata_anggaran_id ?? null;
     const { data: subMataAnggaransData, isLoading: subMataAnggaransLoading } = useSubMataAnggarans(
         mataAnggaranId,
-        undefined
+        { per_page: 500 }
     );
 
     const subMataAnggaranOptions = useMemo(() => {
