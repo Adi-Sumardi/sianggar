@@ -222,9 +222,14 @@ export default function PktList() {
             accessorKey: 'mata_anggaran',
             header: 'Mata Anggaran',
             cell: ({ row }) => (
-                <span className="text-sm text-slate-700">
-                    {row.original.mata_anggaran?.nama || '-'}
-                </span>
+                <div>
+                    <span className="text-sm text-slate-700">
+                        {row.original.mata_anggaran?.nama || '-'}
+                    </span>
+                    {row.original.kegiatan?.nama && (
+                        <p className="text-xs text-slate-400">{row.original.kegiatan.nama}</p>
+                    )}
+                </div>
             ),
         },
         {
