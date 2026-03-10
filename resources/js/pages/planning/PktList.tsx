@@ -330,9 +330,7 @@ export default function PktList() {
                         <DataTable
                             columns={columns}
                             data={filteredData}
-                            searchValue={searchQuery}
-                            emptyTitle="Belum ada PKT"
-                            emptyDescription="Klik 'Tambah PKT' untuk menambahkan program kerja tahunan."
+                            emptyMessage="Belum ada PKT. Klik 'Tambah PKT' untuk menambahkan program kerja tahunan."
                         />
                     )}
                 </motion.div>
@@ -360,7 +358,7 @@ export default function PktList() {
                 confirmLabel={deletePkt.isPending ? 'Menghapus...' : 'Hapus'}
                 variant="destructive"
                 onConfirm={handleDelete}
-                disabled={deletePkt.isPending}
+                isLoading={deletePkt.isPending}
             >
                 <div className="space-y-3">
                     <p className="text-sm text-slate-600">
