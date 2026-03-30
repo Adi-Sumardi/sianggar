@@ -23,9 +23,9 @@ import { useUser, useUpdateUser, useUpdateUserPassword } from '@/hooks/useUsers'
 const editUserSchema = z.object({
     name: z.string().min(2, 'Nama minimal 2 karakter').max(100, 'Nama maksimal 100 karakter'),
     email: z.string().email('Format email tidak valid'),
-    no_hp: z.string().max(20, 'No HP maksimal 20 karakter').optional().or(z.literal('')),
-    role: z.nativeEnum(UserRole, { errorMap: () => ({ message: 'Role wajib dipilih' }) }),
-    unit_id: z.coerce.number().optional(),
+    no_hp: z.string().max(20, 'No HP maksimal 20 karakter').optional(),
+    role: z.nativeEnum(UserRole, { message: 'Role wajib dipilih' }),
+    unit_id: z.number().optional(),
 });
 
 type EditUserForm = z.infer<typeof editUserSchema>;

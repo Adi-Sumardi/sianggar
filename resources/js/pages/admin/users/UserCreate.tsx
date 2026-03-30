@@ -23,11 +23,11 @@ const createUserSchema = z
     .object({
         name: z.string().min(2, 'Nama minimal 2 karakter').max(100, 'Nama maksimal 100 karakter'),
         email: z.string().email('Format email tidak valid'),
-        no_hp: z.string().max(20, 'No HP maksimal 20 karakter').optional().or(z.literal('')),
+        no_hp: z.string().max(20, 'No HP maksimal 20 karakter').optional(),
         password: z.string().min(8, 'Password minimal 8 karakter'),
         password_confirmation: z.string().min(1, 'Konfirmasi password wajib diisi'),
-        role: z.nativeEnum(UserRole, { errorMap: () => ({ message: 'Role wajib dipilih' }) }),
-        unit_id: z.coerce.number().optional(),
+        role: z.nativeEnum(UserRole, { message: 'Role wajib dipilih' }),
+        unit_id: z.number().optional(),
     })
     .refine((data) => data.password === data.password_confirmation, {
         message: 'Konfirmasi password tidak cocok',
