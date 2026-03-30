@@ -26,7 +26,16 @@ class LpjRevisedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', \App\Channels\SaungWaChannel::class];
+    }
+
+    public function toSaungWa(object $notifiable): string
+    {
+        $msg = "⚠️ *SIANGGAR*\nLPJ \"{$this->lpj->perihal}\" perlu direvisi.";
+        if ($this->catatan !== '') {
+            $msg .= "\n\nCatatan: {$this->catatan}";
+        }
+        return $msg;
     }
 
     /**

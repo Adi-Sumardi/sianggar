@@ -25,7 +25,13 @@ class NewEmailReplyNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', \App\Channels\SaungWaChannel::class];
+    }
+
+    public function toSaungWa(object $notifiable): string
+    {
+        $replierName = $this->reply->user?->name ?? 'Unknown';
+        return "↩️ *SIANGGAR*\n{$replierName} membalas surat: {$this->email->name_surat}";
     }
 
     /**

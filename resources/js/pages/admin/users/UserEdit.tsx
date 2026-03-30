@@ -23,6 +23,7 @@ import { useUser, useUpdateUser, useUpdateUserPassword } from '@/hooks/useUsers'
 const editUserSchema = z.object({
     name: z.string().min(2, 'Nama minimal 2 karakter').max(100, 'Nama maksimal 100 karakter'),
     email: z.string().email('Format email tidak valid'),
+    no_hp: z.string().max(20, 'No HP maksimal 20 karakter').optional().or(z.literal('')),
     role: z.nativeEnum(UserRole, { errorMap: () => ({ message: 'Role wajib dipilih' }) }),
     unit_id: z.coerce.number().optional(),
 });
@@ -73,6 +74,7 @@ export default function UserEdit() {
         defaultValues: {
             name: '',
             email: '',
+            no_hp: '',
             role: UserRole.Admin,
             unit_id: undefined,
         },
@@ -98,6 +100,7 @@ export default function UserEdit() {
             resetUserForm({
                 name: userData.name,
                 email: userData.email,
+                no_hp: userData.no_hp ?? '',
                 role: userData.role as UserRole,
                 unit_id: userData.unit_id ?? undefined,
             });
@@ -115,6 +118,7 @@ export default function UserEdit() {
                 data: {
                     name: data.name,
                     email: data.email,
+                    no_hp: data.no_hp || null,
                     role: data.role,
                     unit_id: data.unit_id || null,
                 },
@@ -263,6 +267,33 @@ export default function UserEdit() {
                                     />
                                     {userErrors.email && (
                                         <p className="text-xs text-red-600">{userErrors.email.message}</p>
+                                    )}
+                                </div>
+
+                                {/* No HP */}
+                                <div className="space-y-1.5">
+                                    <label
+                                        htmlFor="no_hp"
+                                        className="block text-sm font-medium text-slate-700"
+                                    >
+                                        No HP (WhatsApp)
+                                    </label>
+                                    <input
+                                        id="no_hp"
+                                        type="text"
+                                        placeholder="cth: 08123456789"
+                                        {...registerUser('no_hp')}
+                                        className={cn(
+                                            'block w-full rounded-md border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition-colors',
+                                            'placeholder:text-slate-400',
+                                            'focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20',
+                                            userErrors.no_hp
+                                                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
+                                                : 'border-slate-300',
+                                        )}
+                                    />
+                                    {userErrors.no_hp && (
+                                        <p className="text-xs text-red-600">{userErrors.no_hp.message}</p>
                                     )}
                                 </div>
 

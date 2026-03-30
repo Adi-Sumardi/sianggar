@@ -26,10 +26,32 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'no_hp',
         'password',
         'role',
         'unit_id',
     ];
+
+    /**
+     * Route notifications for SaungWA channel.
+     * Normalizes Indonesian phone numbers to international format (628xxx).
+     */
+    public function routeNotificationForSaungWa(): ?string
+    {
+        if (empty($this->no_hp)) {
+            return null;
+        }
+
+        $phone = preg_replace('/\D/', '', $this->no_hp);
+
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        } elseif (! str_starts_with($phone, '62')) {
+            $phone = '62' . $phone;
+        }
+
+        return $phone;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

@@ -4,6 +4,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    no_hp: string | null;
     role: string;
     role_label: string;
     unit_id: number | null;
@@ -36,6 +37,7 @@ export interface UserFilterParams {
 export interface CreateUserPayload {
     name: string;
     email: string;
+    no_hp?: string | null;
     password: string;
     password_confirmation: string;
     role: string;
@@ -45,6 +47,7 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload {
     name?: string;
     email?: string;
+    no_hp?: string | null;
     role?: string;
     unit_id?: number | null;
 }

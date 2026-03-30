@@ -30,6 +30,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
+            'no_hp' => ['nullable', 'string', 'max:20'],
             'role' => ['sometimes', 'required', Rule::enum(UserRole::class)],
             'unit_id' => ['nullable', 'integer', Rule::exists('units', 'id')],
         ];

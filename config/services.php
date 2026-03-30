@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'saungwa' => [
+        'appkey'  => env('SAUNGWA_APPKEY'),
+        'authkey' => env('SAUNGWA_AUTHKEY'),
+    ],
+
 ];

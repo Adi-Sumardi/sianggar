@@ -28,7 +28,19 @@ class ProposalApprovedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', \App\Channels\SaungWaChannel::class];
+    }
+
+    public function toSaungWa(object $notifiable): string
+    {
+        if ($this->isFullyApproved) {
+            return "✅ *SIANGGAR*\nPengajuan {$this->pengajuan->nomor} telah disetujui sepenuhnya dan siap diproses.";
+        }
+
+        $approverName = $this->approver?->name ?? 'Sistem';
+        $stageLabel   = $this->stage?->label() ?? '-';
+
+        return "✅ *SIANGGAR*\nPengajuan {$this->pengajuan->nomor} telah disetujui oleh {$approverName} pada tahap {$stageLabel}.";
     }
 
     /**

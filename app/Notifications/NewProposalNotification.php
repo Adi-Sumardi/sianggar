@@ -25,7 +25,12 @@ class NewProposalNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', \App\Channels\SaungWaChannel::class];
+    }
+
+    public function toSaungWa(object $notifiable): string
+    {
+        return "📋 *SIANGGAR*\nPengajuan baru {$this->pengajuan->nomor} menunggu persetujuan Anda pada tahap {$this->stage->label()}.\n\nPerihal: {$this->pengajuan->perihal}";
     }
 
     /**

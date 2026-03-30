@@ -26,7 +26,16 @@ class ProposalRejectedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', \App\Channels\SaungWaChannel::class];
+    }
+
+    public function toSaungWa(object $notifiable): string
+    {
+        $msg = "❌ *SIANGGAR*\nPengajuan {$this->pengajuan->nomor} ditolak oleh {$this->approver->name}.";
+        if ($this->catatan !== '') {
+            $msg .= "\n\nAlasan: {$this->catatan}";
+        }
+        return $msg;
     }
 
     /**

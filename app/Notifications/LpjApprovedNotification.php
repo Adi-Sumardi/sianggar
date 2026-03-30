@@ -26,7 +26,16 @@ class LpjApprovedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', \App\Channels\SaungWaChannel::class];
+    }
+
+    public function toSaungWa(object $notifiable): string
+    {
+        if ($this->isFinal) {
+            return "✅ *SIANGGAR*\nLPJ \"{$this->lpj->perihal}\" telah disetujui sepenuhnya oleh {$this->approver->name}.";
+        }
+
+        return "✅ *SIANGGAR*\nLPJ \"{$this->lpj->perihal}\" telah disetujui oleh {$this->approver->name} dan dilanjutkan ke tahap berikutnya.";
     }
 
     /**
