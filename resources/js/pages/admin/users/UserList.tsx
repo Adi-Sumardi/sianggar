@@ -71,6 +71,13 @@ export default function UserList() {
                 ),
             },
             {
+                accessorKey: 'no_hp',
+                header: 'No HP',
+                cell: ({ row }) => (
+                    <span className="text-slate-600">{row.original.no_hp ?? '-'}</span>
+                ),
+            },
+            {
                 accessorKey: 'role',
                 header: 'Role',
                 cell: ({ row }) => (
