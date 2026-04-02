@@ -62,16 +62,22 @@ jobs:
       - name: Create public archive
         run: cd public && shopt -s dotglob && tar czf ../deploy-public.tar.gz *
 
-      # 8. Upload archives via FTP (only 2 files = reliable)
-      - name: Install lftp
-        run: sudo apt-get install -y -qq lftp
-
+      # 8. Upload archives via FTP
       - name: Upload files via FTP
         run: |
-          lftp \
-            -u "$FTP_USER","$FTP_PASS" \
-            -e "set ftp:ssl-allow yes; set ftp:ssl-force no; set ssl:verify-certificate no; set ftp:passive-mode yes; set net:timeout 120; set net:max-retries 10; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 2; set xfer:timeout 300; set xfer:clobber true; put public/deploy-webhook.php; put deploy-app.tar.gz; put deploy-public.tar.gz; quit" \
-            "ftp://$FTP_HOST"
+          upload() {
+            curl --ftp-pasv --insecure \
+              --user "$FTP_USER:$FTP_PASS" \
+              --connect-timeout 30 \
+              --max-time 600 \
+              --retry 3 \
+              --retry-delay 15 \
+              --retry-connrefused \
+              -T "$1" "ftp://$FTP_HOST/$1"
+          }
+          upload public/deploy-webhook.php
+          upload deploy-app.tar.gz
+          upload deploy-public.tar.gz
         env:
           FTP_HOST: ${{ secrets.HOSTINGER_HOST }}
           FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
