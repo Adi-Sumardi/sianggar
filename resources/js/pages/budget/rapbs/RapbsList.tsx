@@ -491,14 +491,22 @@ export default function RapbsList() {
                                             </tbody>
                                             <tfoot>
                                                 {(() => {
+                                                    const unitTotalApbsPrev = unit.mata_anggarans.reduce((s, ma) => s + (ma.apbs_tahun_lalu ?? 0), 0);
+                                                    const unitTotalAsumsi = unit.mata_anggarans.reduce((s, ma) => s + (ma.asumsi_realisasi ?? 0), 0);
                                                     const unitTotalPlafon = unit.mata_anggarans.reduce((s, ma) => s + (ma.plafon_apbs ?? 0), 0);
                                                     const unitSelisih = unitTotalPlafon - unitTotal;
                                                     const isOverBudget = unitTotal > unitTotalPlafon;
                                                     return (
                                                         <tr className="border-t border-slate-200 bg-slate-50/50">
                                                             <td />
-                                                            <td colSpan={4} className="px-2 py-3 text-sm font-semibold text-slate-700">
+                                                            <td colSpan={2} className="px-2 py-3 text-sm font-semibold text-slate-700">
                                                                 Total {unit.unit_nama}
+                                                            </td>
+                                                            <td className="px-2 py-3 text-right text-sm font-bold text-slate-900">
+                                                                {formatRupiah(unitTotalApbsPrev)}
+                                                            </td>
+                                                            <td className="px-2 py-3 text-right text-sm font-bold text-slate-900">
+                                                                {formatRupiah(unitTotalAsumsi)}
                                                             </td>
                                                             <td className="px-2 py-3 text-right text-sm font-bold text-slate-900">
                                                                 {formatRupiah(unitTotalPlafon)}
