@@ -13,13 +13,7 @@ class AcademicYear
     public static function current(): string
     {
         $year = (int) date('Y');
-        $month = (int) date('n');
-
-        if ($month >= 7) {
-            return $year . '/' . ($year + 1);
-        }
-
-        return ($year - 1) . '/' . $year;
+        return $year . '/' . ($year + 1);
     }
 
     /**

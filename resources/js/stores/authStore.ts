@@ -11,16 +11,8 @@ import type { User } from '@/types/models';
  * Academic year starts from July. e.g., July 2025 -> TA 2025/2026
  */
 export function getCurrentAcademicYear(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1; // 1-12
-
-    // If month >= July (7), we're in the new academic year
-    if (month >= 7) {
-        return `${year}/${year + 1}`;
-    }
-    // Otherwise we're still in the previous academic year
-    return `${year - 1}/${year}`;
+    const year = new Date().getFullYear();
+    return `${year}/${year + 1}`;
 }
 
 interface AuthState {
@@ -54,7 +46,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             user: null,
             isAuthenticated: false,
             isLoading: true,
@@ -71,9 +63,8 @@ export const useAuthStore = create<AuthState>()(
 
             setFiscalYear: (fiscalYear: string) => set({ fiscalYear }),
 
-            hasPermission: (permission: string) => {
-                const state = useAuthStore.getState();
-                return state.user?.permissions?.includes(permission) ?? false;
+            hasPermission: (permission: string): boolean => {
+                return get().user?.permissions?.includes(permission) ?? false;
             },
 
             logout: () =>
@@ -96,21 +87,9 @@ export const useAuthStore = create<AuthState>()(
  * Get available academic year options for the selector.
  */
 export function getAcademicYearOptions(): string[] {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const month = now.getMonth() + 1;
-
-    // Academic year starts in July.
-    // Before July → current AY is (year-1)/year
-    // From July  → current AY is year/(year+1)
-    if (month >= 7) {
-        return [
-            `${currentYear}/${currentYear + 1}`,
-            `${currentYear + 1}/${currentYear + 2}`,
-        ];
-    }
+    const year = new Date().getFullYear();
     return [
-        `${currentYear - 1}/${currentYear}`,
-        `${currentYear}/${currentYear + 1}`,
+        `${year}/${year + 1}`,
+        `${year + 1}/${year + 2}`,
     ];
 }
