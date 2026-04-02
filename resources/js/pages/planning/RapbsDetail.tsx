@@ -411,7 +411,8 @@ export default function RapbsDetail() {
 
                 {/* Warning: Over Budget */}
                 {canSubmit && isOverBudget && (
-                    <motion.div variants={staggerItem}>
+                    <motion.div variants={staggerItem} className="space-y-3">
+                        {/* Main warning banner */}
                         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-3">
                             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                             <div>
@@ -423,6 +424,109 @@ export default function RapbsDetail() {
                                 </p>
                             </div>
                         </div>
+
+                        {/* Detailed explanation */}
+                        {unitRekapData && (() => {
+                            const selisihTotal = totalAnggaran - totalPlafon;
+                            const overItems = unitRekapData.mata_anggarans
+                                .filter((ma) => ma.total > (ma.plafon_apbs ?? 0))
+                                .sort((a, b) => (b.total - (b.plafon_apbs ?? 0)) - (a.total - (a.plafon_apbs ?? 0)));
+
+                            return (
+                                <div className="rounded-xl border border-red-200 bg-white overflow-hidden">
+                                    {/* Header */}
+                                    <div className="flex items-center gap-3 border-b border-red-100 bg-red-50/60 px-5 py-3.5">
+                                        <BarChart3 className="h-4 w-4 shrink-0 text-red-500" />
+                                        <div>
+                                            <p className="text-sm font-semibold text-red-800">
+                                                Analisis Penyebab Kelebihan Anggaran
+                                            </p>
+                                            <p className="text-xs text-red-600 mt-0.5">
+                                                Total kelebihan sebesar <span className="font-bold">{formatRupiah(selisihTotal)}</span> berasal dari {overItems.length} mata anggaran berikut
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Explanation text */}
+                                    <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/40">
+                                        <p className="text-sm text-slate-700 leading-relaxed">
+                                            Plafon anggaran dihitung berdasarkan <span className="font-medium text-slate-900">Asumsi Realisasi tahun sebelumnya × 105%</span>.
+                                            Anggaran yang diajukan dalam RAPBS tidak boleh melebihi plafon tersebut.
+                                            Terdapat <span className="font-semibold text-red-700">{overItems.length} mata anggaran</span> yang nilai pengajuannya melampaui plafon,
+                                            sehingga total anggaran unit ini melebihi batas yang diizinkan.
+                                            Kurangi nilai anggaran pada mata anggaran yang terindikasi di bawah ini agar RAPBS dapat diajukan.
+                                        </p>
+                                    </div>
+
+                                    {/* Per-mata-anggaran breakdown */}
+                                    <div className="divide-y divide-slate-100">
+                                        {overItems.map((ma) => {
+                                            const selisih = ma.total - (ma.plafon_apbs ?? 0);
+                                            const persen = (ma.plafon_apbs ?? 0) > 0
+                                                ? (((ma.total - (ma.plafon_apbs ?? 0)) / (ma.plafon_apbs ?? 0)) * 100).toFixed(1)
+                                                : '∞';
+                                            return (
+                                                <div key={ma.id} className="px-5 py-3.5">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-mono font-medium text-red-700">
+                                                                    {ma.kode}
+                                                                </span>
+                                                                <span className="text-sm font-medium text-slate-900 truncate">
+                                                                    {ma.nama}
+                                                                </span>
+                                                            </div>
+                                                            <div className="mt-2 grid grid-cols-3 gap-3 text-xs">
+                                                                <div>
+                                                                    <p className="text-slate-400">Plafon</p>
+                                                                    <p className="font-medium text-slate-700">{formatRupiah(ma.plafon_apbs ?? 0)}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-slate-400">Diajukan</p>
+                                                                    <p className="font-medium text-red-700">{formatRupiah(ma.total)}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-slate-400">Kelebihan</p>
+                                                                    <p className="font-bold text-red-600">+{formatRupiah(selisih)}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="shrink-0 text-right">
+                                                            <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                                                                +{persen}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    {/* Progress bar */}
+                                                    <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                                        <div
+                                                            className="h-full rounded-full bg-red-400"
+                                                            style={{
+                                                                width: `${Math.min(((ma.plafon_apbs ?? 0) / ma.total) * 100, 100)}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="mt-1 flex justify-between text-xs text-slate-400">
+                                                        <span>Plafon</span>
+                                                        <span>{((ma.plafon_apbs ?? 0) > 0 ? ((ma.plafon_apbs ?? 0) / ma.total * 100).toFixed(0) : 0)}% dari anggaran diajukan</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Footer tip */}
+                                    <div className="flex items-start gap-2 border-t border-red-100 bg-red-50/40 px-5 py-3">
+                                        <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                                        <p className="text-xs text-red-700">
+                                            Buka halaman <span className="font-semibold">detail PKT</span> pada setiap mata anggaran di atas, lalu kurangi nilai anggaran hingga tidak melebihi plafon yang ditentukan.
+                                            Total yang perlu dikurangi: <span className="font-bold">{formatRupiah(selisihTotal)}</span>.
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </motion.div>
                 )}
 
