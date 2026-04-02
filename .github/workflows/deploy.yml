@@ -64,20 +64,10 @@ jobs:
 
       - name: Upload files via FTP
         run: |
-          lftp -u "$FTP_USER","$FTP_PASS" "ftp://$FTP_HOST" <<SCRIPT
-          set ftp:ssl-allow yes
-          set ftp:ssl-force no
-          set ssl:verify-certificate no
-          set ftp:passive-mode yes
-          set net:timeout 120
-          set net:max-retries 10
-          set net:reconnect-interval-base 5
-          set net:reconnect-interval-multiplier 2
-          put public/deploy-webhook.php
-          put deploy-app.tar.gz
-          put deploy-public.tar.gz
-          quit
-          SCRIPT
+          lftp \
+            -u "$FTP_USER","$FTP_PASS" \
+            -e "set ftp:ssl-allow yes; set ftp:ssl-force no; set ssl:verify-certificate no; set ftp:passive-mode yes; set net:timeout 120; set net:max-retries 10; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 2; put public/deploy-webhook.php; put deploy-app.tar.gz; put deploy-public.tar.gz; quit" \
+            "ftp://$FTP_HOST"
         env:
           FTP_HOST: ${{ secrets.HOSTINGER_HOST }}
           FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
