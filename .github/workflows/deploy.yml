@@ -56,7 +56,7 @@ jobs:
         run: |
           tar czf deploy-app.tar.gz \
             app/ bootstrap/ config/ database/ routes/ vendor/ \
-            resources/views/ resources/lang/ \
+            resources/views/ \
             artisan composer.json composer.lock
 
       - name: Create public archive
