@@ -66,6 +66,9 @@ jobs:
       - name: Upload files via FTP
         run: |
           upload() {
+            local local_file="$1"
+            local remote_name="$2"
+            echo ">> Uploading $local_file → $remote_name"
             curl --ftp-pasv --insecure \
               --user "$FTP_USER:$FTP_PASS" \
               --connect-timeout 30 \
@@ -73,11 +76,13 @@ jobs:
               --retry 3 \
               --retry-delay 15 \
               --retry-connrefused \
-              -T "$1" "ftp://$FTP_HOST/$1"
+              -T "$local_file" \
+              "ftp://$FTP_HOST/$remote_name"
           }
-          upload public/deploy-webhook.php
-          upload deploy-app.tar.gz
-          upload deploy-public.tar.gz
+
+          upload "public/deploy-webhook.php" "deploy-webhook.php"
+          upload "deploy-app.tar.gz"          "deploy-app.tar.gz"
+          upload "deploy-public.tar.gz"       "deploy-public.tar.gz"
         env:
           FTP_HOST: ${{ secrets.HOSTINGER_HOST }}
           FTP_USER: ${{ secrets.HOSTINGER_USERNAME }}
