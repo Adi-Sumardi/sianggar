@@ -364,6 +364,8 @@ export interface CreatePktDTO {
 }
 
 export interface UpdatePktDTO {
+    kegiatan_id?: number;
+    mata_anggaran_id?: number;
     sub_mata_anggaran_id?: number;
     deskripsi_kegiatan?: string;
     tujuan_kegiatan?: string;

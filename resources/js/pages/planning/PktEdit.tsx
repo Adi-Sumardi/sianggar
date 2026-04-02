@@ -11,14 +11,17 @@ import { CurrencyInput } from '@/components/common/CurrencyInput';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
-import { usePkt, useUpdatePkt } from '@/hooks/usePlanning';
-import { useSubMataAnggarans } from '@/hooks/useBudget';
+import { usePkt, useUpdatePkt, useKegiatans } from '@/hooks/usePlanning';
+import { useMataAnggarans, useSubMataAnggarans } from '@/hooks/useBudget';
+import type { Kegiatan } from '@/types/models';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface FormData {
+    kegiatan_id: number | null;
+    mata_anggaran_id: number | null;
     sub_mata_anggaran_id: number | null;
     deskripsi_kegiatan: string;
     tujuan_kegiatan: string;
@@ -52,6 +55,8 @@ export default function PktEdit() {
 
     // Form state — editable fields
     const [form, setForm] = useState<FormData>({
+        kegiatan_id: null,
+        mata_anggaran_id: null,
         sub_mata_anggaran_id: null,
         deskripsi_kegiatan: '',
         tujuan_kegiatan: '',
@@ -61,11 +66,14 @@ export default function PktEdit() {
     });
 
     const [isInitialized, setIsInitialized] = useState(false);
+    const [selectedKegiatan, setSelectedKegiatan] = useState<Kegiatan | null>(null);
 
     // Initialize form with PKT data
     useEffect(() => {
         if (pkt && !isInitialized) {
             setForm({
+                kegiatan_id: pkt.kegiatan_id ?? null,
+                mata_anggaran_id: pkt.mata_anggaran_id ?? null,
                 sub_mata_anggaran_id: pkt.sub_mata_anggaran_id ?? null,
                 deskripsi_kegiatan: pkt.deskripsi_kegiatan || '',
                 tujuan_kegiatan: pkt.tujuan_kegiatan || '',
@@ -80,8 +88,54 @@ export default function PktEdit() {
     // Mutations
     const updatePkt = useUpdatePkt();
 
-    // Fetch sub mata anggarans for the PKT's mata anggaran
-    const mataAnggaranId = pkt?.mata_anggaran_id ?? null;
+    // Fetch kegiatans for the PKT's unit
+    const unitId = pkt?.unit_id ?? null;
+    const { data: kegiatansData, isLoading: kegiatansLoading } = useKegiatans(
+        unitId ? { unit_id: unitId, per_page: 500 } : undefined
+    );
+
+    const kegiatanList = useMemo(() => kegiatansData?.data ?? [], [kegiatansData]);
+
+    const kegiatanOptions = useMemo(() => {
+        return kegiatanList.map((k: Kegiatan) => ({
+            value: k.id.toString(),
+            label: `${k.kode} - ${k.nama}`,
+        }));
+    }, [kegiatanList]);
+
+    // Handle kegiatan selection — auto-fill mata anggaran info
+    const handleKegiatanChange = (val: string) => {
+        if (!val) {
+            setSelectedKegiatan(null);
+            setForm((prev) => ({ ...prev, kegiatan_id: null, mata_anggaran_id: null, sub_mata_anggaran_id: null }));
+            return;
+        }
+        const kegiatanId = parseInt(val);
+        const kegiatan = kegiatanList.find((k: Kegiatan) => k.id === kegiatanId) ?? null;
+        setSelectedKegiatan(kegiatan);
+        setForm((prev) => ({
+            ...prev,
+            kegiatan_id: kegiatanId,
+            sub_mata_anggaran_id: null,
+        }));
+    };
+
+    // Fetch mata anggarans for unit
+    const { data: mataAnggaransData } = useMataAnggarans(
+        unitId && pkt?.tahun ? { unit_id: unitId, tahun: pkt.tahun, per_page: 500 } : undefined
+    );
+
+    const mataAnggaranOptions = useMemo(() => {
+        const data = mataAnggaransData?.data ?? mataAnggaransData ?? [];
+        if (!Array.isArray(data)) return [];
+        return (data as { id: number; kode: string; nama: string }[]).map((m) => ({
+            value: m.id.toString(),
+            label: `${m.kode} - ${m.nama}`,
+        }));
+    }, [mataAnggaransData]);
+
+    // Fetch sub mata anggarans for the selected mata anggaran
+    const mataAnggaranId = form.mata_anggaran_id;
     const { data: subMataAnggaransData, isLoading: subMataAnggaransLoading } = useSubMataAnggarans(
         mataAnggaranId,
         { per_page: 500 }
@@ -114,7 +168,9 @@ export default function PktEdit() {
             await updatePkt.mutateAsync({
                 id: pktId,
                 dto: {
-                    sub_mata_anggaran_id: form.sub_mata_anggaran_id,
+                    kegiatan_id: form.kegiatan_id ?? undefined,
+                    mata_anggaran_id: form.mata_anggaran_id ?? undefined,
+                    sub_mata_anggaran_id: form.sub_mata_anggaran_id ?? undefined,
                     deskripsi_kegiatan: form.deskripsi_kegiatan || undefined,
                     tujuan_kegiatan: form.tujuan_kegiatan || undefined,
                     saldo_anggaran: form.saldo_anggaran,
@@ -209,39 +265,53 @@ export default function PktEdit() {
                                 </div>
                             </div>
 
-                            {/* Hierarchy info panel (Read-only) */}
-                            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-                                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-blue-800">
-                                    <Info className="h-4 w-4" />
-                                    Hierarki Perencanaan (tidak dapat diubah)
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <div>
-                                        <span className="text-xs font-medium text-slate-500">Sasaran Strategis</span>
-                                        <p className="mt-0.5 text-sm font-medium text-slate-800">
-                                            {pkt.strategy?.kode || '-'} - {pkt.strategy?.nama || '-'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <span className="text-xs font-medium text-slate-500">Indikator</span>
-                                        <p className="mt-0.5 text-sm font-medium text-slate-800">
-                                            {pkt.indikator?.kode || '-'} - {pkt.indikator?.nama || '-'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <span className="text-xs font-medium text-slate-500">Program Kerja</span>
-                                        <p className="mt-0.5 text-sm font-medium text-slate-800">
-                                            {pkt.proker?.kode || '-'} - {pkt.proker?.nama || '-'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <span className="text-xs font-medium text-slate-500">Kegiatan</span>
-                                        <p className="mt-0.5 text-sm font-medium text-slate-800">
-                                            {pkt.kegiatan?.kode || '-'} - {pkt.kegiatan?.nama || '-'}
-                                        </p>
-                                    </div>
-                                </div>
+                            {/* Kegiatan (Editable) */}
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-slate-700">
+                                    Kegiatan <span className="text-red-500">*</span>
+                                </label>
+                                <SearchableSelect
+                                    options={kegiatanOptions}
+                                    value={form.kegiatan_id?.toString() || ''}
+                                    onChange={handleKegiatanChange}
+                                    placeholder="Pilih kegiatan..."
+                                    searchPlaceholder="Cari kegiatan berdasarkan kode atau nama..."
+                                    isLoading={kegiatansLoading}
+                                />
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Data strategi, indikator, dan program kerja mengikuti kegiatan yang dipilih
+                                </p>
                             </div>
+
+                            {/* Hierarchy info panel — shown after kegiatan selected */}
+                            {(selectedKegiatan || pkt.kegiatan) && (
+                                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+                                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-blue-800">
+                                        <Info className="h-4 w-4" />
+                                        Hierarki Perencanaan (otomatis dari kegiatan)
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div>
+                                            <span className="text-xs font-medium text-slate-500">Sasaran Strategis</span>
+                                            <p className="mt-0.5 text-sm font-medium text-slate-800">
+                                                {(selectedKegiatan ?? pkt.kegiatan)?.strategy?.kode || pkt.strategy?.kode || '-'} - {(selectedKegiatan ?? pkt.kegiatan)?.strategy?.nama || pkt.strategy?.nama || '-'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-medium text-slate-500">Indikator</span>
+                                            <p className="mt-0.5 text-sm font-medium text-slate-800">
+                                                {(selectedKegiatan ?? pkt.kegiatan)?.indikator?.kode || pkt.indikator?.kode || '-'} - {(selectedKegiatan ?? pkt.kegiatan)?.indikator?.nama || pkt.indikator?.nama || '-'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-medium text-slate-500">Program Kerja</span>
+                                            <p className="mt-0.5 text-sm font-medium text-slate-800">
+                                                {(selectedKegiatan ?? pkt.kegiatan)?.proker?.kode || pkt.proker?.kode || '-'} - {(selectedKegiatan ?? pkt.kegiatan)?.proker?.nama || pkt.proker?.nama || '-'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Mata Anggaran */}
                             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
@@ -250,10 +320,20 @@ export default function PktEdit() {
                                 </div>
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <div>
-                                        <span className="text-xs font-medium text-slate-500">Mata Anggaran (tidak dapat diubah)</span>
-                                        <p className="mt-0.5 text-sm font-medium text-slate-800">
-                                            {pkt.mata_anggaran?.kode || '-'} - {pkt.mata_anggaran?.nama || '-'}
-                                        </p>
+                                        <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                                            Mata Anggaran <span className="text-red-500">*</span>
+                                        </label>
+                                        <SearchableSelect
+                                            options={mataAnggaranOptions}
+                                            value={form.mata_anggaran_id?.toString() || ''}
+                                            onChange={(val) => setForm((prev) => ({
+                                                ...prev,
+                                                mata_anggaran_id: val ? parseInt(val) : null,
+                                                sub_mata_anggaran_id: null,
+                                            }))}
+                                            placeholder="Pilih mata anggaran..."
+                                            searchPlaceholder="Cari mata anggaran..."
+                                        />
                                     </div>
                                     <div>
                                         <label className="mb-1.5 block text-xs font-medium text-slate-500">
