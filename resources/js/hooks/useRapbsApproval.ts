@@ -135,3 +135,14 @@ export function useRejectRapbs() {
         },
     });
 }
+
+export function useUpdateRapbsKeterangan() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, keterangan }: { id: number; keterangan: string | null }) =>
+            rapbsApprovalService.updateRapbsKeterangan(id, keterangan),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['rapbs', variables.id] });
+        },
+    });
+}

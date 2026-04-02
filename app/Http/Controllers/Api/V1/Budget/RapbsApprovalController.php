@@ -189,6 +189,23 @@ class RapbsApprovalController extends Controller
     }
 
     /**
+     * Update keterangan (notes/justification) for a RAPBS.
+     */
+    public function updateKeterangan(Rapbs $rapbs, Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'keterangan' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $rapbs->update(['keterangan' => $validated['keterangan']]);
+
+        return response()->json([
+            'message' => 'Keterangan berhasil diperbarui.',
+            'data' => ['keterangan' => $rapbs->keterangan],
+        ]);
+    }
+
+    /**
      * Get approval history.
      */
     public function history(Rapbs $rapbs): JsonResponse

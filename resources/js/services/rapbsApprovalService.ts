@@ -89,3 +89,8 @@ export async function getRapbsApprovals(rapbsId: number): Promise<RapbsApproval[
     const { data } = await api.get<ApiResponse<RapbsApproval[]>>(`/rapbs/${rapbsId}/approvals`);
     return data.data;
 }
+
+
+export async function updateRapbsKeterangan(id: number, keterangan: string | null): Promise<void> {
+    await api.patch(`/rapbs/${id}/keterangan`, { keterangan });
+}

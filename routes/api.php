@@ -343,6 +343,7 @@ Route::prefix('v1')->group(function () {
 
         Route::middleware('permission:manage-planning')->group(function () {
             Route::post('rapbs/{rapbs}/submit', [RapbsApprovalController::class, 'submit']);
+            Route::patch('rapbs/{rapbs}/keterangan', [RapbsApprovalController::class, 'updateKeterangan']);
         });
 
         Route::middleware('permission:approve-proposals')->group(function () {

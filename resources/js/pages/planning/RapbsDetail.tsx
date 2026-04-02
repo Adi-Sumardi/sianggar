@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
@@ -18,6 +18,8 @@ import {
     List,
     BarChart3,
     ChevronRight,
+    PenLine,
+    Save,
 } from 'lucide-react';
 
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -38,6 +40,7 @@ import {
     useApproveRapbs,
     useReviseRapbs,
     useRejectRapbs,
+    useUpdateRapbsKeterangan,
 } from '@/hooks/useRapbsApproval';
 import { useRapbsList as useRapbsAggregated } from '@/hooks/useBudget';
 
@@ -165,6 +168,7 @@ export default function RapbsDetail() {
     const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
     const [notes, setNotes] = useState('');
     const [activeTab, setActiveTab] = useState<TabType>('items');
+    const [keteranganText, setKeteranganText] = useState('');
 
     const rapbsId = id ? parseInt(id) : null;
     const { data: rapbs, isLoading, isError } = useRapbs(rapbsId);
@@ -189,8 +193,29 @@ export default function RapbsDetail() {
     const approveMutation = useApproveRapbs();
     const reviseMutation = useReviseRapbs();
     const rejectMutation = useRejectRapbs();
+    const updateKeteranganMutation = useUpdateRapbsKeterangan();
 
     const isMutating = submitMutation.isPending || approveMutation.isPending || reviseMutation.isPending || rejectMutation.isPending;
+
+    // Sync keteranganText with loaded rapbs data
+    useEffect(() => {
+        if (rapbs) {
+            setKeteranganText(rapbs.keterangan ?? '');
+        }
+    }, [rapbs?.keterangan]);
+
+    const handleSaveKeterangan = async () => {
+        if (!rapbsId) return;
+        try {
+            await updateKeteranganMutation.mutateAsync({
+                id: rapbsId,
+                keterangan: keteranganText.trim() || null,
+            });
+            toast.success('Keterangan berhasil disimpan');
+        } catch {
+            toast.error('Gagal menyimpan keterangan');
+        }
+    };
 
     // Build timeline from approvals and expected flow
     const timelineItems: ApprovalTimelineItem[] = [];
@@ -530,8 +555,48 @@ export default function RapbsDetail() {
                     </motion.div>
                 )}
 
-                {/* Keterangan */}
-                {rapbs.keterangan && (
+                {/* Keterangan / Justifikasi */}
+                {canSubmit ? (
+                    <motion.div variants={staggerItem}>
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
+                            <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-100/60 px-5 py-3">
+                                <PenLine className="h-4 w-4 shrink-0 text-amber-600" />
+                                <div>
+                                    <p className="text-sm font-semibold text-amber-900">Keterangan / Justifikasi</p>
+                                    <p className="text-xs text-amber-700 mt-0.5">
+                                        Tuliskan keterangan atau alasan tambahan terkait anggaran yang diajukan dalam RAPBS ini.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="px-5 py-4 space-y-3">
+                                <textarea
+                                    value={keteranganText}
+                                    onChange={(e) => setKeteranganText(e.target.value)}
+                                    rows={4}
+                                    maxLength={2000}
+                                    placeholder="Contoh: Penambahan kegiatan baru berdasarkan program kerja yang telah disetujui rapat pleno, sehingga anggaran perlu disesuaikan..."
+                                    className="w-full resize-none rounded-lg border border-amber-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                                />
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-slate-400">{keteranganText.length}/2000 karakter</span>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveKeterangan}
+                                        disabled={updateKeteranganMutation.isPending}
+                                        className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:opacity-50"
+                                    >
+                                        {updateKeteranganMutation.isPending ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Save className="h-4 w-4" />
+                                        )}
+                                        Simpan Keterangan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                ) : rapbs.keterangan ? (
                     <motion.div variants={staggerItem}>
                         <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
                             <p className="text-sm text-slate-700">
@@ -540,7 +605,7 @@ export default function RapbsDetail() {
                             </p>
                         </div>
                     </motion.div>
-                )}
+                ) : null}
 
                 <div className="space-y-6">
                     {/* Info cards */}
