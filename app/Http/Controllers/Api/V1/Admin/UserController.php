@@ -22,7 +22,7 @@ class UserController extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = User::with('unit');
+        $query = User::with(['unit', 'roles', 'permissions']);
 
         if ($request->filled('role')) {
             $role = UserRole::tryFrom($request->query('role'));

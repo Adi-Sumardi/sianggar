@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\RapbsApprovalStage;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,9 +42,20 @@ class RapbsApproval extends Model
     protected function casts(): array
     {
         return [
-            'stage' => RapbsApprovalStage::class,
             'acted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Use tryFrom() so records with a stale/unknown stage value return null
+     * instead of throwing a ValueError.
+     */
+    protected function stage(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value !== null ? RapbsApprovalStage::tryFrom($value) : null,
+            set: fn ($value) => $value instanceof RapbsApprovalStage ? $value->value : $value,
+        );
     }
 
     // -------------------------------------------------------------------------

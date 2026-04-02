@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Budget;
 
+use App\Enums\RapbsStatus;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RapbsResource;
 use App\Models\Rapbs;
@@ -190,9 +192,27 @@ class RapbsApprovalController extends Controller
 
     /**
      * Update keterangan (notes/justification) for a RAPBS.
+     * Only the owning unit (or admin) can update, and only while status is Draft.
      */
     public function updateKeterangan(Rapbs $rapbs, Request $request): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        if ($user->role !== UserRole::Admin) {
+            if ($rapbs->unit_id !== $user->unit_id) {
+                return response()->json([
+                    'message' => 'Anda tidak memiliki akses untuk mengubah keterangan RAPBS ini.',
+                ], 403);
+            }
+
+            if ($rapbs->status !== RapbsStatus::Draft) {
+                return response()->json([
+                    'message' => 'Keterangan hanya dapat diubah saat RAPBS berstatus Draft.',
+                ], 422);
+            }
+        }
+
         $validated = $request->validate([
             'keterangan' => ['nullable', 'string', 'max:2000'],
         ]);

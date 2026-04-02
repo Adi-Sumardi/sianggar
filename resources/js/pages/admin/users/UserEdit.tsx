@@ -32,13 +32,23 @@ type EditUserForm = z.infer<typeof editUserSchema>;
 
 const changePasswordSchema = z
     .object({
-        password: z.string().min(8, 'Password minimal 8 karakter'),
-        password_confirmation: z.string().min(1, 'Konfirmasi password wajib diisi'),
+        password: z
+            .string()
+            .refine((val) => val === '' || val.length >= 8, {
+                message: 'Password minimal 8 karakter',
+            }),
+        password_confirmation: z.string(),
     })
-    .refine((data) => data.password === data.password_confirmation, {
-        message: 'Konfirmasi password tidak cocok',
-        path: ['password_confirmation'],
-    });
+    .refine(
+        (data) => {
+            if (data.password === '') return true;
+            return data.password === data.password_confirmation;
+        },
+        {
+            message: 'Konfirmasi password tidak cocok',
+            path: ['password_confirmation'],
+        },
+    );
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 
@@ -136,7 +146,7 @@ export default function UserEdit() {
     };
 
     const onSubmitPassword = async (data: ChangePasswordForm) => {
-        if (!userId) return;
+        if (!userId || !data.password) return;
 
         updatePasswordMutation.mutate(
             { id: userId, data },

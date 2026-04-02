@@ -56,6 +56,9 @@ class RapbsApprovalService
     public function approve(Rapbs $rapbs, User $approver, ?string $notes = null): RapbsApproval
     {
         return DB::transaction(function () use ($rapbs, $approver, $notes) {
+            // Lock the row to prevent concurrent approvals
+            $rapbs = Rapbs::lockForUpdate()->findOrFail($rapbs->id);
+            $rapbs->load(['currentApproval', 'submitter']);
             $currentApproval = $rapbs->currentApproval;
 
             if (!$currentApproval) {
@@ -129,6 +132,8 @@ class RapbsApprovalService
     public function revise(Rapbs $rapbs, User $approver, string $notes): RapbsApproval
     {
         return DB::transaction(function () use ($rapbs, $approver, $notes) {
+            $rapbs = Rapbs::lockForUpdate()->findOrFail($rapbs->id);
+            $rapbs->load('currentApproval');
             $currentApproval = $rapbs->currentApproval;
 
             if (!$currentApproval) {
@@ -170,6 +175,8 @@ class RapbsApprovalService
     public function reject(Rapbs $rapbs, User $approver, string $notes): RapbsApproval
     {
         return DB::transaction(function () use ($rapbs, $approver, $notes) {
+            $rapbs = Rapbs::lockForUpdate()->findOrFail($rapbs->id);
+            $rapbs->load('currentApproval');
             $currentApproval = $rapbs->currentApproval;
 
             if (!$currentApproval) {

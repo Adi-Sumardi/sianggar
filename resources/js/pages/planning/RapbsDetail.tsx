@@ -234,8 +234,13 @@ export default function RapbsDetail() {
                 status = 'current';
             }
 
+            const stageEnum = Object.values(RapbsApprovalStage).includes(stage.value as RapbsApprovalStage)
+                ? (stage.value as RapbsApprovalStage)
+                : null;
+            if (!stageEnum) return;
+
             timelineItems.push({
-                stage: stage.value as RapbsApprovalStage,
+                stage: stageEnum,
                 label: stage.label,
                 status,
                 approver: approval?.user?.name,

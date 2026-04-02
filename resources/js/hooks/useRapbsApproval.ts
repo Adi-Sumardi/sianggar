@@ -24,7 +24,7 @@ export function useRapbsList(params?: RapbsFilterParams) {
 export function useRapbs(id: number | null) {
     return useQuery({
         queryKey: ['rapbs', id],
-        queryFn: () => rapbsApprovalService.getRapbs(id!),
+        queryFn: () => (id !== null ? rapbsApprovalService.getRapbs(id) : Promise.reject(new Error('No ID'))),
         enabled: id !== null,
     });
 }
