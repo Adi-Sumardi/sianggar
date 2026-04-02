@@ -43,6 +43,7 @@ import {
     useUpdateRapbsKeterangan,
 } from '@/hooks/useRapbsApproval';
 import { useRapbsList as useRapbsAggregated } from '@/hooks/useBudget';
+import { useAuthStore } from '@/stores/authStore';
 
 // ---------------------------------------------------------------------------
 // Helper functions
@@ -253,6 +254,12 @@ export default function RapbsDetail() {
     // Check if current user can approve (from backend)
     const canApprove = rapbs?.can_approve_action === true;
     const canSubmit = rapbs?.can_submit;
+
+    // Determine if the current user is the unit that owns this RAPBS
+    const { user: currentUser } = useAuthStore();
+    const isOwningUnit = Boolean(
+        currentUser?.unit_id && rapbs?.unit_id && currentUser.unit_id === rapbs.unit_id
+    );
 
     // Check if total anggaran exceeds total plafon (cannot submit if over budget)
     const totalPlafon = unitRekapData?.mata_anggarans.reduce((sum, ma) => sum + (ma.plafon_apbs ?? 0), 0) ?? 0;
@@ -560,57 +567,59 @@ export default function RapbsDetail() {
                     </motion.div>
                 )}
 
-                {/* Keterangan / Justifikasi */}
-                {canSubmit ? (
-                    <motion.div variants={staggerItem}>
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
-                            <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-100/60 px-5 py-3">
-                                <PenLine className="h-4 w-4 shrink-0 text-amber-600" />
-                                <div>
-                                    <p className="text-sm font-semibold text-amber-900">Keterangan / Justifikasi</p>
-                                    <p className="text-xs text-amber-700 mt-0.5">
-                                        Tuliskan keterangan atau alasan tambahan terkait anggaran yang diajukan dalam RAPBS ini.
-                                    </p>
+                {/* Keterangan / Justifikasi — hanya untuk unit pemilik RAPBS */}
+                {isOwningUnit && (
+                    canSubmit ? (
+                        <motion.div variants={staggerItem}>
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
+                                <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-100/60 px-5 py-3">
+                                    <PenLine className="h-4 w-4 shrink-0 text-amber-600" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-amber-900">Keterangan / Justifikasi</p>
+                                        <p className="text-xs text-amber-700 mt-0.5">
+                                            Tuliskan keterangan atau alasan tambahan terkait anggaran yang diajukan dalam RAPBS ini.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="px-5 py-4 space-y-3">
+                                    <textarea
+                                        value={keteranganText}
+                                        onChange={(e) => setKeteranganText(e.target.value)}
+                                        rows={4}
+                                        maxLength={2000}
+                                        placeholder="Contoh: Penambahan kegiatan baru berdasarkan program kerja yang telah disetujui rapat pleno, sehingga anggaran perlu disesuaikan..."
+                                        className="w-full resize-none rounded-lg border border-amber-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                                    />
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-400">{keteranganText.length}/2000 karakter</span>
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveKeterangan}
+                                            disabled={updateKeteranganMutation.isPending}
+                                            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:opacity-50"
+                                        >
+                                            {updateKeteranganMutation.isPending ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Save className="h-4 w-4" />
+                                            )}
+                                            Simpan Keterangan
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="px-5 py-4 space-y-3">
-                                <textarea
-                                    value={keteranganText}
-                                    onChange={(e) => setKeteranganText(e.target.value)}
-                                    rows={4}
-                                    maxLength={2000}
-                                    placeholder="Contoh: Penambahan kegiatan baru berdasarkan program kerja yang telah disetujui rapat pleno, sehingga anggaran perlu disesuaikan..."
-                                    className="w-full resize-none rounded-lg border border-amber-300 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                                />
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs text-slate-400">{keteranganText.length}/2000 karakter</span>
-                                    <button
-                                        type="button"
-                                        onClick={handleSaveKeterangan}
-                                        disabled={updateKeteranganMutation.isPending}
-                                        className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:opacity-50"
-                                    >
-                                        {updateKeteranganMutation.isPending ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Save className="h-4 w-4" />
-                                        )}
-                                        Simpan Keterangan
-                                    </button>
-                                </div>
+                        </motion.div>
+                    ) : rapbs.keterangan ? (
+                        <motion.div variants={staggerItem}>
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
+                                <p className="text-sm text-slate-700">
+                                    <span className="font-semibold text-slate-900">Keterangan:</span>{' '}
+                                    {rapbs.keterangan}
+                                </p>
                             </div>
-                        </div>
-                    </motion.div>
-                ) : rapbs.keterangan ? (
-                    <motion.div variants={staggerItem}>
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
-                            <p className="text-sm text-slate-700">
-                                <span className="font-semibold text-slate-900">Keterangan:</span>{' '}
-                                {rapbs.keterangan}
-                            </p>
-                        </div>
-                    </motion.div>
-                ) : null}
+                        </motion.div>
+                    ) : null
+                )}
 
                 <div className="space-y-6">
                     {/* Info cards */}
@@ -945,8 +954,8 @@ export default function RapbsDetail() {
                 </div>
             </motion.div>
 
-            {/* Revision Comment Thread */}
-            {rapbs && (
+            {/* Revision Comment Thread — hanya untuk approver/admin (bukan unit pemilik) */}
+            {rapbs && !isOwningUnit && (
                 <RevisionCommentThread docType="rapbs" docId={rapbs.id} className="mt-6" />
             )}
 
