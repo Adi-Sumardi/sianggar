@@ -567,8 +567,9 @@ export default function RapbsDetail() {
                     </motion.div>
                 )}
 
-                {/* Keterangan / Justifikasi — hanya untuk unit pemilik RAPBS */}
-                {isOwningUnit && (
+                {/* Keterangan / Justifikasi */}
+                {isOwningUnit ? (
+                    /* Unit pemilik: editable saat draft, read-only setelah diajukan */
                     canSubmit ? (
                         <motion.div variants={staggerItem}>
                             <div className="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
@@ -619,7 +620,19 @@ export default function RapbsDetail() {
                             </div>
                         </motion.div>
                     ) : null
-                )}
+                ) : rapbs.keterangan ? (
+                    /* Approver / admin: tampil read-only jika unit sudah mengisi */
+                    <motion.div variants={staggerItem}>
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                Keterangan dari Unit
+                            </p>
+                            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                {rapbs.keterangan}
+                            </p>
+                        </div>
+                    </motion.div>
+                ) : null}
 
                 <div className="space-y-6">
                     {/* Info cards */}
