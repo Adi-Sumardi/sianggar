@@ -53,7 +53,11 @@ jobs:
 
       # 7. Create deployment archives
       - name: Create app archive
-        run: tar czf deploy-app.tar.gz app/ bootstrap/ config/ database/ resources/ routes/ storage/ vendor/ artisan composer.json composer.lock
+        run: |
+          tar czf deploy-app.tar.gz \
+            app/ bootstrap/ config/ database/ routes/ vendor/ \
+            resources/views/ resources/lang/ \
+            artisan composer.json composer.lock
 
       - name: Create public archive
         run: cd public && shopt -s dotglob && tar czf ../deploy-public.tar.gz *
@@ -66,7 +70,7 @@ jobs:
         run: |
           lftp \
             -u "$FTP_USER","$FTP_PASS" \
-            -e "set ftp:ssl-allow yes; set ftp:ssl-force no; set ssl:verify-certificate no; set ftp:passive-mode yes; set net:timeout 120; set net:max-retries 10; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 2; put public/deploy-webhook.php; put deploy-app.tar.gz; put deploy-public.tar.gz; quit" \
+            -e "set ftp:ssl-allow yes; set ftp:ssl-force no; set ssl:verify-certificate no; set ftp:passive-mode yes; set net:timeout 120; set net:max-retries 10; set net:reconnect-interval-base 5; set net:reconnect-interval-multiplier 2; set xfer:timeout 300; set xfer:clobber true; put public/deploy-webhook.php; put deploy-app.tar.gz; put deploy-public.tar.gz; quit" \
             "ftp://$FTP_HOST"
         env:
           FTP_HOST: ${{ secrets.HOSTINGER_HOST }}
