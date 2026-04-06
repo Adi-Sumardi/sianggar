@@ -70,6 +70,7 @@ export default function MataAnggaranList() {
         search: searchQuery || undefined,
         tahun: filterValues.tahun || undefined,
         unit_id: filterValues.unit_id ? Number(filterValues.unit_id) : undefined,
+        per_page: 1000,
     });
 
     const deleteMutation = useDeleteMataAnggaran();
