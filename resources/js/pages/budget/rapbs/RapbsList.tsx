@@ -62,6 +62,7 @@ export default function RapbsList() {
     const recordsParams = useMemo(() => ({
         tahun: filterValues.tahun || undefined,
         status: filterValues.status || undefined,
+        per_page: 1000,
     }), [filterValues.tahun, filterValues.status]);
 
     const aggregatedParams = useMemo(() => ({
