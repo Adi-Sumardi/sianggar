@@ -99,7 +99,11 @@ class SubMataAnggaranController extends Controller
             ], 422);
         }
 
-        // Safe to delete - first delete detail mata anggarans
+        // Safe to delete - delete lampiran first, then detail mata anggarans
+        foreach ($subMataAnggaran->detailMataAnggarans as $detail) {
+            $detail->lampiranMataAnggarans()->delete();
+        }
+        $subMataAnggaran->lampiranMataAnggarans()->delete();
         $subMataAnggaran->detailMataAnggarans()->delete();
         $subMataAnggaran->delete();
 

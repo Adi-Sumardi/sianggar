@@ -124,8 +124,14 @@ class MataAnggaranController extends Controller
             ], 422);
         }
 
-        // Safe to delete - cascade will handle sub and detail mata anggarans
-        // First delete detail mata anggarans, then sub mata anggarans
+        // Safe to delete - delete lampiran first (FK constraints), then detail, sub, mata anggaran
+        foreach ($mataAnggaran->detailMataAnggarans as $detail) {
+            $detail->lampiranMataAnggarans()->delete();
+        }
+        foreach ($mataAnggaran->subMataAnggarans as $sub) {
+            $sub->lampiranMataAnggarans()->delete();
+        }
+        $mataAnggaran->lampiranMataAnggarans()->delete();
         $mataAnggaran->detailMataAnggarans()->delete();
         $mataAnggaran->subMataAnggarans()->delete();
         $mataAnggaran->delete();
