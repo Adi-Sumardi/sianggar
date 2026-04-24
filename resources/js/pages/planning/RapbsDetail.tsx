@@ -880,7 +880,7 @@ export default function RapbsDetail() {
                                                                     APBS {academicYears.previous}
                                                                 </th>
                                                                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                                                    Asumsi Realisasi {academicYears.previous}
+                                                                    Realisasi Juni {academicYears.previous}
                                                                 </th>
                                                                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                                                                     Plafon {academicYears.current}
