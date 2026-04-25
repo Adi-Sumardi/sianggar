@@ -6,12 +6,12 @@ import { toast } from 'sonner';
 import {
     BarChart,
     Bar,
+    Cell,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip as RechartsTooltip,
     ResponsiveContainer,
-    Legend,
 } from 'recharts';
 
 import { cn } from '@/lib/utils';
@@ -560,19 +560,24 @@ export default function RapbsList() {
                                 : 0;
                             const isNaik = selisihTahunLalu >= 0;
 
-                            // Chart data: per unit comparison
-                            const chartData = units.map((unit) => {
-                                const apbsLalu = unit.mata_anggarans.reduce((s, ma) => s + (ma.apbs_tahun_lalu ?? 0), 0);
-                                const plafon = unit.mata_anggarans.reduce((s, ma) => s + (ma.plafon_apbs ?? 0), 0);
-                                const diajukan = unit.mata_anggarans.reduce((s, ma) => s + ma.total, 0);
-                                return {
-                                    unit: unit.unit_nama.length > 18 ? unit.unit_nama.slice(0, 16) + '…' : unit.unit_nama,
-                                    fullName: unit.unit_nama,
-                                    [`APBS ${academicYears.previous}`]: apbsLalu,
-                                    [`Plafon ${academicYears.current}`]: plafon,
-                                    'Diajukan': diajukan,
-                                };
-                            });
+                            // Chart data: overall aggregate comparison
+                            const chartData = [
+                                {
+                                    label: `APBS ${academicYears.previous}`,
+                                    value: totalApbsTahunLalu,
+                                    fill: '#94a3b8',
+                                },
+                                {
+                                    label: `Plafon ${academicYears.current}`,
+                                    value: totalPlafonApbs,
+                                    fill: '#0ea5e9',
+                                },
+                                {
+                                    label: 'Diajukan',
+                                    value: totalAnggaran,
+                                    fill: dalamPlafon ? '#10b981' : '#ef4444',
+                                },
+                            ];
 
                             const formatCompact = (value: number): string => {
                                 if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}M`;
@@ -665,49 +670,63 @@ export default function RapbsList() {
                                             </div>
                                         )}
 
-                                        {/* Chart: perbandingan per unit */}
-                                        {chartData.length > 0 && (
+                                        {/* Chart: perbandingan keseluruhan */}
+                                        {totalApbsTahunLalu + totalPlafonApbs + totalAnggaran > 0 && (
                                             <div className="mt-4 rounded-md border border-slate-200 bg-white px-4 py-3">
                                                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                                    Grafik Perbandingan per Unit
+                                                    Grafik Perbandingan Keseluruhan
                                                 </p>
-                                                <div className="mt-3" style={{ width: '100%', height: Math.max(280, chartData.length * 48) }}>
+                                                <div className="mt-3 h-72 w-full">
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <BarChart
                                                             data={chartData}
-                                                            layout="vertical"
-                                                            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                                                            margin={{ top: 24, right: 20, left: 10, bottom: 5 }}
                                                         >
-                                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                                                             <XAxis
-                                                                type="number"
+                                                                dataKey="label"
+                                                                tick={{ fontSize: 12, fill: '#334155' }}
+                                                            />
+                                                            <YAxis
                                                                 tickFormatter={formatCompact}
                                                                 tick={{ fontSize: 11, fill: '#64748b' }}
                                                             />
-                                                            <YAxis
-                                                                type="category"
-                                                                dataKey="unit"
-                                                                tick={{ fontSize: 11, fill: '#334155' }}
-                                                                width={120}
-                                                            />
                                                             <RechartsTooltip
-                                                                formatter={(value) => formatRupiah(Number(value))}
-                                                                labelFormatter={(_, payload) => {
-                                                                    const item = payload?.[0]?.payload as { fullName?: string } | undefined;
-                                                                    return item?.fullName ?? '';
-                                                                }}
+                                                                formatter={(value) => [formatRupiah(Number(value)), 'Nilai']}
+                                                                cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
                                                                 contentStyle={{
                                                                     fontSize: 12,
                                                                     borderRadius: 6,
                                                                     border: '1px solid #e2e8f0',
                                                                 }}
                                                             />
-                                                            <Legend wrapperStyle={{ fontSize: 12 }} />
-                                                            <Bar dataKey={`APBS ${academicYears.previous}`} fill="#94a3b8" radius={[0, 4, 4, 0]} />
-                                                            <Bar dataKey={`Plafon ${academicYears.current}`} fill="#0ea5e9" radius={[0, 4, 4, 0]} />
-                                                            <Bar dataKey="Diajukan" fill={dalamPlafon ? '#10b981' : '#ef4444'} radius={[0, 4, 4, 0]} />
+                                                            <Bar
+                                                                dataKey="value"
+                                                                radius={[6, 6, 0, 0]}
+                                                                label={{
+                                                                    position: 'top',
+                                                                    formatter: (v) => formatCompact(Number(v)),
+                                                                    fontSize: 11,
+                                                                    fill: '#475569',
+                                                                }}
+                                                            >
+                                                                {chartData.map((entry) => (
+                                                                    <Cell key={entry.label} fill={entry.fill} />
+                                                                ))}
+                                                            </Bar>
                                                         </BarChart>
                                                     </ResponsiveContainer>
+                                                </div>
+                                                <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-slate-600">
+                                                    {chartData.map((d) => (
+                                                        <div key={d.label} className="flex items-center gap-1.5">
+                                                            <span
+                                                                className="inline-block h-2.5 w-2.5 rounded-sm"
+                                                                style={{ backgroundColor: d.fill }}
+                                                            />
+                                                            <span>{d.label}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         )}
