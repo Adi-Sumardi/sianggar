@@ -3,6 +3,16 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as RechartsTooltip,
+    ResponsiveContainer,
+    Legend,
+} from 'recharts';
 
 import { cn } from '@/lib/utils';
 import { staggerContainer, staggerItem, cardHover } from '@/lib/animations';
@@ -147,6 +157,10 @@ export default function RapbsList() {
     );
     const totalPlafonApbs = units.reduce(
         (sum, unit) => sum + unit.mata_anggarans.reduce((s, ma) => s + (ma.plafon_apbs ?? 0), 0),
+        0,
+    );
+    const totalApbsTahunLalu = units.reduce(
+        (sum, unit) => sum + unit.mata_anggarans.reduce((s, ma) => s + (ma.apbs_tahun_lalu ?? 0), 0),
         0,
     );
     const totalUnits = units.length;
@@ -534,53 +548,184 @@ export default function RapbsList() {
                         </div>
 
                         {/* Grand total footer */}
-                        {units.length > 0 && (
-                            <div>
-                                <div className={cn(
-                                    "rounded-lg border px-5 py-4",
-                                    totalAnggaran <= totalPlafonApbs
-                                        ? "border-emerald-200 bg-emerald-50"
-                                        : "border-red-200 bg-red-50"
-                                )}>
-                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                                        <div>
-                                            <p className="text-xs text-slate-500">Total Plafon APBS {academicYears.current}</p>
-                                            <p className="text-lg font-bold text-slate-900">
-                                                {formatRupiah(totalPlafonApbs)}
-                                            </p>
+                        {units.length > 0 && (() => {
+                            const selisihPlafon = totalPlafonApbs - totalAnggaran;
+                            const dalamPlafon = totalAnggaran <= totalPlafonApbs;
+                            const selisihTahunLalu = totalAnggaran - totalApbsTahunLalu;
+                            const persenKenaikan = totalApbsTahunLalu > 0
+                                ? (selisihTahunLalu / totalApbsTahunLalu) * 100
+                                : 0;
+                            const persenTerhadapPlafon = totalPlafonApbs > 0
+                                ? (totalAnggaran / totalPlafonApbs) * 100
+                                : 0;
+                            const isNaik = selisihTahunLalu >= 0;
+
+                            // Chart data: per unit comparison
+                            const chartData = units.map((unit) => {
+                                const apbsLalu = unit.mata_anggarans.reduce((s, ma) => s + (ma.apbs_tahun_lalu ?? 0), 0);
+                                const plafon = unit.mata_anggarans.reduce((s, ma) => s + (ma.plafon_apbs ?? 0), 0);
+                                const diajukan = unit.mata_anggarans.reduce((s, ma) => s + ma.total, 0);
+                                return {
+                                    unit: unit.unit_nama.length > 18 ? unit.unit_nama.slice(0, 16) + '…' : unit.unit_nama,
+                                    fullName: unit.unit_nama,
+                                    [`APBS ${academicYears.previous}`]: apbsLalu,
+                                    [`Plafon ${academicYears.current}`]: plafon,
+                                    'Diajukan': diajukan,
+                                };
+                            });
+
+                            const formatCompact = (value: number): string => {
+                                if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}M`;
+                                if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(0)}Jt`;
+                                if (value >= 1_000) return `${(value / 1_000).toFixed(0)}rb`;
+                                return value.toString();
+                            };
+
+                            return (
+                                <div>
+                                    <div className={cn(
+                                        "rounded-lg border px-5 py-4",
+                                        dalamPlafon
+                                            ? "border-emerald-200 bg-emerald-50"
+                                            : "border-red-200 bg-red-50"
+                                    )}>
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+                                            <div>
+                                                <p className="text-xs text-slate-500">APBS {academicYears.previous}</p>
+                                                <p className="text-lg font-bold text-slate-900">
+                                                    {formatRupiah(totalApbsTahunLalu)}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500">Total Plafon APBS {academicYears.current}</p>
+                                                <p className="text-lg font-bold text-slate-900">
+                                                    {formatRupiah(totalPlafonApbs)}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500">Total Anggaran Diajukan</p>
+                                                <p className={cn(
+                                                    "text-lg font-bold",
+                                                    dalamPlafon ? "text-emerald-700" : "text-red-700"
+                                                )}>
+                                                    {formatRupiah(totalAnggaran)}
+                                                </p>
+                                                {totalPlafonApbs > 0 && (
+                                                    <p className="mt-0.5 text-[11px] text-slate-500">
+                                                        {persenTerhadapPlafon.toFixed(2)}% dari plafon
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500">Selisih vs Plafon</p>
+                                                <p className={cn(
+                                                    "text-lg font-bold",
+                                                    dalamPlafon ? "text-emerald-700" : "text-red-700"
+                                                )}>
+                                                    {formatRupiah(selisihPlafon)}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Total Anggaran Diajukan</p>
-                                            <p className={cn(
-                                                "text-lg font-bold",
-                                                totalAnggaran <= totalPlafonApbs ? "text-emerald-700" : "text-red-700"
+
+                                        {/* Analisis perbandingan vs APBS tahun lalu */}
+                                        {totalApbsTahunLalu > 0 && (
+                                            <div className="mt-4 rounded-md border border-slate-200 bg-white px-4 py-3">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    Analisis vs APBS {academicYears.previous}
+                                                </p>
+                                                <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                    <div>
+                                                        <p className="text-xs text-slate-500">
+                                                            {isNaik ? "Kenaikan" : "Penurunan"} Anggaran
+                                                        </p>
+                                                        <p className={cn(
+                                                            "text-base font-semibold",
+                                                            isNaik ? "text-amber-700" : "text-emerald-700"
+                                                        )}>
+                                                            {isNaik ? "+" : ""}{formatRupiah(selisihTahunLalu)}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500">Persentase Perubahan</p>
+                                                        <p className={cn(
+                                                            "text-base font-semibold",
+                                                            isNaik ? "text-amber-700" : "text-emerald-700"
+                                                        )}>
+                                                            {isNaik ? "▲" : "▼"} {Math.abs(persenKenaikan).toFixed(2)}%
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <p className="mt-2 text-xs text-slate-500">
+                                                    Anggaran yang diajukan {isNaik ? "naik" : "turun"} sebesar{" "}
+                                                    <span className="font-semibold text-slate-700">
+                                                        {Math.abs(persenKenaikan).toFixed(2)}%
+                                                    </span>{" "}
+                                                    dibandingkan APBS {academicYears.previous}.
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Chart: perbandingan per unit */}
+                                        {chartData.length > 0 && (
+                                            <div className="mt-4 rounded-md border border-slate-200 bg-white px-4 py-3">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    Grafik Perbandingan per Unit
+                                                </p>
+                                                <div className="mt-3" style={{ width: '100%', height: Math.max(280, chartData.length * 48) }}>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart
+                                                            data={chartData}
+                                                            layout="vertical"
+                                                            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                                                        >
+                                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                                            <XAxis
+                                                                type="number"
+                                                                tickFormatter={formatCompact}
+                                                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                                            />
+                                                            <YAxis
+                                                                type="category"
+                                                                dataKey="unit"
+                                                                tick={{ fontSize: 11, fill: '#334155' }}
+                                                                width={120}
+                                                            />
+                                                            <RechartsTooltip
+                                                                formatter={(value) => formatRupiah(Number(value))}
+                                                                labelFormatter={(_, payload) => {
+                                                                    const item = payload?.[0]?.payload as { fullName?: string } | undefined;
+                                                                    return item?.fullName ?? '';
+                                                                }}
+                                                                contentStyle={{
+                                                                    fontSize: 12,
+                                                                    borderRadius: 6,
+                                                                    border: '1px solid #e2e8f0',
+                                                                }}
+                                                            />
+                                                            <Legend wrapperStyle={{ fontSize: 12 }} />
+                                                            <Bar dataKey={`APBS ${academicYears.previous}`} fill="#94a3b8" radius={[0, 4, 4, 0]} />
+                                                            <Bar dataKey={`Plafon ${academicYears.current}`} fill="#0ea5e9" radius={[0, 4, 4, 0]} />
+                                                            <Bar dataKey="Diajukan" fill={dalamPlafon ? '#10b981' : '#ef4444'} radius={[0, 4, 4, 0]} />
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <div className={cn(
+                                                "rounded-full px-3 py-1 text-xs font-medium",
+                                                dalamPlafon
+                                                    ? "bg-emerald-100 text-emerald-700"
+                                                    : "bg-red-100 text-red-700"
                                             )}>
-                                                {formatRupiah(totalAnggaran)}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Selisih</p>
-                                            <p className={cn(
-                                                "text-lg font-bold",
-                                                totalAnggaran <= totalPlafonApbs ? "text-emerald-700" : "text-red-700"
-                                            )}>
-                                                {formatRupiah(totalPlafonApbs - totalAnggaran)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="mt-3 flex items-center gap-2">
-                                        <div className={cn(
-                                            "rounded-full px-3 py-1 text-xs font-medium",
-                                            totalAnggaran <= totalPlafonApbs
-                                                ? "bg-emerald-100 text-emerald-700"
-                                                : "bg-red-100 text-red-700"
-                                        )}>
-                                            {totalAnggaran <= totalPlafonApbs ? "Dalam Plafon" : "Melebihi Plafon"}
+                                                {dalamPlafon ? "Dalam Plafon" : "Melebihi Plafon"}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
                     </>
                 )}
             </motion.div>
