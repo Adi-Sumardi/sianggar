@@ -36,6 +36,7 @@ const MataAnggaranDetail = lazy(() => import('@/pages/budget/mata-anggaran/MataA
 const ApbsList = lazy(() => import('@/pages/budget/apbs/ApbsList'));
 const ApbsDetail = lazy(() => import('@/pages/budget/apbs/ApbsDetail'));
 const RapbsList = lazy(() => import('@/pages/budget/rapbs/RapbsList'));
+const RapbsAnalisis = lazy(() => import('@/pages/budget/rapbs/RapbsAnalisis'));
 const CoaList = lazy(() => import('@/pages/budget/coa/CoaList'));
 const CoaCreate = lazy(() => import('@/pages/budget/coa/CoaCreate'));
 
@@ -217,6 +218,14 @@ export function AppRouter() {
                         element={
                             <PermissionGuard permissions={[Permission.VIEW_BUDGET]}>
                                 <RapbsList />
+                            </PermissionGuard>
+                        }
+                    />
+                    <Route
+                        path="budget/rapbs/analisis"
+                        element={
+                            <PermissionGuard permissions={[Permission.VIEW_BUDGET]}>
+                                <RapbsAnalisis />
                             </PermissionGuard>
                         }
                     />

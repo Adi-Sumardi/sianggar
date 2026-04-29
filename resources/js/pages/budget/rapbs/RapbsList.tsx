@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X } from 'lucide-react';
+import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart,
@@ -58,6 +58,7 @@ function formatAcademicYear(year: string): { previous: string; current: string }
 // ---------------------------------------------------------------------------
 
 export default function RapbsList() {
+    const navigate = useNavigate();
     const defaultTahun = '2026/2027';
     const [filterValues, setFilterValues] = useState<Record<string, string>>({ tahun: defaultTahun });
     const [searchQuery, setSearchQuery] = useState('');
@@ -210,6 +211,14 @@ export default function RapbsList() {
                         description="Kelola dan submit rencana anggaran pendapatan dan belanja sekolah."
                         actions={
                             <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/budget/rapbs/analisis')}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+                                >
+                                    <GitCompareArrows className="h-4 w-4" />
+                                    Analisis APBS 25/26 vs 26/27
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => setViewMode('records')}
