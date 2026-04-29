@@ -72,6 +72,7 @@ export default function ActivityList() {
     });
     const { data: prokersData } = useProkers({
         indikator_id: formIndikatorId ? Number(formIndikatorId) : undefined,
+        per_page: 1000,
     });
     const { data: kegiatansData, isLoading: loadingKegiatans, error: kegiatansError } = useKegiatans({
         unit_id: filterValues.unit ? Number(filterValues.unit) : undefined,
