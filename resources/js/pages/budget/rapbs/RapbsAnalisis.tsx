@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, BarChart3, Loader2, TrendingDown, TrendingUp } from 'lucide-react';
@@ -34,6 +34,7 @@ function formatCompact(value: number): string {
 
 export default function RapbsAnalisis() {
     const navigate = useNavigate();
+    const [selectedUnitId, setSelectedUnitId] = useState<string>('all');
 
     const params = useMemo(() => ({ tahun: TAHUN_BARU }), []);
     const { data, isLoading, isError, error } = useRapbsAggregated(params);
@@ -173,36 +174,123 @@ export default function RapbsAnalisis() {
                         </motion.div>
 
                         {/* Per-unit chart */}
-                        {unitRows.length > 0 && (
-                            <motion.div variants={staggerItem} {...cardHover}
-                                className="rounded-lg border border-slate-200 bg-white p-5"
-                            >
-                                <h3 className="text-sm font-semibold text-slate-700">Perbandingan per Unit</h3>
-                                <div className="mt-4 h-96 w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartData} margin={{ top: 24, right: 20, left: 10, bottom: 60 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                                            <XAxis
-                                                dataKey="unit"
-                                                tick={{ fontSize: 11, fill: '#334155' }}
-                                                angle={-25}
-                                                textAnchor="end"
-                                                height={70}
-                                            />
-                                            <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: '#64748b' }} />
-                                            <RechartsTooltip
-                                                formatter={(value) => formatRupiah(Number(value))}
-                                                cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
-                                                contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #e2e8f0' }}
-                                            />
-                                            <Legend wrapperStyle={{ fontSize: 12 }} />
-                                            <Bar dataKey={`APBS ${TAHUN_LAMA}`} fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                                            <Bar dataKey={`Anggaran ${TAHUN_BARU}`} fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </motion.div>
-                        )}
+                        {unitRows.length > 0 && (() => {
+                            const filteredUnit = selectedUnitId !== 'all'
+                                ? unitRows.find((u) => String(u.unitId) === selectedUnitId)
+                                : null;
+
+                            const singleUnitChart = filteredUnit
+                                ? [
+                                    { label: `APBS ${TAHUN_LAMA}`, value: filteredUnit.apbsLama, fill: '#94a3b8' },
+                                    { label: `Anggaran ${TAHUN_BARU}`, value: filteredUnit.anggaranBaru, fill: '#0ea5e9' },
+                                ]
+                                : [];
+
+                            return (
+                                <motion.div variants={staggerItem} {...cardHover}
+                                    className="rounded-lg border border-slate-200 bg-white p-5"
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-slate-700">Perbandingan per Unit</h3>
+                                            {filteredUnit && (
+                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                    {filteredUnit.unitNama} ({filteredUnit.unitKode})
+                                                </p>
+                                            )}
+                                        </div>
+                                        <select
+                                            value={selectedUnitId}
+                                            onChange={(e) => setSelectedUnitId(e.target.value)}
+                                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        >
+                                            <option value="all">Semua Unit</option>
+                                            {unitRows.map((u) => (
+                                                <option key={u.unitId} value={String(u.unitId)}>
+                                                    {u.unitNama}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="mt-4 h-96 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            {filteredUnit ? (
+                                                <BarChart data={singleUnitChart} margin={{ top: 24, right: 20, left: 10, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                                                    <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#334155' }} />
+                                                    <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: '#64748b' }} />
+                                                    <RechartsTooltip
+                                                        formatter={(value) => [formatRupiah(Number(value)), 'Nilai']}
+                                                        cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
+                                                        contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                                                    />
+                                                    <Bar
+                                                        dataKey="value"
+                                                        radius={[6, 6, 0, 0]}
+                                                        label={{
+                                                            position: 'top',
+                                                            formatter: (v) => formatCompact(Number(v)),
+                                                            fontSize: 11,
+                                                            fill: '#475569',
+                                                        }}
+                                                    >
+                                                        {singleUnitChart.map((entry) => (
+                                                            <Cell key={entry.label} fill={entry.fill} />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            ) : (
+                                                <BarChart data={chartData} margin={{ top: 24, right: 20, left: 10, bottom: 60 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                                                    <XAxis
+                                                        dataKey="unit"
+                                                        tick={{ fontSize: 11, fill: '#334155' }}
+                                                        angle={-25}
+                                                        textAnchor="end"
+                                                        height={70}
+                                                    />
+                                                    <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: '#64748b' }} />
+                                                    <RechartsTooltip
+                                                        formatter={(value) => formatRupiah(Number(value))}
+                                                        cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
+                                                        contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                                                    />
+                                                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                                                    <Bar dataKey={`APBS ${TAHUN_LAMA}`} fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                                                    <Bar dataKey={`Anggaran ${TAHUN_BARU}`} fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                                                </BarChart>
+                                            )}
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    {filteredUnit && (
+                                        <div className="mt-3 grid grid-cols-2 gap-3 rounded-md border border-slate-200 bg-slate-50/50 px-4 py-3 sm:grid-cols-3">
+                                            <div>
+                                                <p className="text-xs text-slate-500">Selisih</p>
+                                                <p className={cn(
+                                                    "text-sm font-semibold",
+                                                    filteredUnit.selisih >= 0 ? "text-amber-700" : "text-emerald-700"
+                                                )}>
+                                                    {filteredUnit.selisih >= 0 ? '+' : ''}{formatRupiah(filteredUnit.selisih)}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500">Perubahan</p>
+                                                <p className={cn(
+                                                    "text-sm font-semibold",
+                                                    filteredUnit.selisih >= 0 ? "text-amber-700" : "text-emerald-700"
+                                                )}>
+                                                    {filteredUnit.apbsLama > 0
+                                                        ? `${filteredUnit.selisih >= 0 ? '▲' : '▼'} ${Math.abs(filteredUnit.persen).toFixed(2)}%`
+                                                        : '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            );
+                        })()}
 
                         {/* Detail table per unit */}
                         <motion.div variants={staggerItem}
