@@ -44,6 +44,7 @@ export default function RapbsAnalisis() {
     const unitRows = units.map((unit) => {
         const apbsLama = unit.mata_anggarans.reduce((s, ma) => s + (ma.apbs_tahun_lalu ?? 0), 0);
         const realisasiJuni = unit.mata_anggarans.reduce((s, ma) => s + (ma.asumsi_realisasi ?? 0), 0);
+        const plafonBaru = unit.mata_anggarans.reduce((s, ma) => s + (ma.plafon_apbs ?? 0), 0);
         const anggaranBaru = unit.mata_anggarans.reduce((s, ma) => s + (ma.total ?? 0), 0);
         const selisih = anggaranBaru - apbsLama;
         const persen = apbsLama > 0 ? (selisih / apbsLama) * 100 : 0;
@@ -53,6 +54,7 @@ export default function RapbsAnalisis() {
             unitKode: unit.unit_kode,
             apbsLama,
             realisasiJuni,
+            plafonBaru,
             anggaranBaru,
             selisih,
             persen,
@@ -61,6 +63,7 @@ export default function RapbsAnalisis() {
 
     const totalApbsLama = unitRows.reduce((s, u) => s + u.apbsLama, 0);
     const totalRealisasiJuni = unitRows.reduce((s, u) => s + u.realisasiJuni, 0);
+    const totalPlafonBaru = unitRows.reduce((s, u) => s + u.plafonBaru, 0);
     const totalAnggaranBaru = unitRows.reduce((s, u) => s + u.anggaranBaru, 0);
     const totalSelisih = totalAnggaranBaru - totalApbsLama;
     const totalPersen = totalApbsLama > 0 ? (totalSelisih / totalApbsLama) * 100 : 0;
@@ -328,6 +331,7 @@ export default function RapbsAnalisis() {
                                             <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Unit</th>
                                             <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">APBS {TAHUN_LAMA}</th>
                                             <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Realisasi Juni {TAHUN_LAMA}</th>
+                                            <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Plafon {TAHUN_BARU}</th>
                                             <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Anggaran {TAHUN_BARU}</th>
                                             <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Selisih</th>
                                             <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Perubahan</th>
@@ -337,7 +341,7 @@ export default function RapbsAnalisis() {
                                     <tbody className="divide-y divide-slate-50">
                                         {unitRows.length === 0 ? (
                                             <tr>
-                                                <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
+                                                <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-500">
                                                     Tidak ada data.
                                                 </td>
                                             </tr>
@@ -352,6 +356,7 @@ export default function RapbsAnalisis() {
                                                         </td>
                                                         <td className="px-4 py-3 text-right text-sm text-slate-700">{formatRupiah(u.apbsLama)}</td>
                                                         <td className="px-4 py-3 text-right text-sm text-amber-700">{formatRupiah(u.realisasiJuni)}</td>
+                                                        <td className="px-4 py-3 text-right text-sm text-sky-700">{formatRupiah(u.plafonBaru)}</td>
                                                         <td className="px-4 py-3 text-right text-sm font-medium text-slate-900">{formatRupiah(u.anggaranBaru)}</td>
                                                         <td className={cn(
                                                             "px-4 py-3 text-right text-sm font-semibold",
@@ -386,6 +391,7 @@ export default function RapbsAnalisis() {
                                                 <td className="px-4 py-3 text-sm font-bold text-slate-900">Total Keseluruhan</td>
                                                 <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">{formatRupiah(totalApbsLama)}</td>
                                                 <td className="px-4 py-3 text-right text-sm font-bold text-amber-700">{formatRupiah(totalRealisasiJuni)}</td>
+                                                <td className="px-4 py-3 text-right text-sm font-bold text-sky-700">{formatRupiah(totalPlafonBaru)}</td>
                                                 <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">{formatRupiah(totalAnggaranBaru)}</td>
                                                 <td className={cn(
                                                     "px-4 py-3 text-right text-sm font-bold",
