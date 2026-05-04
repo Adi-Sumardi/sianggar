@@ -64,6 +64,7 @@ export default function RapbsList() {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedMa, setExpandedMa] = useState<Set<number>>(new Set());
     const [viewMode, setViewMode] = useState<'records' | 'aggregated'>('records');
+    const [includeBagianUmum, setIncludeBagianUmum] = useState(false);
 
     // Get current user and check if admin
     const { user } = useAuth();
@@ -151,16 +152,24 @@ export default function RapbsList() {
         )
         : allUnits;
 
+    // Unit "Bagian Umum" can be excluded from grand totals via toggle
+    const isBagianUmum = (unit: { unit_nama: string; unit_kode: string }) =>
+        unit.unit_nama.toLowerCase().includes('bagian umum') ||
+        unit.unit_kode.toLowerCase().includes('bagian umum');
+
+    const summedUnits = includeBagianUmum ? units : units.filter((u) => !isBagianUmum(u));
+    const hasBagianUmum = units.some(isBagianUmum);
+
     // Summaries
-    const totalAnggaran = units.reduce(
+    const totalAnggaran = summedUnits.reduce(
         (sum, unit) => sum + unit.mata_anggarans.reduce((s, ma) => s + ma.total, 0),
         0,
     );
-    const totalPlafonApbs = units.reduce(
+    const totalPlafonApbs = summedUnits.reduce(
         (sum, unit) => sum + unit.mata_anggarans.reduce((s, ma) => s + (ma.plafon_apbs ?? 0), 0),
         0,
     );
-    const totalApbsTahunLalu = units.reduce(
+    const totalApbsTahunLalu = summedUnits.reduce(
         (sum, unit) => sum + unit.mata_anggarans.reduce((s, ma) => s + (ma.apbs_tahun_lalu ?? 0), 0),
         0,
     );
@@ -597,6 +606,27 @@ export default function RapbsList() {
 
                             return (
                                 <div>
+                                    {hasBagianUmum && (
+                                        <div className="mb-3 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-2.5">
+                                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                                                <span className="font-medium text-slate-700">Unit Bagian Umum:</span>
+                                                <span>
+                                                    {includeBagianUmum
+                                                        ? 'ikut dijumlahkan dalam total di bawah'
+                                                        : 'sementara tidak dijumlahkan dalam total di bawah'}
+                                                </span>
+                                            </div>
+                                            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-700">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={includeBagianUmum}
+                                                    onChange={(e) => setIncludeBagianUmum(e.target.checked)}
+                                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                Sertakan Bagian Umum
+                                            </label>
+                                        </div>
+                                    )}
                                     <div className={cn(
                                         "rounded-lg border px-5 py-4",
                                         dalamPlafon
