@@ -262,11 +262,11 @@ export default function UnitList() {
                         pagination={
                             pagination
                                 ? {
-                                      currentPage: pagination.current_page,
-                                      totalPages: pagination.last_page,
-                                      perPage: pagination.per_page,
-                                      total: pagination.total,
-                                      onPageChange: setPage,
+                                      pageIndex: pagination.current_page - 1,
+                                      pageSize: pagination.per_page,
+                                      pageCount: pagination.last_page,
+                                      onPageChange: (page) => setPage(page + 1),
+                                      onPageSizeChange: () => {},
                                   }
                                 : undefined
                         }

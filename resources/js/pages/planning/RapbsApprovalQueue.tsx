@@ -67,7 +67,7 @@ function QueueCard({ item, onClick, index }: QueueCardProps) {
                         {item.unit?.nama || 'Unit'} - Tahun {item.tahun}
                     </h3>
                     <p className="mt-0.5 text-sm text-blue-600 font-medium">
-                        Tahap: {getRapbsApprovalStageLabel(item.current_approval_stage)}
+                        Tahap: {getRapbsApprovalStageLabel(item.current_approval_stage ?? '')}
                     </p>
                 </div>
                 <div className="flex-shrink-0 text-right">

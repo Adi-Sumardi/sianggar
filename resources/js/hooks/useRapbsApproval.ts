@@ -29,10 +29,11 @@ export function useRapbs(id: number | null) {
     });
 }
 
-export function useRapbsPendingApprovals(params?: RapbsApprovalFilterParams) {
+export function useRapbsPendingApprovals(params?: RapbsApprovalFilterParams, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: ['rapbs', 'pending-approvals', params],
         queryFn: () => rapbsApprovalService.getPendingApprovals(params),
+        enabled: options?.enabled,
     });
 }
 

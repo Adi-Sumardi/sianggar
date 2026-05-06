@@ -211,9 +211,11 @@ export default function PerubahanList() {
                         emptyTitle="Belum ada perubahan anggaran"
                         emptyDescription="Belum ada pengajuan yang ditandai sebagai perubahan."
                         pagination={data?.meta ? {
-                            currentPage: data.meta.current_page,
-                            totalPages: data.meta.last_page,
-                            onPageChange: setPage,
+                            pageIndex: data.meta.current_page - 1,
+                            pageSize: data.meta.per_page ?? 15,
+                            pageCount: data.meta.last_page,
+                            onPageChange: (page) => setPage(page + 1),
+                            onPageSizeChange: () => {},
                         } : undefined}
                     />
                 </motion.div>

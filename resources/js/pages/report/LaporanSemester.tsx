@@ -245,7 +245,7 @@ export default function LaporanSemester() {
                                             <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} />
                                             <YAxis tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(v) => `${v}jt`} />
                                             <Tooltip
-                                                formatter={(value: number) => [`Rp ${value.toFixed(0)}jt`, '']}
+                                                formatter={(value: number | undefined) => [`Rp ${(value ?? 0).toFixed(0)}jt`, '']}
                                                 contentStyle={{
                                                     borderRadius: '8px',
                                                     border: '1px solid #e2e8f0',

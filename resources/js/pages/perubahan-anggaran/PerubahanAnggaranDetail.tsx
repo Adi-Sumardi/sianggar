@@ -852,19 +852,19 @@ export default function PerubahanAnggaranDetail() {
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`rounded-full p-2 ${
-                                                            approval.status === 'approved' || approval.status === ApprovalStatus.Approved
+                                                            (approval.status as string) === 'approved' || approval.status === ApprovalStatus.Approved
                                                                 ? 'bg-green-100'
-                                                                : approval.status === 'revised' || approval.status === ApprovalStatus.Revised
+                                                                : (approval.status as string) === 'revised' || approval.status === ApprovalStatus.Revised
                                                                     ? 'bg-amber-100'
-                                                                    : approval.status === 'rejected' || approval.status === ApprovalStatus.Rejected
+                                                                    : (approval.status as string) === 'rejected' || approval.status === ApprovalStatus.Rejected
                                                                         ? 'bg-red-100'
                                                                         : 'bg-blue-100'
                                                         }`}>
-                                                            {approval.status === 'approved' || approval.status === ApprovalStatus.Approved ? (
+                                                            {(approval.status as string) === 'approved' || approval.status === ApprovalStatus.Approved ? (
                                                                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                                            ) : approval.status === 'revised' || approval.status === ApprovalStatus.Revised ? (
+                                                            ) : (approval.status as string) === 'revised' || approval.status === ApprovalStatus.Revised ? (
                                                                 <RotateCcw className="h-4 w-4 text-amber-600" />
-                                                            ) : approval.status === 'rejected' || approval.status === ApprovalStatus.Rejected ? (
+                                                            ) : (approval.status as string) === 'rejected' || approval.status === ApprovalStatus.Rejected ? (
                                                                 <XCircle className="h-4 w-4 text-red-600" />
                                                             ) : (
                                                                 <Clock className="h-4 w-4 text-blue-600" />

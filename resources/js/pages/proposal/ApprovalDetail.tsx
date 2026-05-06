@@ -257,7 +257,7 @@ export default function ApprovalDetail() {
             // Only poll for leadership roles
             // Poll every 5 seconds to check for active discussions (for floating button)
             // Poll faster (3s) when dialog is open for real-time chat
-            refetchInterval: isLeadershipRole ? (discussionDialog ? 3000 : 5000) : false
+            refetchInterval: isLeadershipRole ? (discussionDialog ? 3000 : 5000) : undefined
         }
     );
     const openDiscussionMutation = useOpenDiscussion();
@@ -1133,7 +1133,7 @@ export default function ApprovalDetail() {
                 title="Tolak Pengajuan"
                 description="Pengajuan yang ditolak tidak dapat diproses lagi. Pastikan alasan penolakan jelas."
                 confirmLabel={rejectMutation.isPending ? 'Menolak...' : 'Tolak'}
-                variant="delete"
+                variant="destructive"
                 onConfirm={handleReject}
             >
                 <textarea

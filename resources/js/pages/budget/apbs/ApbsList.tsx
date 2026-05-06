@@ -21,7 +21,7 @@ import type { Apbs } from '@/types/models';
 // Extended type for display
 // ---------------------------------------------------------------------------
 
-interface ApbsWithUnit extends Apbs {
+interface ApbsWithUnit extends Omit<Apbs, 'unit'> {
     unit?: {
         id: number;
         nama: string;

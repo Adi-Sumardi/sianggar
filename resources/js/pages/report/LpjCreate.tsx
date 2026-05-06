@@ -59,13 +59,13 @@ export default function LpjCreate() {
         try {
             const lpj = await createLpjMutation.mutateAsync({
                 pengajuan_anggaran_id: selectedPengajuan.id,
-                unit: selectedPengajuan.unit ?? '',
+                unit: (typeof selectedPengajuan.unit === 'string' ? selectedPengajuan.unit : selectedPengajuan.unit?.nama) ?? '',
                 perihal: selectedPengajuan.nama_pengajuan ?? 'LPJ',
-                tahun: selectedPengajuan.tahun ?? getCurrentAcademicYear(),
+                tahun: selectedPengajuan.tahun_anggaran ?? getCurrentAcademicYear(),
                 jumlah_pengajuan_total: selectedPengajuan.approved_amount ?? selectedPengajuan.jumlah_pengajuan_total,
                 input_realisasi: realisasi,
                 deskripsi_singkat: deskripsi || undefined,
-                mata_anggaran: selectedPengajuan.details?.[0]?.mata_anggaran?.nama,
+                mata_anggaran: selectedPengajuan.detail_pengajuans?.[0]?.mata_anggaran?.nama,
             });
 
             // Upload attachments if any
@@ -98,13 +98,13 @@ export default function LpjCreate() {
             // Create LPJ first
             const lpj = await createLpjMutation.mutateAsync({
                 pengajuan_anggaran_id: selectedPengajuan.id,
-                unit: selectedPengajuan.unit ?? '',
+                unit: (typeof selectedPengajuan.unit === 'string' ? selectedPengajuan.unit : selectedPengajuan.unit?.nama) ?? '',
                 perihal: selectedPengajuan.nama_pengajuan ?? 'LPJ',
-                tahun: selectedPengajuan.tahun ?? getCurrentAcademicYear(),
+                tahun: selectedPengajuan.tahun_anggaran ?? getCurrentAcademicYear(),
                 jumlah_pengajuan_total: selectedPengajuan.approved_amount ?? selectedPengajuan.jumlah_pengajuan_total,
                 input_realisasi: realisasi,
                 deskripsi_singkat: deskripsi || undefined,
-                mata_anggaran: selectedPengajuan.details?.[0]?.mata_anggaran?.nama,
+                mata_anggaran: selectedPengajuan.detail_pengajuans?.[0]?.mata_anggaran?.nama,
             });
 
             // Upload attachments if any
@@ -126,7 +126,7 @@ export default function LpjCreate() {
     // Format pengajuan option label
     const formatPengajuanLabel = (p: PengajuanAnggaran) => {
         const amount = p.approved_amount ?? p.jumlah_pengajuan_total;
-        return `${p.no_surat ?? `PA/${p.tahun}/${p.id}`} - ${p.nama_pengajuan} (${formatRupiah(amount)})`;
+        return `${p.no_surat ?? `PA/${p.tahun_anggaran}/${p.id}`} - ${p.nama_pengajuan} (${formatRupiah(amount)})`;
     };
 
     return (
@@ -209,7 +209,7 @@ export default function LpjCreate() {
                                         <SearchableSelect
                                             options={availablePengajuan.map((p) => ({
                                                 value: String(p.id),
-                                                label: p.no_surat ?? `PA/${p.tahun}/${p.id}`,
+                                                label: p.no_surat ?? `PA/${p.tahun_anggaran}/${p.id}`,
                                                 description: `${p.nama_pengajuan} - ${formatRupiah(p.approved_amount ?? p.jumlah_pengajuan_total)}`,
                                             }))}
                                             value={selectedPengajuanId ? String(selectedPengajuanId) : ''}

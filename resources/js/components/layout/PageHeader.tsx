@@ -49,6 +49,7 @@ interface PageHeaderProps {
     title: string;
     description?: string;
     actions?: React.ReactNode;
+    backButton?: React.ReactNode;
     className?: string;
 }
 

@@ -68,6 +68,9 @@ interface DataTableProps<TData, TValue> {
         onPageSizeChange: (size: number) => void;
     };
     emptyMessage?: string;
+    emptyTitle?: string;
+    emptyDescription?: string;
+    searchValue?: string;
     className?: string;
 }
 
@@ -95,7 +98,7 @@ export function DataTable<TData, TValue>({
     });
 
     // Debounced search
-    const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [searchInput, setSearchInput] = useState('');
 
     const handleSearchChange = useCallback(

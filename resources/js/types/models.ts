@@ -200,6 +200,11 @@ export interface MataAnggaran {
     created_at: string;
     updated_at: string;
 
+    // Computed (may be returned by certain endpoints)
+    jumlah?: number;
+    realisasi?: number;
+    sisa?: number;
+
     // Relations
     unit?: Unit;
     no_mata_anggaran?: NoMataAnggaran;
@@ -254,6 +259,9 @@ export interface DetailMataAnggaran {
     realisasi: number;
     created_at: string;
     updated_at: string;
+
+    // Computed
+    sisa?: number;
 
     // Relations
     mata_anggaran?: MataAnggaran;
@@ -424,6 +432,14 @@ export interface Lpj {
     ditujukan: string | null;
     created_at: string;
     updated_at: string;
+
+    // Additional fields returned by some endpoints
+    jumlah_realisasi?: number;
+    total_realisasi?: number;
+    nomor_lpj?: string;
+    nomor?: string;
+    user?: { name: string } | null;
+    status?: string;
 
     // Relations
     pengajuan_anggaran?: PengajuanAnggaran;
@@ -751,6 +767,10 @@ export interface Rapbs {
     total_plafon?: number;
     is_over_budget?: boolean;
     expected_flow?: RapbsExpectedStage[];
+
+    // Additional fields returned by some endpoints
+    nomor_rapbs?: string;
+    creator?: { name: string } | null;
 
     // Relations
     unit?: Unit;

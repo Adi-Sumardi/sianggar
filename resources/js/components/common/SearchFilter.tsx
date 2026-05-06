@@ -27,7 +27,7 @@ export function SearchFilter({
     className,
 }: SearchFilterProps) {
     const [searchQuery, setSearchQuery] = useState('');
-    const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     // Debounced search
     const handleSearchChange = useCallback(

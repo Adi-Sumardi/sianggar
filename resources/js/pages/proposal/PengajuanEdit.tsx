@@ -300,6 +300,7 @@ export default function PengajuanEdit() {
     const existingFiles = useMemo(() => {
         if (!pengajuan?.attachments) return [];
         return pengajuan.attachments.map(a => ({
+            id: a.id,
             name: a.nama,
             url: `/storage/${a.path}`,
         }));
@@ -367,7 +368,7 @@ export default function PengajuanEdit() {
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Unit</label>
                 <input
                     type="text"
-                    value={pengajuan.unit || user?.unit || '-'}
+                    value={(typeof pengajuan.unit === 'string' ? pengajuan.unit : pengajuan.unit?.nama) || user?.unit?.nama || '-'}
                     disabled
                     className="block w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-500 shadow-sm"
                 />
@@ -557,7 +558,7 @@ export default function PengajuanEdit() {
                     </div>
                     <div>
                         <p className="text-xs font-medium text-slate-500">Unit</p>
-                        <p className="mt-0.5 text-sm text-slate-900">{pengajuan.unit || user?.unit || '-'}</p>
+                        <p className="mt-0.5 text-sm text-slate-900">{(typeof pengajuan.unit === 'string' ? pengajuan.unit : pengajuan.unit?.nama) || user?.unit?.nama || '-'}</p>
                     </div>
                     <div>
                         <p className="text-xs font-medium text-slate-500">Tempat</p>

@@ -277,11 +277,8 @@ export function getStatusColor(status: ProposalStatus | ApprovalStatus | LpjStat
         [ProposalStatus.Done]: 'bg-emerald-100 text-emerald-700',
         [ProposalStatus.Paid]: 'bg-emerald-100 text-emerald-700',
 
-        // ApprovalStatus
+        // ApprovalStatus (pending only; approved/revised/rejected share values with ProposalStatus above)
         [ApprovalStatus.Pending]: 'bg-yellow-100 text-yellow-700',
-        [ApprovalStatus.Approved]: 'bg-green-100 text-green-700',
-        [ApprovalStatus.Revised]: 'bg-cyan-100 text-cyan-700',
-        [ApprovalStatus.Rejected]: 'bg-red-100 text-red-700',
 
         // LpjStatus
         [LpjStatus.Validated]: 'bg-sky-100 text-sky-700',
@@ -309,20 +306,13 @@ export function getStatusLabel(status: ProposalStatus | ApprovalStatus | LpjStat
         [ProposalStatus.Done]: 'Selesai',
         [ProposalStatus.Paid]: 'Dibayar',
 
-        // ApprovalStatus
+        // ApprovalStatus (pending only; approved/revised/rejected share values with ProposalStatus above)
         [ApprovalStatus.Pending]: 'Menunggu',
-        [ApprovalStatus.Approved]: 'Disetujui',
-        [ApprovalStatus.Revised]: 'Direvisi',
-        [ApprovalStatus.Rejected]: 'Ditolak',
+        ['approved']: 'Disetujui',
 
-        // LpjStatus
-        [LpjStatus.Draft]: 'Draf',
-        [LpjStatus.Submitted]: 'Diajukan',
+        // LpjStatus (validated and approved-middle are unique; others share values above)
         [LpjStatus.Validated]: 'Divalidasi',
         [LpjStatus.ApprovedByMiddle]: 'Disetujui Bidang',
-        [LpjStatus.Approved]: 'Disetujui',
-        [LpjStatus.Revised]: 'Perlu Revisi',
-        [LpjStatus.Rejected]: 'Ditolak',
 
         // EmailStatus
         [EmailStatus.Sent]: 'Terkirim',

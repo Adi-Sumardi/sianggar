@@ -221,7 +221,7 @@ export default function StrategyList() {
                 description={editItem ? 'Ubah data sasaran strategis.' : 'Tambahkan sasaran strategis baru.'}
                 confirmLabel={isSaving ? 'Menyimpan...' : (editItem ? 'Simpan' : 'Tambah')}
                 onConfirm={handleSave}
-                loading={isSaving}
+                isLoading={isSaving}
             >
                 <div className="space-y-3">
                     <div>
@@ -258,7 +258,7 @@ export default function StrategyList() {
                 confirmLabel={isDeleting ? 'Menghapus...' : 'Hapus'}
                 variant="destructive"
                 onConfirm={handleDelete}
-                loading={isDeleting}
+                isLoading={isDeleting}
             />
         </PageTransition>
     );

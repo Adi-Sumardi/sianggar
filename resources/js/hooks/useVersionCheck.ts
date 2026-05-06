@@ -37,7 +37,7 @@ export function useVersionCheck() {
 
     useEffect(() => {
         // Don't run in development
-        if (import.meta.env.DEV) return;
+        if ((import.meta as any).env?.DEV) return;
 
         // Fetch baseline on mount
         const init = async () => {

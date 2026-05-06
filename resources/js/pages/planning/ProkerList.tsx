@@ -266,7 +266,7 @@ export default function ProkerList() {
                 </motion.div>
             </motion.div>
 
-            <ConfirmDialog open={dialogOpen} onOpenChange={setDialogOpen} title={editItem ? 'Edit Program Kerja' : 'Tambah Program Kerja'} description={editItem ? 'Ubah data program kerja.' : 'Tambahkan program kerja baru.'} confirmLabel={isSaving ? 'Menyimpan...' : (editItem ? 'Simpan' : 'Tambah')} onConfirm={handleSave} loading={isSaving}>
+            <ConfirmDialog open={dialogOpen} onOpenChange={setDialogOpen} title={editItem ? 'Edit Program Kerja' : 'Tambah Program Kerja'} description={editItem ? 'Ubah data program kerja.' : 'Tambahkan program kerja baru.'} confirmLabel={isSaving ? 'Menyimpan...' : (editItem ? 'Simpan' : 'Tambah')} onConfirm={handleSave} isLoading={isSaving}>
                 <div className="space-y-3">
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">Strategi</label>
@@ -293,7 +293,7 @@ export default function ProkerList() {
                 </div>
             </ConfirmDialog>
 
-            <ConfirmDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, item: deleteDialog.item })} title="Hapus Program Kerja" description={`Apakah Anda yakin ingin menghapus "${deleteDialog.item?.nama ?? ''}"?`} confirmLabel={isDeleting ? 'Menghapus...' : 'Hapus'} variant="destructive" onConfirm={handleDelete} loading={isDeleting} />
+            <ConfirmDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, item: deleteDialog.item })} title="Hapus Program Kerja" description={`Apakah Anda yakin ingin menghapus "${deleteDialog.item?.nama ?? ''}"?`} confirmLabel={isDeleting ? 'Menghapus...' : 'Hapus'} variant="destructive" onConfirm={handleDelete} isLoading={isDeleting} />
 
             <ImportDialog
                 open={importDialogOpen}

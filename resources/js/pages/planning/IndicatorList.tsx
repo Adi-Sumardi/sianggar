@@ -270,7 +270,7 @@ export default function IndicatorList() {
                 description={editItem ? 'Ubah data indikator kinerja utama.' : 'Tambahkan indikator kinerja utama baru.'}
                 confirmLabel={isSaving ? 'Menyimpan...' : (editItem ? 'Simpan' : 'Tambah')}
                 onConfirm={handleSave}
-                loading={isSaving}
+                isLoading={isSaving}
             >
                 <div className="space-y-3">
                     <div>
@@ -320,7 +320,7 @@ export default function IndicatorList() {
                 confirmLabel={isDeleting ? 'Menghapus...' : 'Hapus'}
                 variant="destructive"
                 onConfirm={handleDelete}
-                loading={isDeleting}
+                isLoading={isDeleting}
             />
         </PageTransition>
     );

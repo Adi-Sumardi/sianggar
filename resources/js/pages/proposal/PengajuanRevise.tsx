@@ -133,7 +133,7 @@ export default function PengajuanRevise() {
         if (!pengajuan?.approvals) return null;
 
         const revisedApproval = pengajuan.approvals.find(
-            (a: Approval) => a.status === ApprovalStatus.Revised || a.status === 'revised'
+            (a: Approval) => a.status === ApprovalStatus.Revised
         );
 
         if (!revisedApproval) return null;

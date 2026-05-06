@@ -19,8 +19,8 @@ interface PrintContentProps {
         id: number;
         unit?: { nama: string; kode?: string };
         tahun: string;
-        nomor_dokumen?: string;
-        tanggal_pengesahan?: string;
+        nomor_dokumen?: string | null;
+        tanggal_pengesahan?: string | null;
         total_anggaran: number;
         total_realisasi: number;
         sisa_anggaran: number;
@@ -32,9 +32,9 @@ interface PrintContentProps {
             realisasi: number;
             sisa: number;
         }>;
-        ttd_kepala_sekolah?: string;
-        ttd_bendahara?: string;
-        ttd_ketua_umum?: string;
+        ttd_kepala_sekolah?: string | null;
+        ttd_bendahara?: string | null;
+        ttd_ketua_umum?: string | null;
     };
 }
 

@@ -114,7 +114,7 @@ export interface UpdatePengajuanDTO {
 }
 
 export interface CreateDetailPengajuanDTO {
-    detail_mata_anggaran_id: number;
+    detail_mata_anggaran_id?: number | null;
     mata_anggaran_id?: number | null;
     sub_mata_anggaran_id?: number | null;
     nama_item?: string;
@@ -315,6 +315,7 @@ export interface CreateIndikatorDTO {
 }
 
 export interface UpdateIndikatorDTO {
+    strategy_id?: number;
     kode?: string;
     nama?: string;
 }
@@ -327,6 +328,8 @@ export interface CreateProkerDTO {
 }
 
 export interface UpdateProkerDTO {
+    strategy_id?: number;
+    indikator_id?: number;
     kode?: string;
     nama?: string;
 }

@@ -74,7 +74,7 @@ function transformLpj(lpj: Lpj): QueueItem {
         type: 'lpj',
         nomor: lpj.nomor_lpj || lpj.nomor || '-',
         perihal: lpj.perihal || `LPJ - ${lpj.pengajuan_anggaran?.perihal || '-'}`,
-        unit: lpj.unit?.nama || lpj.pengajuan_anggaran?.unit?.nama || '-',
+        unit: lpj.unit || lpj.pengajuan_anggaran?.unit?.nama || '-',
         pengaju: lpj.user?.name || '-',
         total: total,
         tanggal_masuk: lpj.created_at,
