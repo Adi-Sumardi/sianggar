@@ -18,7 +18,7 @@ import {
 import { toast } from 'sonner';
 
 import { staggerContainer, staggerItem } from '@/lib/animations';
-import { formatRupiah } from '@/lib/currency';
+import { formatRupiah, formatVolume } from '@/lib/currency';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
@@ -1393,7 +1393,7 @@ function DetailMataAnggaranRow({
             <span className="font-mono text-xs font-medium text-emerald-600">{detail.kode}</span>
             <span className="flex-1 text-sm text-slate-700">{detail.nama}</span>
             <span className="text-xs text-slate-500">
-                {detail.volume} {detail.satuan}
+                {formatVolume(detail.volume)} {detail.satuan}
             </span>
             <span className="text-xs text-slate-500">@ {formatRupiah(detail.harga_satuan)}</span>
             <span className="text-sm font-medium text-slate-900">{formatRupiah(detail.jumlah)}</span>

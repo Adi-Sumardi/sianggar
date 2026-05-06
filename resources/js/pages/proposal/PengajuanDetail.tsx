@@ -21,7 +21,7 @@ import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ApprovalTimeline } from '@/components/common/ApprovalTimeline';
-import { formatRupiah } from '@/lib/currency';
+import { formatRupiah, formatVolume } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
@@ -387,7 +387,7 @@ export default function PengajuanDetail() {
                                                     <td className="px-4 py-3 text-slate-700">
                                                         {detail.uraian || detail.detail_mata_anggaran?.nama || '-'}
                                                     </td>
-                                                    <td className="px-4 py-3 text-right text-slate-700">{detail.volume || '-'}</td>
+                                                    <td className="px-4 py-3 text-right text-slate-700">{detail.volume != null ? formatVolume(detail.volume) : '-'}</td>
                                                     <td className="px-4 py-3 text-slate-700">{detail.satuan || '-'}</td>
                                                     <td className="px-4 py-3 text-right text-slate-700">
                                                         {detail.harga_satuan ? formatRupiah(detail.harga_satuan) : '-'}

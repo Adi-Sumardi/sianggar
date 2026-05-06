@@ -25,7 +25,7 @@ import {
 import { PageTransition } from '@/components/layout/PageTransition';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { RevisionCommentThread } from '@/components/common/RevisionCommentThread';
-import { formatRupiah } from '@/lib/currency';
+import { formatRupiah, formatVolume } from '@/lib/currency';
 import { formatDateTime } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
@@ -776,7 +776,7 @@ export default function RapbsDetail() {
                                                             )}
                                                         </td>
                                                         <td className="px-4 py-3 text-center text-slate-700">
-                                                            <span className="font-medium">{item.volume}</span>
+                                                            <span className="font-medium">{formatVolume(item.volume)}</span>
                                                             <span className="text-slate-500 ml-1">{item.satuan}</span>
                                                         </td>
                                                         <td className="px-4 py-3 text-right text-slate-700">

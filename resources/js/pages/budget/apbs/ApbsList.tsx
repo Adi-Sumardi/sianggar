@@ -5,7 +5,7 @@ import { Plus, Save, X, Pencil, DollarSign, Loader2, Printer, ChevronDown, Chevr
 import { toast } from 'sonner';
 
 import { staggerContainer, staggerItem, cardHover } from '@/lib/animations';
-import { formatRupiah } from '@/lib/currency';
+import { formatRupiah, formatVolume } from '@/lib/currency';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { SearchFilter } from '@/components/common/SearchFilter';
@@ -736,7 +736,7 @@ function ApbsSubMataAnggaranRow({ sub, mataAnggaranId, isExpanded, onToggle }: A
                                     </span>
                                     {detail.volume && detail.satuan && (
                                         <span className="text-xs text-slate-500">
-                                            {detail.volume} {detail.satuan}
+                                            {formatVolume(detail.volume)} {detail.satuan}
                                         </span>
                                     )}
                                     {detail.harga_satuan && (

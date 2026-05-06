@@ -14,3 +14,12 @@ export function parseRupiah(formatted: string): number {
 export function formatNumber(value: number): string {
     return new Intl.NumberFormat('id-ID').format(value);
 }
+
+// Tampilkan volume tanpa desimal jika bilangan bulat: 1.00 → "1", 1.5 → "1,5"
+export function formatVolume(value: number | string | null | undefined): string {
+    const num = Number(value);
+    if (isNaN(num)) return String(value ?? '');
+    return Number.isInteger(num)
+        ? String(num)
+        : new Intl.NumberFormat('id-ID').format(num);
+}

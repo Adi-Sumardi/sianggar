@@ -32,6 +32,12 @@ function n(v: unknown): number {
     return isNaN(num) ? 0 : num;
 }
 
+// Format volume: tampilkan tanpa desimal jika bulat (cegah "1.00" terbaca "100" di Excel locale ID)
+function fmtVolume(v: unknown): string {
+    const num = n(v);
+    return Number.isInteger(num) ? String(num) : num.toLocaleString('id-ID');
+}
+
 // Indonesian Rupiah Excel format
 const IDR_FMT = '"Rp "#,##0';
 
@@ -162,7 +168,7 @@ export async function exportUnitRapbsExcel(
             const detailsResp = await getDetailMataAnggarans({ mata_anggaran_id: ma.id, per_page: 500 });
             const details = detailsResp.data || [];
             for (const d of details) {
-                const uraian = `${d.nama}  (${n(d.volume)} ${d.satuan} × Rp ${n(d.harga_satuan).toLocaleString('id-ID')})`;
+                const uraian = `${d.nama}  (${fmtVolume(d.volume)} ${d.satuan} × Rp ${n(d.harga_satuan).toLocaleString('id-ID')})`;
                 const ds     = makeStyle({ size: 8, fg: C.detailFg });
                 const dsR    = makeStyle({ size: 8, fg: C.detailFg, align: 'right' });
                 setCell(ws, r, 0, null, ds);
@@ -185,20 +191,19 @@ export async function exportUnitRapbsExcel(
                 const details  = detailsResp.data || [];
                 const subTotal = details.reduce((s, d) => s + n(d.jumlah), 0);
 
-                // ── Sub Mata Anggaran row ────────────────────────────────────
+                // ── Sub Mata Anggaran row (tanpa angka, tanpa prefix maNo.subNo) ─
                 const ss  = makeStyle({ bold: true, size: 9, bg: C.subBg, fg: C.subFg });
-                const ssR = makeStyle({ bold: true, size: 9, bg: C.subBg, fg: C.subFg, align: 'right' });
                 setCell(ws, r, 0, null, ss);
                 setCell(ws, r, 1, null, ss);
-                setCell(ws, r, 2, `${maNo}.${subNo}  ${sub.kode}  ${sub.nama}`, ss);
+                setCell(ws, r, 2, `${sub.kode}  ${sub.nama}`, ss);
                 setCell(ws, r, 3, null, ss);
-                setCell(ws, r, 4, subTotal, ssR, IDR_FMT);
-                merge(r, 2, r, 3);
+                setCell(ws, r, 4, null, ss);
+                merge(r, 2, r, 4);
                 r++;
 
                 // ── Detail rows ──────────────────────────────────────────────
                 for (const d of details) {
-                    const uraian = `${d.nama}  (${n(d.volume)} ${d.satuan} × Rp ${n(d.harga_satuan).toLocaleString('id-ID')})`;
+                    const uraian = `${d.nama}  (${fmtVolume(d.volume)} ${d.satuan} × Rp ${n(d.harga_satuan).toLocaleString('id-ID')})`;
                     const ds     = makeStyle({ size: 8, fg: C.detailFg });
                     const dsR    = makeStyle({ size: 8, fg: C.detailFg, align: 'right' });
                     setCell(ws, r, 0, null, ds);

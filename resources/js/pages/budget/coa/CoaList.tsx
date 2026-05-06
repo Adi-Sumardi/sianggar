@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
-import { formatRupiah } from '@/lib/currency';
+import { formatRupiah, formatVolume } from '@/lib/currency';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { DataTable } from '@/components/common/DataTable';
@@ -762,7 +762,7 @@ function SubMataAnggaranCoaRow({ sub, mataAnggaranId, isExpanded, onToggle }: Su
                                     </span>
                                     {detail.volume && detail.satuan && (
                                         <span className="text-xs text-slate-500">
-                                            {detail.volume} {detail.satuan}
+                                            {formatVolume(detail.volume)} {detail.satuan}
                                         </span>
                                     )}
                                     {detail.jumlah && (

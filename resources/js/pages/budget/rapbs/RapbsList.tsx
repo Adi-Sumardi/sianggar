@@ -17,7 +17,7 @@ import {
 
 import { cn } from '@/lib/utils';
 import { staggerContainer, staggerItem, cardHover } from '@/lib/animations';
-import { formatRupiah } from '@/lib/currency';
+import { formatRupiah, formatVolume } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -1135,7 +1135,7 @@ function SubMataAnggaranRow({ sub, mataAnggaranId, isExpanded, onToggle }: SubMa
                                     </span>
                                     {detail.volume && detail.satuan && (
                                         <span className="text-xs text-slate-500">
-                                            {detail.volume} {detail.satuan}
+                                            {formatVolume(detail.volume)} {detail.satuan}
                                         </span>
                                     )}
                                     {detail.harga_satuan && (
