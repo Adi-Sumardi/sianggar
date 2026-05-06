@@ -29,18 +29,14 @@ function idrFmt(cell: ExcelJS.Cell, value: number) {
     cell.alignment = { horizontal: 'right', vertical: 'middle' };
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+function sanitizeSheetName(name: string, index: number): string {
+    const clean = name.replace(/[:\\/?\*\[\]]/g, '').trim().slice(0, 31);
+    return clean || `Unit ${index + 1}`;
+}
 
-export async function exportUnitRapbsExcel(
-    unit: RapbsUnitData,
-    tahun: string,
-): Promise<void> {
-    const wb  = new ExcelJS.Workbook();
-    const ws  = wb.addWorksheet(
-        unit.unit_kode.replace(/[^a-zA-Z0-9\s]/g, '').slice(0, 31) || 'Unit',
-        { properties: { defaultRowHeight: 15 } },
-    );
+// ── Core sheet builder ────────────────────────────────────────────────────────
 
+async function buildUnitSheet(ws: ExcelJS.Worksheet, unit: RapbsUnitData, tahun: string): Promise<void> {
     // Column widths
     ws.columns = [
         { key: 'a', width: 6  },
@@ -50,7 +46,6 @@ export async function exportUnitRapbsExcel(
         { key: 'e', width: 22 },
     ];
 
-    // ── Helper to add empty-fill cells so styles apply to merged area ─────────
     const addRow = (...values: (string | number | null)[]) => {
         const r = ws.addRow(values);
         r.height = 16;
@@ -118,9 +113,7 @@ export async function exportUnitRapbsExcel(
             c.border = allBorder;
             c.alignment = { horizontal: col === 'A' ? 'center' : col === 'E' ? 'right' : 'left', vertical: 'middle' };
         });
-
-        // Bold + Rupiah format for E
-        rMA.getCell('E').font = { bold: true, size: 9, color: { argb: 'FF1E40AF' }, name: 'Calibri' };
+        rMA.getCell('E').font   = { bold: true, size: 9, color: { argb: 'FF1E40AF' }, name: 'Calibri' };
         rMA.getCell('E').numFmt = '"Rp "#,##0';
 
         if (subs.length === 0) {
@@ -193,10 +186,55 @@ export async function exportUnitRapbsExcel(
         c.alignment = { horizontal: col === 'B' ? 'left' : col === 'E' ? 'right' : 'center', vertical: 'middle' };
     });
     rT.getCell('E').numFmt = '"Rp "#,##0';
+}
 
-    // ── Save ──────────────────────────────────────────────────────────────────
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export async function exportUnitRapbsExcel(
+    unit: RapbsUnitData,
+    tahun: string,
+): Promise<void> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet(
+        sanitizeSheetName(unit.unit_nama, 0),
+        { properties: { defaultRowHeight: 15 } },
+    );
+
+    await buildUnitSheet(ws, unit, tahun);
+
     const buffer   = await wb.xlsx.writeBuffer();
     const blob     = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const filename = `RAPBS_${tahun.replace('/', '-')}_${unit.unit_kode}.xlsx`;
+    saveAs(blob, filename);
+}
+
+export async function exportAllUnitsRapbsExcel(
+    units: RapbsUnitData[],
+    tahun: string,
+    onProgress?: (current: number, total: number) => void,
+): Promise<void> {
+    const wb = new ExcelJS.Workbook();
+
+    // Track used sheet names to guarantee uniqueness
+    const usedNames = new Set<string>();
+
+    for (let i = 0; i < units.length; i++) {
+        const unit = units[i];
+
+        let sheetName = sanitizeSheetName(unit.unit_nama, i);
+        if (usedNames.has(sheetName)) {
+            sheetName = sheetName.slice(0, 28) + ` ${i + 1}`;
+        }
+        usedNames.add(sheetName);
+
+        const ws = wb.addWorksheet(sheetName, { properties: { defaultRowHeight: 15 } });
+        await buildUnitSheet(ws, unit, tahun);
+
+        onProgress?.(i + 1, units.length);
+    }
+
+    const buffer   = await wb.xlsx.writeBuffer();
+    const blob     = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const filename = `RAPBS_${tahun.replace('/', '-')}_Semua_Unit.xlsx`;
     saveAs(blob, filename);
 }

@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download } from 'lucide-react';
-import { exportUnitRapbsExcel } from '@/lib/exportRapbsExcel';
+import { exportUnitRapbsExcel, exportAllUnitsRapbsExcel } from '@/lib/exportRapbsExcel';
 import { toast } from 'sonner';
 import {
     BarChart,
@@ -67,6 +67,7 @@ export default function RapbsList() {
     const [viewMode, setViewMode] = useState<'records' | 'aggregated'>('records');
     const [includeBagianUmum, setIncludeBagianUmum] = useState(false);
     const [exportingUnitId, setExportingUnitId] = useState<number | null>(null);
+    const [exportAllProgress, setExportAllProgress] = useState<{ current: number; total: number } | null>(null);
 
     const handleExportUnit = useCallback(async (unit: RapbsUnitData) => {
         setExportingUnitId(unit.unit_id);
@@ -165,6 +166,23 @@ export default function RapbsList() {
             unit.unit_kode.toLowerCase().includes(searchQuery.toLowerCase())
         )
         : allUnits;
+
+    const handleExportAll = useCallback(async () => {
+        if (units.length === 0) return;
+        setExportAllProgress({ current: 0, total: units.length });
+        try {
+            await exportAllUnitsRapbsExcel(
+                units,
+                filterValues.tahun || defaultTahun,
+                (current, total) => setExportAllProgress({ current, total }),
+            );
+            toast.success('Excel semua unit berhasil diunduh');
+        } catch {
+            toast.error('Gagal mengekspor Excel');
+        } finally {
+            setExportAllProgress(null);
+        }
+    }, [units, filterValues.tahun, defaultTahun]);
 
     // Unit "Bagian Umum" can be excluded from grand totals via toggle
     const isBagianUmum = (unit: { unit_nama: string; unit_kode: string }) =>
@@ -451,6 +469,31 @@ export default function RapbsList() {
 
                         {/* Unit Cards */}
                         <div className="space-y-4">
+                    {units.length > 0 && (
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs text-slate-500">
+                                {units.length} unit · {totalItems} mata anggaran
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleExportAll}
+                                disabled={!!exportAllProgress}
+                                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {exportAllProgress ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Memproses {exportAllProgress.current}/{exportAllProgress.total} unit...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download className="h-4 w-4" />
+                                        Download Excel Semua Unit
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
                     {units.length === 0 ? (
                         <div className="rounded-lg border border-slate-200 bg-white px-6 py-12 text-center">
                             <p className="text-sm text-slate-500">Tidak ada data RAPBS yang ditemukan.</p>
