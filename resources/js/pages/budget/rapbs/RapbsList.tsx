@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows } from 'lucide-react';
+import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download } from 'lucide-react';
+import { exportUnitRapbsExcel } from '@/lib/exportRapbsExcel';
 import { toast } from 'sonner';
 import {
     BarChart,
@@ -65,6 +66,19 @@ export default function RapbsList() {
     const [expandedMa, setExpandedMa] = useState<Set<number>>(new Set());
     const [viewMode, setViewMode] = useState<'records' | 'aggregated'>('records');
     const [includeBagianUmum, setIncludeBagianUmum] = useState(false);
+    const [exportingUnitId, setExportingUnitId] = useState<number | null>(null);
+
+    const handleExportUnit = useCallback(async (unit: RapbsUnitData) => {
+        setExportingUnitId(unit.unit_id);
+        try {
+            await exportUnitRapbsExcel(unit, filterValues.tahun || defaultTahun);
+            toast.success(`Excel ${unit.unit_nama} berhasil diunduh`);
+        } catch {
+            toast.error('Gagal mengekspor Excel');
+        } finally {
+            setExportingUnitId(null);
+        }
+    }, [filterValues.tahun, defaultTahun]);
 
     // Get current user and check if admin
     const { user } = useAuth();
@@ -468,11 +482,25 @@ export default function RapbsList() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-slate-400">Total Anggaran</p>
-                                            <p className="text-base font-bold text-slate-900">
-                                                {formatRupiah(unitTotal)}
-                                            </p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                                <p className="text-xs text-slate-400">Total Anggaran</p>
+                                                <p className="text-base font-bold text-slate-900">
+                                                    {formatRupiah(unitTotal)}
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleExportUnit(unit)}
+                                                disabled={exportingUnitId === unit.unit_id}
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50"
+                                            >
+                                                {exportingUnitId === unit.unit_id
+                                                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    : <Download className="h-3.5 w-3.5" />
+                                                }
+                                                Excel
+                                            </button>
                                         </div>
                                     </div>
 
