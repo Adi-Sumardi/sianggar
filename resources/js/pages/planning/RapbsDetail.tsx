@@ -184,8 +184,14 @@ export default function RapbsDetail() {
         rapbs?.unit_id && rapbs?.tahun ? aggregatedParams : null
     );
 
-    // Get the unit data from aggregated response
+    // Get the unit data from aggregated response (for plafon, apbs_tahun_lalu, asumsi_realisasi)
     const unitRekapData = rapbsAggregated?.find(u => u.unit_id === rapbs?.unit_id);
+
+    // PKT-based total (from detail_mata_anggarans) — single source of truth, same as /budget/rapbs
+    const pktTotalAnggaran = useMemo(
+        () => unitRekapData?.mata_anggarans.reduce((sum, ma) => sum + ma.total, 0) ?? 0,
+        [unitRekapData],
+    );
 
     // Calculate academic years
     const academicYears = rapbs?.tahun ? formatAcademicYear(rapbs.tahun) : { previous: '', current: '' };
@@ -263,7 +269,7 @@ export default function RapbsDetail() {
 
     // Check if total anggaran exceeds total plafon (cannot submit if over budget)
     const totalPlafon = unitRekapData?.mata_anggarans.reduce((sum, ma) => sum + (ma.plafon_apbs ?? 0), 0) ?? 0;
-    const totalAnggaran = unitRekapData?.mata_anggarans.reduce((sum, ma) => sum + ma.total, 0) ?? 0;
+    const totalAnggaran = pktTotalAnggaran;
     const isOverBudget = totalPlafon > 0 && totalAnggaran > totalPlafon;
 
     const handleSubmit = async () => {
@@ -666,7 +672,9 @@ export default function RapbsDetail() {
                                     </div>
                                     <div>
                                         <p className="text-xs text-slate-500">Total Anggaran</p>
-                                        <p className="font-semibold text-slate-900">{formatRupiah(rapbs.total_anggaran)}</p>
+                                        <p className="font-semibold text-slate-900">
+                                            {isLoadingAggregated ? '...' : formatRupiah(pktTotalAnggaran)}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -794,7 +802,7 @@ export default function RapbsDetail() {
                                                         Total Anggaran
                                                     </td>
                                                     <td className="px-4 py-3 text-right font-bold text-lg text-slate-900">
-                                                        {formatRupiah(rapbs.total_anggaran)}
+                                                        {formatRupiah(pktTotalAnggaran)}
                                                     </td>
                                                 </tr>
                                             </tfoot>

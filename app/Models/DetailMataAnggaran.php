@@ -94,4 +94,40 @@ class DetailMataAnggaran extends Model
     {
         return $this->hasMany(LampiranMataAnggaran::class);
     }
+
+    // -------------------------------------------------------------------------
+    // Sync hooks
+    // -------------------------------------------------------------------------
+
+    protected static function booted(): void
+    {
+        // When jumlah changes, sync all linked RapbsItems and recalculate totals.
+        static::updated(function (DetailMataAnggaran $detail) {
+            if (! $detail->wasChanged('jumlah')) {
+                return;
+            }
+
+            $rapbsIds = RapbsItem::where('detail_mata_anggaran_id', $detail->id)
+                ->pluck('rapbs_id')
+                ->unique();
+
+            RapbsItem::where('detail_mata_anggaran_id', $detail->id)
+                ->update(['jumlah' => $detail->jumlah, 'harga_satuan' => $detail->jumlah]);
+
+            Rapbs::whereIn('id', $rapbsIds)
+                ->each(fn (Rapbs $rapbs) => $rapbs->recalculateTotal());
+        });
+
+        // When deleted, remove linked RapbsItems and recalculate totals.
+        static::deleted(function (DetailMataAnggaran $detail) {
+            $rapbsIds = RapbsItem::where('detail_mata_anggaran_id', $detail->id)
+                ->pluck('rapbs_id')
+                ->unique();
+
+            RapbsItem::where('detail_mata_anggaran_id', $detail->id)->delete();
+
+            Rapbs::whereIn('id', $rapbsIds)
+                ->each(fn (Rapbs $rapbs) => $rapbs->recalculateTotal());
+        });
+    }
 }
