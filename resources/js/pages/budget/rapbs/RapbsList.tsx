@@ -1,8 +1,10 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download } from 'lucide-react';
+import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download, Printer } from 'lucide-react';
+import { useReactToPrint } from 'react-to-print';
 import { exportUnitRapbsExcel, exportAllUnitsRapbsExcel } from '@/lib/exportRapbsExcel';
+import { RapbsPersetujuanDocument, buildPersetujuanData, type PersetujuanMataAnggaran } from './RapbsPersetujuanPrint';
 import { toast } from 'sonner';
 import {
     BarChart,
@@ -22,6 +24,7 @@ import { formatRupiah, formatVolume } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageTransition } from '@/components/layout/PageTransition';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { SearchFilter } from '@/components/common/SearchFilter';
 import { StatCard } from '@/components/common/StatCard';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -69,6 +72,11 @@ export default function RapbsList() {
     const [includeBagianUmum, setIncludeBagianUmum] = useState(false);
     const [exportingUnitId, setExportingUnitId] = useState<number | null>(null);
     const [exportAllProgress, setExportAllProgress] = useState<{ current: number; total: number } | null>(null);
+    const [printQueue, setPrintQueue] = useState<Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[] }> | null>(null);
+    const [printPreparing, setPrintPreparing] = useState<{ current: number; total: number } | null>(null);
+    const [printDialog, setPrintDialog] = useState<RapbsUnitData[] | null>(null);
+    const [kepalaNames, setKepalaNames] = useState<Record<number, string>>({});
+    const printRef = useRef<HTMLDivElement>(null);
 
     const handleExportUnit = useCallback(async (unit: RapbsUnitData) => {
         setExportingUnitId(unit.unit_id);
@@ -184,6 +192,59 @@ export default function RapbsList() {
             setExportAllProgress(null);
         }
     }, [units, filterValues.tahun, defaultTahun]);
+
+    // Cetak persetujuan anggaran (per unit atau semua unit sekaligus).
+    // Data sub mata anggaran & detail diambil dulu dari API (seperti export Excel),
+    // baru dialihkan ke dialog print.
+    const handlePrint = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: `Persetujuan-RAPBS-${(filterValues.tahun || defaultTahun).replace('/', '-')}`,
+        onAfterPrint: () => setPrintQueue(null),
+    });
+
+    useEffect(() => {
+        if (printQueue && printQueue.length > 0) {
+            handlePrint();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [printQueue]);
+
+    const findRapbsForUnit = useCallback(
+        (unitId: number) => rapbsRecords.find((r) => r.unit_id === unitId),
+        [rapbsRecords],
+    );
+
+    // Buka popup pengisian nama Kepala Sekolah/Kepala Unit sebelum cetak,
+    // prefill dari nama pengaju RAPBS jika ada
+    const openPrintDialog = useCallback((targets: RapbsUnitData[]) => {
+        if (targets.length === 0) return;
+        setKepalaNames((prev) => {
+            const names: Record<number, string> = {};
+            for (const u of targets) {
+                names[u.unit_id] = prev[u.unit_id] || (findRapbsForUnit(u.unit_id)?.submitter?.name ?? '');
+            }
+            return names;
+        });
+        setPrintDialog(targets);
+    }, [findRapbsForUnit]);
+
+    const preparePersetujuanPrint = useCallback(async (targets: RapbsUnitData[]) => {
+        if (targets.length === 0) return;
+        setPrintPreparing({ current: 0, total: targets.length });
+        try {
+            const items: Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[] }> = [];
+            for (let i = 0; i < targets.length; i++) {
+                const mataAnggarans = await buildPersetujuanData(targets[i]);
+                items.push({ unit: targets[i], mataAnggarans });
+                setPrintPreparing({ current: i + 1, total: targets.length });
+            }
+            setPrintQueue(items);
+        } catch {
+            toast.error('Gagal menyiapkan dokumen persetujuan');
+        } finally {
+            setPrintPreparing(null);
+        }
+    }, []);
 
     // Unit "Bagian Umum" can be excluded from grand totals via toggle
     const isBagianUmum = (unit: { unit_nama: string; unit_kode: string }) =>
@@ -475,24 +536,44 @@ export default function RapbsList() {
                             <p className="text-xs text-slate-500">
                                 {units.length} unit · {totalItems} mata anggaran
                             </p>
-                            <button
-                                type="button"
-                                onClick={handleExportAll}
-                                disabled={!!exportAllProgress}
-                                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {exportAllProgress ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Memproses {exportAllProgress.current}/{exportAllProgress.total} unit...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Download className="h-4 w-4" />
-                                        Download Excel Semua Unit
-                                    </>
-                                )}
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleExportAll}
+                                    disabled={!!exportAllProgress}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {exportAllProgress ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Memproses {exportAllProgress.current}/{exportAllProgress.total} unit...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Download className="h-4 w-4" />
+                                            Download Excel Semua Unit
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => openPrintDialog(units)}
+                                    disabled={!!printPreparing || !!printQueue}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {printPreparing ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Menyiapkan {printPreparing.current}/{printPreparing.total} unit...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Printer className="h-4 w-4" />
+                                            Cetak Persetujuan Semua Unit
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     )}
                     {units.length === 0 ? (
@@ -544,6 +625,18 @@ export default function RapbsList() {
                                                     : <Download className="h-3.5 w-3.5" />
                                                 }
                                                 Excel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => openPrintDialog([unit])}
+                                                disabled={!!printPreparing || !!printQueue}
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
+                                            >
+                                                {printPreparing?.total === 1
+                                                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    : <Printer className="h-3.5 w-3.5" />
+                                                }
+                                                Cetak
                                             </button>
                                         </div>
                                     </div>
@@ -858,7 +951,80 @@ export default function RapbsList() {
                         })()}
                     </>
                 )}
+
+                {/* Hidden print container untuk Lembar Persetujuan Anggaran */}
+                <div style={{ overflow: 'hidden', height: 0 }}>
+                    <div ref={printRef}>
+                        {(printQueue ?? []).map((item, idx) => (
+                            <div
+                                key={item.unit.unit_id}
+                                style={idx < (printQueue?.length ?? 0) - 1 ? { pageBreakAfter: 'always' } : undefined}
+                            >
+                                <RapbsPersetujuanDocument
+                                    unit={item.unit}
+                                    tahun={filterValues.tahun || defaultTahun}
+                                    mataAnggarans={item.mataAnggarans}
+                                    rapbs={findRapbsForUnit(item.unit.unit_id)}
+                                    kepalaSekolah={kepalaNames[item.unit.unit_id]}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Popup pengisian nama Kepala Sekolah/Kepala Unit sebelum cetak */}
+                <ConfirmDialog
+                    open={!!printDialog}
+                    onOpenChange={(open) => {
+                        if (!open) setPrintDialog(null);
+                    }}
+                    title="Cetak Persetujuan Anggaran"
+                    description="Isi nama Kepala Sekolah/Kepala Unit yang akan tercantum sebagai penandatangan pada lembar persetujuan."
+                    confirmLabel="Cetak"
+                    cancelLabel="Batal"
+                    onConfirm={() => {
+                        const targets = printDialog;
+                        setPrintDialog(null);
+                        if (targets) preparePersetujuanPrint(targets);
+                    }}
+                >
+                    <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                        {(printDialog ?? []).map((u) => (
+                            <div key={u.unit_id}>
+                                <label className="mb-1 block text-xs font-medium text-slate-600">
+                                    {u.unit_nama}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={kepalaNames[u.unit_id] ?? ''}
+                                    onChange={(e) =>
+                                        setKepalaNames((prev) => ({ ...prev, [u.unit_id]: e.target.value }))
+                                    }
+                                    placeholder="Nama Kepala Sekolah/Kepala Unit"
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </ConfirmDialog>
             </motion.div>
+
+            {/* Print Styles */}
+            <style>{`
+                @media print {
+                    @page {
+                        size: A4;
+                        margin: 1cm;
+                    }
+                    body {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    .page-break-inside-avoid {
+                        page-break-inside: avoid;
+                    }
+                }
+            `}</style>
         </PageTransition>
     );
 }
