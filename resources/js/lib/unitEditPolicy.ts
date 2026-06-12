@@ -1,10 +1,10 @@
 // ---------------------------------------------------------------------------
 // Kebijakan edit anggaran per unit
 // ---------------------------------------------------------------------------
-// Saat ini hanya unit Bagian Umum dan STEBANK yang masih diperbolehkan
-// mengubah/menghapus data anggaran (PKT, RAPBS, Mata Anggaran).
+// Saat ini hanya unit Bagian Umum, STEBANK, dan Sekretariat yang masih
+// diperbolehkan mengubah/menghapus data anggaran (PKT, RAPBS, Mata Anggaran).
 
-const EDITABLE_UNIT_KEYWORDS = ['bagian umum', 'stebank'];
+const EDITABLE_UNIT_KEYWORDS = ['bagian umum', 'stebank', 'sekretariat'];
 
 /**
  * Cek apakah unit (berdasarkan nama/kode) masih boleh mengedit data anggaran.
@@ -17,4 +17,4 @@ export function canUnitEditBudget(...identifiers: Array<string | null | undefine
 }
 
 export const UNIT_EDIT_DISABLED_MESSAGE =
-    'Hanya unit Bagian Umum dan STEBANK yang dapat mengubah data';
+    'Hanya unit Bagian Umum, STEBANK, dan Sekretariat yang dapat mengubah data';
