@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useMataAnggarans, useDeleteMataAnggaran, useSubMataAnggarans } from '@/hooks/useBudget';
 import { useUnitsList } from '@/hooks/useUnits';
 import { useAuth } from '@/hooks/useAuth';
+import { canUnitEditBudget, UNIT_EDIT_DISABLED_MESSAGE } from '@/lib/unitEditPolicy';
 import { getAcademicYearOptions } from '@/stores/authStore';
 import { UserRole, isApproverRole } from '@/types/enums';
 import type { MataAnggaran, SubMataAnggaran } from '@/types/models';
@@ -265,6 +266,7 @@ interface MataAnggaranRowProps {
 
 function MataAnggaranRow({ item, isExpanded, onToggle, onView, onEdit, onDelete }: MataAnggaranRowProps) {
     const subCount = item.sub_mata_anggarans_count ?? item.sub_mata_anggarans?.length ?? 0;
+    const unitEditable = canUnitEditBudget(item.unit?.nama, item.unit?.kode);
 
     // Fetch sub mata anggarans when expanded
     const {
@@ -325,16 +327,20 @@ function MataAnggaranRow({ item, isExpanded, onToggle, onView, onEdit, onDelete 
                         <button
                             type="button"
                             onClick={onEdit}
-                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                            disabled={!unitEditable}
+                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
                             aria-label="Edit"
+                            title={unitEditable ? 'Edit' : UNIT_EDIT_DISABLED_MESSAGE}
                         >
                             <Pencil className="h-4 w-4" />
                         </button>
                         <button
                             type="button"
                             onClick={onDelete}
-                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                            disabled={!unitEditable}
+                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
                             aria-label="Hapus"
+                            title={unitEditable ? 'Hapus' : UNIT_EDIT_DISABLED_MESSAGE}
                         >
                             <Trash2 className="h-4 w-4" />
                         </button>

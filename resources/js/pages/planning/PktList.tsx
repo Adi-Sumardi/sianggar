@@ -13,6 +13,7 @@ import { DataTable } from '@/components/common/DataTable';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatRupiah } from '@/lib/currency';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { canUnitEditBudget, UNIT_EDIT_DISABLED_MESSAGE } from '@/lib/unitEditPolicy';
 
 import {
     usePkts,
@@ -245,34 +246,44 @@ export default function PktList() {
             id: 'actions',
             header: '',
             enableSorting: false,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-1">
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/planning/pkt/${row.original.id}/edit`);
-                        }}
-                        disabled={rapbsLocked}
-                        className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
-                        title={rapbsLocked ? 'RAPBS sedang diajukan' : 'Edit'}
-                    >
-                        <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteDialog({ open: true, item: row.original });
-                        }}
-                        disabled={rapbsLocked}
-                        className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
-                        title={rapbsLocked ? 'RAPBS sedang diajukan' : 'Hapus'}
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
-            ),
+            cell: ({ row }) => {
+                const unitEditable = canUnitEditBudget(
+                    row.original.unit_relation?.nama,
+                    row.original.unit_relation?.kode,
+                    row.original.unit || user?.unit?.nama,
+                );
+                const disabled = rapbsLocked || !unitEditable;
+                const disabledTitle = !unitEditable ? UNIT_EDIT_DISABLED_MESSAGE : 'RAPBS sedang diajukan';
+
+                return (
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/planning/pkt/${row.original.id}/edit`);
+                            }}
+                            disabled={disabled}
+                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                            title={disabled ? disabledTitle : 'Edit'}
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteDialog({ open: true, item: row.original });
+                            }}
+                            disabled={disabled}
+                            className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                            title={disabled ? disabledTitle : 'Hapus'}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </button>
+                    </div>
+                );
+            },
         },
     ];
 

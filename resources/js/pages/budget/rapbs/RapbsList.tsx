@@ -17,6 +17,7 @@ import {
 
 import { cn } from '@/lib/utils';
 import { staggerContainer, staggerItem, cardHover } from '@/lib/animations';
+import { canUnitEditBudget } from '@/lib/unitEditPolicy';
 import { formatRupiah, formatVolume } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -588,7 +589,7 @@ export default function RapbsList() {
                                                             onToggle={() => toggleMaExpand(ma.id)}
                                                             onUpdateComparison={handleUpdateBudgetComparison}
                                                             isUpdating={updateBudgetComparison.isPending}
-                                                            isAdmin={isAdmin}
+                                                            canEdit={isAdmin && canUnitEditBudget(unit.unit_nama, unit.unit_kode)}
                                                         />
                                                     );
                                                 })}
@@ -880,10 +881,10 @@ interface MataAnggaranRowProps {
     onToggle: () => void;
     onUpdateComparison: (id: number, field: 'apbs_tahun_lalu' | 'asumsi_realisasi', value: number) => void;
     isUpdating: boolean;
-    isAdmin: boolean;
+    canEdit: boolean;
 }
 
-function MataAnggaranRow({ ma, isExpanded, onToggle, onUpdateComparison, isUpdating, isAdmin }: MataAnggaranRowProps) {
+function MataAnggaranRow({ ma, isExpanded, onToggle, onUpdateComparison, isUpdating, canEdit }: MataAnggaranRowProps) {
     const [expandedSub, setExpandedSub] = useState<Set<number>>(new Set());
     const [editingField, setEditingField] = useState<'apbs_tahun_lalu' | 'asumsi_realisasi' | null>(null);
     const [editValue, setEditValue] = useState<number>(0);
@@ -957,7 +958,7 @@ function MataAnggaranRow({ ma, isExpanded, onToggle, onUpdateComparison, isUpdat
                 </td>
                 {/* APBS Tahun Lalu - Editable only for Admin */}
                 <td className="px-2 py-2 text-right">
-                    {isAdmin && editingField === 'apbs_tahun_lalu' ? (
+                    {canEdit && editingField === 'apbs_tahun_lalu' ? (
                         <div className="flex items-center justify-end gap-1">
                             <CurrencyInput
                                 value={editValue}
@@ -980,7 +981,7 @@ function MataAnggaranRow({ ma, isExpanded, onToggle, onUpdateComparison, isUpdat
                                 <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
-                    ) : isAdmin ? (
+                    ) : canEdit ? (
                         <button
                             type="button"
                             onClick={() => handleStartEdit('apbs_tahun_lalu')}
@@ -996,7 +997,7 @@ function MataAnggaranRow({ ma, isExpanded, onToggle, onUpdateComparison, isUpdat
                 </td>
                 {/* Asumsi Realisasi - Editable only for Admin */}
                 <td className="px-2 py-2 text-right">
-                    {isAdmin && editingField === 'asumsi_realisasi' ? (
+                    {canEdit && editingField === 'asumsi_realisasi' ? (
                         <div className="flex items-center justify-end gap-1">
                             <CurrencyInput
                                 value={editValue}
@@ -1019,7 +1020,7 @@ function MataAnggaranRow({ ma, isExpanded, onToggle, onUpdateComparison, isUpdat
                                 <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
-                    ) : isAdmin ? (
+                    ) : canEdit ? (
                         <button
                             type="button"
                             onClick={() => handleStartEdit('asumsi_realisasi')}
