@@ -536,44 +536,24 @@ export default function RapbsList() {
                             <p className="text-xs text-slate-500">
                                 {units.length} unit · {totalItems} mata anggaran
                             </p>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleExportAll}
-                                    disabled={!!exportAllProgress}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {exportAllProgress ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Memproses {exportAllProgress.current}/{exportAllProgress.total} unit...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Download className="h-4 w-4" />
-                                            Download Excel Semua Unit
-                                        </>
-                                    )}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => openPrintDialog(units)}
-                                    disabled={!!printPreparing || !!printQueue}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {printPreparing ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Menyiapkan {printPreparing.current}/{printPreparing.total} unit...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Printer className="h-4 w-4" />
-                                            Cetak Persetujuan Semua Unit
-                                        </>
-                                    )}
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={handleExportAll}
+                                disabled={!!exportAllProgress}
+                                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {exportAllProgress ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Memproses {exportAllProgress.current}/{exportAllProgress.total} unit...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download className="h-4 w-4" />
+                                        Download Excel Semua Unit
+                                    </>
+                                )}
+                            </button>
                         </div>
                     )}
                     {units.length === 0 ? (
