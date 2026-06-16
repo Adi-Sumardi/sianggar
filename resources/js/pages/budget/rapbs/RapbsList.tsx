@@ -427,7 +427,14 @@ export default function RapbsList() {
                                 <p className="text-sm text-slate-500">Tidak ada data RAPBS yang ditemukan.</p>
                             </div>
                         ) : (
-                            rapbsRecords.map((rapbs) => (
+                            rapbsRecords.map((rapbs) => {
+                                // Gunakan total dari rekap data supaya konsisten dengan halaman detail
+                                const unitRekap = allUnits.find((u) => u.unit_id === rapbs.unit_id);
+                                const totalAnggaran = unitRekap
+                                    ? unitRekap.mata_anggarans.reduce((s, ma) => s + (ma.total ?? 0), 0)
+                                    : rapbs.total_anggaran;
+
+                                return (
                                 <motion.div
                                     key={rapbs.id}
                                     {...cardHover}
@@ -455,7 +462,7 @@ export default function RapbsList() {
                                             <div className="text-right">
                                                 <p className="text-xs text-slate-400">Total Anggaran</p>
                                                 <p className="text-lg font-bold text-slate-900">
-                                                    {formatRupiah(rapbs.total_anggaran)}
+                                                    {formatRupiah(totalAnggaran)}
                                                 </p>
                                             </div>
                                             <StatusBadge status={rapbs.status} />
@@ -517,7 +524,8 @@ export default function RapbsList() {
                                         </div>
                                     </div>
                                 </motion.div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 )}
