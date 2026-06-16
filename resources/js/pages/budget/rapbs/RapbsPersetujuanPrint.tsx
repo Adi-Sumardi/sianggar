@@ -187,7 +187,7 @@ export function RapbsPersetujuanDocument({
                 {/* Teks tengah */}
                 <div className="flex-1 text-center">
                     <h2 className="text-lg font-bold uppercase mt-1">
-                        Rencana Anggaran Belanja Sekolah (RAPBS)
+                        Anggaran Belanja Sekolah
                     </h2>
                     <h3 className="text-base font-semibold mt-1">
                         Tahun Ajaran {tahunAnggaran}
