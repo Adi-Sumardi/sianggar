@@ -31,7 +31,7 @@ class RapbsController extends Controller
             'mataAnggarans' => function ($q) use ($tahun) {
                 $q->where('tahun', $tahun);
             },
-            'mataAnggarans.subMataAnggarans.detailMataAnggarans' => function ($q) use ($tahun) {
+            'mataAnggarans.detailMataAnggarans' => function ($q) use ($tahun) {
                 $q->where('tahun', $tahun);
             },
         ]);
@@ -56,7 +56,7 @@ class RapbsController extends Controller
                     'total_realisasi' => $apbs?->total_realisasi ?? 0,
                     'sisa_anggaran' => $apbs?->sisa_anggaran ?? 0,
                     'mata_anggarans' => $unit->mataAnggarans->map(function (MataAnggaran $ma) {
-                        $totalDetail = $ma->subMataAnggarans->flatMap->detailMataAnggarans->sum('jumlah');
+                        $totalDetail = $ma->detailMataAnggarans->sum('jumlah');
 
                         return [
                             'id' => $ma->id,
