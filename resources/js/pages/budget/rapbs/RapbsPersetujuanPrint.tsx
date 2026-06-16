@@ -225,7 +225,7 @@ export function RapbsPersetujuanDocument({
 
             {/* Program Prioritas */}
             <div className="mb-6 border border-slate-300 p-4 rounded">
-                <h4 className="font-bold text-sm mb-3 border-b border-slate-300 pb-1">PROGRAM PRIORITAS (UNGGULAN)</h4>
+                <h4 className="font-bold text-sm mb-3 border-b border-slate-300 pb-1">PROGRAM PRIORITAS</h4>
                 {programPrioritas.length > 0 ? (
                     <ul className="text-sm space-y-1">
                         {programPrioritas.map((p, idx) => (
