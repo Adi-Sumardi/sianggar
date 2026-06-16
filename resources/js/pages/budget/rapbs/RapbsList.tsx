@@ -4,7 +4,8 @@ import { motion } from 'motion/react';
 import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download, Printer } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { exportUnitRapbsExcel, exportAllUnitsRapbsExcel } from '@/lib/exportRapbsExcel';
-import { RapbsPersetujuanDocument, buildPersetujuanData, type PersetujuanMataAnggaran } from './RapbsPersetujuanPrint';
+import { RapbsPersetujuanDocument, buildPersetujuanData, type PersetujuanMataAnggaran, type ProgramPrioritas } from './RapbsPersetujuanPrint';
+import { getPkts } from '@/services/planningService';
 import { toast } from 'sonner';
 import {
     BarChart,
@@ -72,7 +73,7 @@ export default function RapbsList() {
     const [includeBagianUmum, setIncludeBagianUmum] = useState(false);
     const [exportingUnitId, setExportingUnitId] = useState<number | null>(null);
     const [exportAllProgress, setExportAllProgress] = useState<{ current: number; total: number } | null>(null);
-    const [printQueue, setPrintQueue] = useState<Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[] }> | null>(null);
+    const [printQueue, setPrintQueue] = useState<Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[]; programPrioritas: ProgramPrioritas[] }> | null>(null);
     const [printPreparing, setPrintPreparing] = useState<{ current: number; total: number } | null>(null);
     const [printDialog, setPrintDialog] = useState<RapbsUnitData[] | null>(null);
     const [kepalaNames, setKepalaNames] = useState<Record<number, string>>({});
@@ -231,11 +232,25 @@ export default function RapbsList() {
     const preparePersetujuanPrint = useCallback(async (targets: RapbsUnitData[]) => {
         if (targets.length === 0) return;
         setPrintPreparing({ current: 0, total: targets.length });
+        const tahun = filterValues.tahun || defaultTahun;
         try {
-            const items: Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[] }> = [];
+            const items: Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[]; programPrioritas: ProgramPrioritas[] }> = [];
             for (let i = 0; i < targets.length; i++) {
-                const mataAnggarans = await buildPersetujuanData(targets[i]);
-                items.push({ unit: targets[i], mataAnggarans });
+                const unit = targets[i];
+                const [mataAnggarans, pktsResp] = await Promise.all([
+                    buildPersetujuanData(unit),
+                    getPkts({ unit_id: String(unit.unit_id), tahun, per_page: 500 }),
+                ]);
+                const seen = new Set<number>();
+                const programPrioritas: ProgramPrioritas[] = [];
+                for (const pkt of pktsResp.data ?? []) {
+                    const k = pkt.kegiatan as (typeof pkt.kegiatan & { jenis_kegiatan?: string }) | undefined;
+                    if (k && k.jenis_kegiatan === 'unggulan' && !seen.has(k.id)) {
+                        seen.add(k.id);
+                        programPrioritas.push({ kode: k.kode ?? null, nama: k.nama ?? '' });
+                    }
+                }
+                items.push({ unit, mataAnggarans, programPrioritas });
                 setPrintPreparing({ current: i + 1, total: targets.length });
             }
             setPrintQueue(items);
@@ -244,7 +259,7 @@ export default function RapbsList() {
         } finally {
             setPrintPreparing(null);
         }
-    }, []);
+    }, [filterValues.tahun, defaultTahun]);
 
     // Unit "Bagian Umum" can be excluded from grand totals via toggle
     const isBagianUmum = (unit: { unit_nama: string; unit_kode: string }) =>
@@ -946,6 +961,7 @@ export default function RapbsList() {
                                     mataAnggarans={item.mataAnggarans}
                                     rapbs={findRapbsForUnit(item.unit.unit_id)}
                                     kepalaSekolah={kepalaNames[item.unit.unit_id]}
+                                    programPrioritas={item.programPrioritas}
                                 />
                             </div>
                         ))}

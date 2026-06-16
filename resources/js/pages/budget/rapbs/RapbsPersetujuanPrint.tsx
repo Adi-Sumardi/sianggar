@@ -1,21 +1,33 @@
 import { Fragment } from 'react';
 
 import { formatRupiah } from '@/lib/currency';
-import { getRapbsStatusLabel } from '@/types/enums';
 import { getSubMataAnggarans, getDetailMataAnggarans } from '@/services/budgetService';
 import type { RapbsUnitData } from '@/services/budgetService';
 import type { Rapbs } from '@/types/models';
 
 // ---------------------------------------------------------------------------
-// Dokumen cetak "Lembar Persetujuan Anggaran" per unit.
-// Desain mengikuti Lembar Pengesahan APBS (ApbsDetail.tsx);
-// struktur tabel rincian & blok tanda tangan mengikuti export Excel.
+// Constants
 // ---------------------------------------------------------------------------
 
-// Nama pejabat penandatangan (Kepala Sekolah diambil dinamis dari pengaju RAPBS)
 const DIREKTUR_NAMA = 'Drs. Nasjudi, M.Pd';
 const KETUA_UMUM_NAMA = 'H. Kunrat Wirasubrata, MBA';
 const BENDAHARA_NAMA = 'M. Sholihul Anwar SAP, M.Ak';
+
+const TANGGAL_PERSETUJUAN_PEMBINA = '03 Juni 2026';
+const TANGGAL_DITERIMA = '19 Juni 2026';
+
+// Unit names classified as schools (Kepala Sekolah) vs non-school (Kepala Bagian)
+const SCHOOL_UNIT_KEYWORDS = ['ra ', 'ra sakinah', 'playgroup', 'tk ', 'sd ', 'smp', 'sma', 'smk', 'tsanawiyah', 'aliyah', 'ibtidaiyah', 'raudhatul'];
+
+function isSchoolUnit(unitNama?: string | null): boolean {
+    if (!unitNama) return false;
+    const lower = unitNama.toLowerCase();
+    return SCHOOL_UNIT_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface PersetujuanDetail {
     uraian: string;
@@ -37,6 +49,15 @@ export interface PersetujuanMataAnggaran {
     details: PersetujuanDetail[];
 }
 
+export interface ProgramPrioritas {
+    kode: string | null;
+    nama: string;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function n(v: unknown): number {
     const num = Number(v);
     return isNaN(num) ? 0 : num;
@@ -51,9 +72,27 @@ function toUraian(d: { nama: string; volume: unknown; satuan: string; harga_satu
     return `${d.nama}  (${fmtVolume(d.volume)} ${d.satuan} × Rp ${n(d.harga_satuan).toLocaleString('id-ID')})`;
 }
 
+function formatAcademicYear(year: string): string {
+    if (year.includes('/')) return year;
+    const yearNum = parseInt(year, 10) || new Date().getFullYear();
+    return `${yearNum}/${yearNum + 1}`;
+}
+
+function formatTanggal(value?: string | null): string {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Data builder (mirrors buildUnitSheet in exportRapbsExcel.ts)
+// ---------------------------------------------------------------------------
+
 /**
- * Susun data rincian untuk dokumen persetujuan. Struktur dan sumber datanya
- * sama dengan buildUnitSheet pada export Excel.
+ * Susun data rincian untuk dokumen persetujuan.
  */
 export async function buildPersetujuanData(unit: RapbsUnitData): Promise<PersetujuanMataAnggaran[]> {
     const result: PersetujuanMataAnggaran[] = [];
@@ -100,6 +139,10 @@ export async function buildPersetujuanData(unit: RapbsUnitData): Promise<Persetu
     return result;
 }
 
+// ---------------------------------------------------------------------------
+// Print Document Component
+// ---------------------------------------------------------------------------
+
 interface RapbsPersetujuanDocumentProps {
     unit: RapbsUnitData;
     tahun: string;
@@ -107,62 +150,97 @@ interface RapbsPersetujuanDocumentProps {
     rapbs?: Rapbs;
     /** Nama Kepala Sekolah/Kepala Unit, diisi lewat popup sebelum cetak. */
     kepalaSekolah?: string;
+    /** Program unggulan unit untuk tahun ajaran ini. */
+    programPrioritas?: ProgramPrioritas[];
 }
 
-function formatAcademicYear(year: string): string {
-    if (year.includes('/')) return year;
-    const yearNum = parseInt(year, 10) || new Date().getFullYear();
-    return `${yearNum}/${yearNum + 1}`;
-}
-
-function formatTanggal(value?: string | null): string {
-    if (!value) return '-';
-    return new Date(value).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
-}
-
-export function RapbsPersetujuanDocument({ unit, tahun, mataAnggarans, rapbs, kepalaSekolah }: RapbsPersetujuanDocumentProps) {
+export function RapbsPersetujuanDocument({
+    unit,
+    tahun,
+    mataAnggarans,
+    rapbs,
+    kepalaSekolah,
+    programPrioritas = [],
+}: RapbsPersetujuanDocumentProps) {
     const tahunAnggaran = formatAcademicYear(tahun);
     const totalAnggaran = mataAnggarans.reduce((s, ma) => s + ma.total, 0);
+    const kepalaLabel = isSchoolUnit(unit.unit_nama) ? 'Kepala Sekolah' : 'Kepala Bagian';
 
     return (
         <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Times New Roman, serif' }}>
             {/* Header */}
-            <div className="text-center mb-8">
-                <h1 className="text-xl font-bold uppercase tracking-wide">
-                    Lembar Persetujuan Anggaran
-                </h1>
-                <h2 className="text-lg font-bold uppercase mt-1">
-                    Rencana Anggaran Pendapatan dan Belanja Sekolah (RAPBS)
-                </h2>
-                <h3 className="text-base font-semibold mt-1">
-                    Tahun Anggaran {tahunAnggaran}
-                </h3>
+            <div className="relative flex items-center mb-8" style={{ minHeight: 80 }}>
+                {/* Logo kiri */}
+                <div className="absolute left-0 top-0 shrink-0">
+                    <img
+                        src="/logo/yapi.png"
+                        alt="Logo YAPI"
+                        style={{
+                            width: 72,
+                            height: 72,
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid #e2e8f0',
+                        }}
+                    />
+                </div>
+                {/* Teks tengah */}
+                <div className="flex-1 text-center">
+                    <h2 className="text-lg font-bold uppercase mt-1">
+                        Rencana Anggaran Belanja Sekolah (RAPBS)
+                    </h2>
+                    <h3 className="text-base font-semibold mt-1">
+                        Tahun Ajaran {tahunAnggaran}
+                    </h3>
+                </div>
             </div>
 
             {/* Document Info */}
             <div className="mb-6 border border-slate-300 p-4 rounded">
-                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
-                    <div>
-                        <span className="font-semibold">Unit:</span>
-                        <span className="ml-2">{unit.unit_nama || '-'}</span>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                    {/* Kolom Kiri */}
+                    <div className="space-y-2">
+                        <div>
+                            <span className="font-semibold">Unit:</span>
+                            <span className="ml-2">{unit.unit_nama || '-'}</span>
+                        </div>
+                        <div>
+                            <span className="font-semibold">Kode Unit:</span>
+                            <span className="ml-2">{unit.unit_kode || '-'}</span>
+                        </div>
                     </div>
-                    <div>
-                        <span className="font-semibold">Kode Unit:</span>
-                        <span className="ml-2">{unit.unit_kode || '-'}</span>
-                    </div>
-                    <div>
-                        <span className="font-semibold">Status RAPBS:</span>
-                        <span className="ml-2">{rapbs ? getRapbsStatusLabel(rapbs.status) : '-'}</span>
-                    </div>
-                    <div>
-                        <span className="font-semibold">Tanggal Pengajuan:</span>
-                        <span className="ml-2">{formatTanggal(rapbs?.submitted_at)}</span>
+                    {/* Kolom Kanan */}
+                    <div className="space-y-2">
+                        <div>
+                            <span className="font-semibold">Tanggal Persetujuan Pembina:</span>
+                            <span className="ml-2">{TANGGAL_PERSETUJUAN_PEMBINA}</span>
+                        </div>
+                        <div>
+                            <span className="font-semibold">Tanggal Diterima:</span>
+                            <span className="ml-2">{TANGGAL_DITERIMA}</span>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Program Prioritas */}
+            <div className="mb-6 border border-slate-300 p-4 rounded">
+                <h4 className="font-bold text-sm mb-3 border-b border-slate-300 pb-1">PROGRAM PRIORITAS (UNGGULAN)</h4>
+                {programPrioritas.length > 0 ? (
+                    <ul className="text-sm space-y-1">
+                        {programPrioritas.map((p, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                                <span className="text-slate-400 mt-0.5">•</span>
+                                <span>
+                                    {p.kode && <span className="font-mono text-xs text-slate-500 mr-2">[{p.kode}]</span>}
+                                    {p.nama}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-slate-400 italic">Belum ada program prioritas untuk tahun ajaran ini.</p>
+                )}
             </div>
 
             {/* Rincian Anggaran - struktur sama dengan export Excel */}
@@ -235,9 +313,9 @@ export function RapbsPersetujuanDocument({ unit, tahun, mataAnggarans, rapbs, ke
                 </table>
             </div>
 
-            {/* Signature Section - desain mengikuti format tanda tangan di Excel */}
+            {/* Signature Section */}
             <div className="mt-12 page-break-inside-avoid text-sm">
-                {/* Blok 1: Direktur (kiri) & Kepala Sekolah (kanan) */}
+                {/* Blok 1: Direktur (kiri) & Kepala Sekolah/Bagian (kanan) */}
                 <div className="flex justify-between gap-8">
                     <div>
                         <p>Direktorat Pendidikan</p>
@@ -251,7 +329,7 @@ export function RapbsPersetujuanDocument({ unit, tahun, mataAnggarans, rapbs, ke
                         <p className="mt-20 font-bold underline">
                             {kepalaSekolah || rapbs?.submitter?.name || '................................'}
                         </p>
-                        <p>Kepala Sekolah</p>
+                        <p>{kepalaLabel}</p>
                     </div>
                 </div>
 
@@ -278,7 +356,7 @@ export function RapbsPersetujuanDocument({ unit, tahun, mataAnggarans, rapbs, ke
             {/* Footer */}
             <div className="mt-8 pt-4 border-t border-slate-200 text-xs text-slate-500 text-center print:mt-4">
                 <p>Dokumen ini digenerate oleh SIANGGAR - Sistem Informasi Pengajuan Anggaran</p>
-                <p>RAPBS {unit.unit_nama} - Tahun Anggaran {tahunAnggaran}</p>
+                <p>RAPBS {unit.unit_nama} - Tahun Ajaran {tahunAnggaran}</p>
             </div>
         </div>
     );
