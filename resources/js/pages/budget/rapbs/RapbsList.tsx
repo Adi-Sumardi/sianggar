@@ -75,6 +75,7 @@ export default function RapbsList() {
     const [exportAllProgress, setExportAllProgress] = useState<{ current: number; total: number } | null>(null);
     const [printQueue, setPrintQueue] = useState<Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[]; programPrioritas: ProgramPrioritas[] }> | null>(null);
     const [printPreparing, setPrintPreparing] = useState<{ current: number; total: number } | null>(null);
+    const [printingUnitId, setPrintingUnitId] = useState<number | null>(null);
     const [printDialog, setPrintDialog] = useState<RapbsUnitData[] | null>(null);
     const [kepalaNames, setKepalaNames] = useState<Record<number, string>>({});
     const printRef = useRef<HTMLDivElement>(null);
@@ -232,6 +233,7 @@ export default function RapbsList() {
     const preparePersetujuanPrint = useCallback(async (targets: RapbsUnitData[]) => {
         if (targets.length === 0) return;
         setPrintPreparing({ current: 0, total: targets.length });
+        if (targets.length === 1) setPrintingUnitId(targets[0].unit_id);
         const tahun = filterValues.tahun || defaultTahun;
         try {
             const items: Array<{ unit: RapbsUnitData; mataAnggarans: PersetujuanMataAnggaran[]; programPrioritas: ProgramPrioritas[] }> = [];
@@ -258,6 +260,7 @@ export default function RapbsList() {
             toast.error('Gagal menyiapkan dokumen persetujuan');
         } finally {
             setPrintPreparing(null);
+            setPrintingUnitId(null);
         }
     }, [filterValues.tahun, defaultTahun]);
 
@@ -624,10 +627,10 @@ export default function RapbsList() {
                                             <button
                                                 type="button"
                                                 onClick={() => openPrintDialog([unit])}
-                                                disabled={!!printPreparing || !!printQueue}
+                                                disabled={printingUnitId === unit.unit_id || !!printQueue}
                                                 className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
                                             >
-                                                {printPreparing?.total === 1
+                                                {printingUnitId === unit.unit_id
                                                     ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                                     : <Printer className="h-3.5 w-3.5" />
                                                 }
