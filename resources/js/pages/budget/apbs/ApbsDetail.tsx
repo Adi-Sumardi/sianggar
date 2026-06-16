@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, Printer, Download, Building2, Calendar, FileText, Loader2 } from 'lucide-react';
@@ -9,10 +9,32 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { formatRupiah } from '@/lib/currency';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useApbsDetail } from '@/hooks/useBudget';
+import { getPkts } from '@/services/planningService';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const TANGGAL_PERSETUJUAN_PEMBINA = '03 Juni 2026';
+const TANGGAL_DITERIMA = '19 Juni 2026';
+
+// Unit names classified as schools (Kepala Sekolah signature)
+const SCHOOL_UNIT_KEYWORDS = ['ra ', 'ra sakinah', 'playgroup', 'tk ', 'sd ', 'smp', 'sma', 'smk', 'tsanawiyah', 'aliyah', 'ibtidaiyah', 'raudhatul'];
+
+function isSchoolUnit(unitNama?: string | null): boolean {
+    if (!unitNama) return false;
+    const lower = unitNama.toLowerCase();
+    return SCHOOL_UNIT_KEYWORDS.some((kw) => lower.includes(kw));
+}
 
 // ---------------------------------------------------------------------------
 // Print Content Component
 // ---------------------------------------------------------------------------
+
+interface ProgramPrioritas {
+    kode: string | null;
+    nama: string;
+}
 
 interface PrintContentProps {
     apbs: {
@@ -36,54 +58,93 @@ interface PrintContentProps {
         ttd_bendahara?: string | null;
         ttd_ketua_umum?: string | null;
     };
+    programPrioritas: ProgramPrioritas[];
 }
 
-function PrintContent({ apbs }: PrintContentProps) {
+function PrintContent({ apbs, programPrioritas }: PrintContentProps) {
     const items = apbs.items ?? [];
+    const unitNama = apbs.unit?.nama;
+    const kepalaLabel = isSchoolUnit(unitNama) ? 'Kepala Sekolah' : 'Kepala Bagian';
 
     return (
         <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Times New Roman, serif' }}>
             {/* Header */}
-            <div className="text-center mb-8">
-                <h1 className="text-xl font-bold uppercase tracking-wide">
-                    Lembar Pengesahan
-                </h1>
-                <h2 className="text-lg font-bold uppercase mt-1">
-                    Anggaran Pendapatan dan Belanja Sekolah (APBS)
-                </h2>
-                <h3 className="text-base font-semibold mt-1">
-                    Tahun Anggaran {apbs.tahun}
-                </h3>
+            <div className="relative flex items-center mb-8" style={{ minHeight: 80 }}>
+                {/* Logo kiri */}
+                <div className="absolute left-0 top-0 shrink-0">
+                    <img
+                        src="/logo/yapi.png"
+                        alt="Logo YAPI"
+                        style={{
+                            width: 72,
+                            height: 72,
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid #e2e8f0',
+                        }}
+                    />
+                </div>
+                {/* Teks tengah */}
+                <div className="flex-1 text-center">
+                    <h2 className="text-lg font-bold uppercase mt-1">
+                        Anggaran Belanja Sekolah
+                    </h2>
+                    <h3 className="text-base font-semibold mt-1">
+                        Tahun Ajaran {apbs.tahun}
+                    </h3>
+                </div>
             </div>
 
             {/* Document Info */}
             <div className="mb-6 border border-slate-300 p-4 rounded">
-                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
-                    <div>
-                        <span className="font-semibold">Nomor Dokumen:</span>
-                        <span className="ml-2">{apbs.nomor_dokumen || '-'}</span>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                    {/* Kolom Kiri */}
+                    <div className="space-y-2">
+                        <div>
+                            <span className="font-semibold">Nomor Dokumen:</span>
+                            <span className="ml-2">{apbs.nomor_dokumen || '-'}</span>
+                        </div>
+                        <div>
+                            <span className="font-semibold">Kode Unit:</span>
+                            <span className="ml-2">{apbs.unit?.kode || '-'}</span>
+                        </div>
                     </div>
-                    <div>
-                        <span className="font-semibold">Tanggal Pengesahan:</span>
-                        <span className="ml-2">
-                            {apbs.tanggal_pengesahan
-                                ? new Date(apbs.tanggal_pengesahan).toLocaleDateString('id-ID', {
-                                      day: 'numeric',
-                                      month: 'long',
-                                      year: 'numeric',
-                                  })
-                                : '-'}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="font-semibold">Unit:</span>
-                        <span className="ml-2">{apbs.unit?.nama || '-'}</span>
-                    </div>
-                    <div>
-                        <span className="font-semibold">Kode Unit:</span>
-                        <span className="ml-2">{apbs.unit?.kode || '-'}</span>
+                    {/* Kolom Kanan */}
+                    <div className="space-y-2">
+                        <div>
+                            <span className="font-semibold">Unit:</span>
+                            <span className="ml-2">{unitNama || '-'}</span>
+                        </div>
+                        <div>
+                            <span className="font-semibold">Tanggal Persetujuan Pembina:</span>
+                            <span className="ml-2">{TANGGAL_PERSETUJUAN_PEMBINA}</span>
+                        </div>
+                        <div>
+                            <span className="font-semibold">Tanggal Diterima:</span>
+                            <span className="ml-2">{TANGGAL_DITERIMA}</span>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Program Prioritas */}
+            <div className="mb-6 border border-slate-300 p-4 rounded">
+                <h4 className="font-bold text-sm mb-3 border-b border-slate-300 pb-1">PROGRAM PRIORITAS (UNGGULAN)</h4>
+                {programPrioritas.length > 0 ? (
+                    <ul className="text-sm space-y-1">
+                        {programPrioritas.map((p, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                                <span className="text-slate-400 mt-0.5">•</span>
+                                <span>
+                                    {p.kode && <span className="font-mono text-xs text-slate-500 mr-2">[{p.kode}]</span>}
+                                    {p.nama}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-slate-400 italic">Belum ada program prioritas untuk tahun ajaran ini.</p>
+                )}
             </div>
 
             {/* Budget Summary */}
@@ -161,9 +222,9 @@ function PrintContent({ apbs }: PrintContentProps) {
                 </p>
 
                 <div className="grid grid-cols-1 gap-4 text-center text-sm sm:grid-cols-3 sm:gap-8">
-                    {/* Kepala Sekolah */}
+                    {/* Kepala Sekolah / Kepala Bagian */}
                     <div>
-                        <p className="font-semibold mb-16">Kepala Sekolah</p>
+                        <p className="font-semibold mb-16">{kepalaLabel}</p>
                         <div className="border-b border-slate-400 mx-4 mb-1" />
                         <p className="text-xs text-slate-500">
                             {apbs.ttd_kepala_sekolah || '(................................)'}
@@ -209,6 +270,26 @@ export default function ApbsDetail() {
     const printRef = useRef<HTMLDivElement>(null);
 
     const { data: apbs, isLoading, isError } = useApbsDetail(Number(id));
+    const [programPrioritas, setProgramPrioritas] = useState<ProgramPrioritas[]>([]);
+
+    useEffect(() => {
+        if (!apbs?.unit_id) return;
+
+        getPkts({ unit_id: String(apbs.unit_id), tahun: apbs.tahun, per_page: 500 })
+            .then((res) => {
+                const seen = new Set<number>();
+                const list: ProgramPrioritas[] = [];
+                for (const pkt of res.data ?? []) {
+                    const k = pkt.kegiatan as (typeof pkt.kegiatan & { jenis_kegiatan?: string }) | undefined;
+                    if (k && k.jenis_kegiatan === 'unggulan' && !seen.has(k.id)) {
+                        seen.add(k.id);
+                        list.push({ kode: k.kode ?? null, nama: k.nama ?? '' });
+                    }
+                }
+                setProgramPrioritas(list);
+            })
+            .catch(() => {/* silent fail - not critical for print */});
+    }, [apbs]);
 
     const handlePrint = useReactToPrint({
         contentRef: printRef,
@@ -329,7 +410,7 @@ export default function ApbsDetail() {
                             <p className="text-xs text-slate-500">Klik tombol "Cetak" untuk mencetak dokumen ini</p>
                         </div>
                         <div ref={printRef} className="print:shadow-none">
-                            <PrintContent apbs={apbs} />
+                            <PrintContent apbs={apbs} programPrioritas={programPrioritas} />
                         </div>
                     </div>
                 </motion.div>

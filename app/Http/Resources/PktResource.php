@@ -62,6 +62,7 @@ class PktResource extends JsonResource
                 'id' => $this->kegiatan->id,
                 'kode' => $this->kegiatan->kode,
                 'nama' => $this->kegiatan->nama,
+                'jenis_kegiatan' => $this->kegiatan->jenis_kegiatan,
             ]),
             'mata_anggaran' => $this->whenLoaded('mataAnggaran', fn () => [
                 'id' => $this->mataAnggaran->id,
