@@ -341,12 +341,14 @@ export interface CreateKegiatanDTO {
     kode?: string;
     nama?: string;
     jenis_kegiatan?: 'unggulan' | 'non-unggulan';
+    deskripsi?: string | null;
 }
 
 export interface UpdateKegiatanDTO {
     kode?: string;
     nama?: string;
     jenis_kegiatan?: 'unggulan' | 'non-unggulan';
+    deskripsi?: string | null;
 }
 
 export interface CreatePktDTO {

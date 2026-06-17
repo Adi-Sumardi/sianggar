@@ -144,6 +144,7 @@ export interface Kegiatan {
     kode: string | null;
     nama: string | null;
     jenis_kegiatan: 'unggulan' | 'non-unggulan';
+    deskripsi: string | null;
     created_at: string;
     updated_at: string;
 

@@ -31,6 +31,7 @@ class Kegiatan extends Model
         'kode',
         'nama',
         'jenis_kegiatan',
+        'deskripsi',
     ];
 
     // -------------------------------------------------------------------------

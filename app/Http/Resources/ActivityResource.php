@@ -25,6 +25,7 @@ class ActivityResource extends JsonResource
             'kode' => $this->kode,
             'nama' => $this->nama,
             'jenis_kegiatan' => $this->jenis_kegiatan,
+            'deskripsi' => $this->deskripsi,
             'keterangan' => $this->keterangan,
             'unit' => new UnitResource($this->whenLoaded('unit')),
             'strategy' => new StrategyResource($this->whenLoaded('strategy')),

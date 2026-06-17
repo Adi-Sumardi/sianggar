@@ -77,6 +77,7 @@ class ActivityController extends Controller
             'kode' => ['required', 'string', 'max:50'],
             'nama' => ['required', 'string', 'max:255'],
             'jenis_kegiatan' => ['sometimes', 'string', Rule::in(['unggulan', 'non-unggulan'])],
+            'deskripsi' => ['sometimes', 'nullable', 'string'],
         ]);
 
         $kegiatan = Kegiatan::create(array_merge($validated, [
@@ -115,6 +116,7 @@ class ActivityController extends Controller
             'kode' => ['sometimes', 'required', 'string', 'max:50'],
             'nama' => ['sometimes', 'required', 'string', 'max:255'],
             'jenis_kegiatan' => ['sometimes', 'string', Rule::in(['unggulan', 'non-unggulan'])],
+            'deskripsi' => ['sometimes', 'nullable', 'string'],
         ]);
 
         $activity->update($validated);

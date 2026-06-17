@@ -36,6 +36,7 @@ interface ActivityRow {
     kode: string;
     nama: string;
     jenis_kegiatan: 'unggulan' | 'non-unggulan';
+    deskripsi: string | null;
     strategy_id: number;
     indikator_id: number;
     proker_id: number;
@@ -63,6 +64,7 @@ export default function ActivityList() {
     const [formIndikatorId, setFormIndikatorId] = useState('');
     const [formProkerId, setFormProkerId] = useState('');
     const [formJenisKegiatan, setFormJenisKegiatan] = useState<'unggulan' | 'non-unggulan'>('non-unggulan');
+    const [formDeskripsi, setFormDeskripsi] = useState('');
 
     // Data hooks
     const { data: strategiesData, isLoading: loadingStrategies } = useStrategies();
@@ -160,6 +162,7 @@ export default function ActivityList() {
             kode: k.kode ?? '-',
             nama: k.nama ?? '-',
             jenis_kegiatan: k.jenis_kegiatan ?? 'non-unggulan',
+            deskripsi: k.deskripsi ?? null,
             strategy_id: k.strategy_id,
             indikator_id: k.indikator_id,
             proker_id: k.proker_id,
@@ -175,6 +178,7 @@ export default function ActivityList() {
         setFormIndikatorId('');
         setFormProkerId('');
         setFormJenisKegiatan('non-unggulan');
+        setFormDeskripsi('');
         setDialogOpen(true);
     };
 
@@ -186,6 +190,7 @@ export default function ActivityList() {
         setFormIndikatorId(item.indikator_id.toString());
         setFormProkerId(item.proker_id.toString());
         setFormJenisKegiatan(item.jenis_kegiatan);
+        setFormDeskripsi(item.deskripsi ?? '');
         setDialogOpen(true);
     };
 
@@ -203,6 +208,7 @@ export default function ActivityList() {
                         kode: formKode.trim() || undefined,
                         nama: formNama.trim() || undefined,
                         jenis_kegiatan: formJenisKegiatan,
+                        deskripsi: formDeskripsi.trim() || null,
                     },
                 });
                 toast.success('Kegiatan berhasil diperbarui');
@@ -218,6 +224,7 @@ export default function ActivityList() {
                     kode: formKode.trim() || undefined,
                     nama: formNama.trim() || undefined,
                     jenis_kegiatan: formJenisKegiatan,
+                    deskripsi: formDeskripsi.trim() || null,
                 });
                 toast.success('Kegiatan berhasil ditambahkan');
             }
@@ -383,6 +390,17 @@ export default function ActivityList() {
                             <option value="non-unggulan">Prestasi</option>
                             <option value="unggulan">Unggulan</option>
                         </select>
+                    </div>
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Deskripsi Kegiatan <span className="font-normal text-slate-400">(opsional)</span></label>
+                        <p className="mb-1.5 text-xs text-slate-500">Jelaskan kegiatan secara detail — What, Why, Who, When, Where, How (5W+1H)</p>
+                        <textarea
+                            value={formDeskripsi}
+                            onChange={(e) => setFormDeskripsi(e.target.value)}
+                            placeholder="Contoh: Kegiatan ini bertujuan untuk... (What) dilakukan karena... (Why) melibatkan... (Who) pada tanggal... (When) di... (Where) dengan cara... (How)"
+                            rows={6}
+                            className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
+                        />
                     </div>
                 </div>
             </ConfirmDialog>

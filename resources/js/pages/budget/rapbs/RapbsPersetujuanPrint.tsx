@@ -52,6 +52,7 @@ export interface PersetujuanMataAnggaran {
 export interface ProgramPrioritas {
     kode: string | null;
     nama: string;
+    deskripsi: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -227,14 +228,19 @@ export function RapbsPersetujuanDocument({
             <div className="mb-6 border border-slate-300 p-4 rounded">
                 <h4 className="font-bold text-sm mb-3 border-b border-slate-300 pb-1">PROGRAM PRIORITAS</h4>
                 {programPrioritas.length > 0 ? (
-                    <ul className="text-sm space-y-1">
+                    <ul className="text-sm space-y-3">
                         {programPrioritas.map((p, idx) => (
                             <li key={idx} className="flex items-start gap-2">
-                                <span className="text-slate-400 mt-0.5">•</span>
-                                <span>
-                                    {p.kode && <span className="font-mono text-xs text-slate-500 mr-2">[{p.kode}]</span>}
-                                    {p.nama}
-                                </span>
+                                <span className="text-slate-400 mt-0.5 shrink-0">•</span>
+                                <div>
+                                    <div>
+                                        {p.kode && <span className="font-mono text-xs text-slate-500 mr-2">[{p.kode}]</span>}
+                                        <span className="font-medium">{p.nama}</span>
+                                    </div>
+                                    {p.deskripsi && (
+                                        <p className="mt-1 text-xs text-slate-600 whitespace-pre-wrap leading-relaxed">{p.deskripsi}</p>
+                                    )}
+                                </div>
                             </li>
                         ))}
                     </ul>

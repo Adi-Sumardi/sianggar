@@ -246,10 +246,10 @@ export default function RapbsList() {
                 const seen = new Set<number>();
                 const programPrioritas: ProgramPrioritas[] = [];
                 for (const pkt of pktsResp.data ?? []) {
-                    const k = pkt.kegiatan as (typeof pkt.kegiatan & { jenis_kegiatan?: string }) | undefined;
+                    const k = pkt.kegiatan as (typeof pkt.kegiatan & { jenis_kegiatan?: string; deskripsi?: string | null }) | undefined;
                     if (k && k.jenis_kegiatan === 'unggulan' && !seen.has(k.id)) {
                         seen.add(k.id);
-                        programPrioritas.push({ kode: k.kode ?? null, nama: k.nama ?? '' });
+                        programPrioritas.push({ kode: k.kode ?? null, nama: k.nama ?? '', deskripsi: k.deskripsi ?? null });
                     }
                 }
                 items.push({ unit, mataAnggarans, programPrioritas });
