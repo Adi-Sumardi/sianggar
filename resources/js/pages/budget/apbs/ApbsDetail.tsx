@@ -213,15 +213,15 @@ function PrintContent({ apbs, programPrioritas, kabagKeuangan, kabagSdmUmum }: P
                                     <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(item.sisa)}</td>
                                 </tr>
                             ))}
-                        </tbody>
-                        <tfoot>
+                            {/* Baris TOTAL diletakkan di tbody (bukan tfoot) agar tidak
+                                terulang di setiap halaman saat dokumen dicetak. */}
                             <tr className="bg-slate-50 font-semibold">
                                 <td className="border border-slate-300 px-2 py-1" colSpan={3}>TOTAL</td>
                                 <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(apbs.total_anggaran)}</td>
                                 <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(apbs.total_realisasi)}</td>
                                 <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(apbs.sisa_anggaran)}</td>
                             </tr>
-                        </tfoot>
+                        </tbody>
                     </table>
                 </div>
             )}

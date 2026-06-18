@@ -324,14 +324,14 @@ export function RapbsPersetujuanDocument({
                                 ))}
                             </Fragment>
                         ))}
-                    </tbody>
-                    <tfoot>
+                        {/* Baris TOTAL diletakkan di tbody (bukan tfoot) agar tidak
+                            terulang di setiap halaman saat dokumen dicetak. */}
                         <tr className="bg-slate-800 text-white font-bold">
                             <td className="border border-slate-300 px-2 py-1" />
                             <td className="border border-slate-300 px-2 py-1" colSpan={3}>TOTAL ANGGARAN</td>
                             <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(totalAnggaran)}</td>
                         </tr>
-                    </tfoot>
+                    </tbody>
                 </table>
             </div>
 
