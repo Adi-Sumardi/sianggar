@@ -6,7 +6,9 @@ import { useReactToPrint } from 'react-to-print';
 
 import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatRupiah } from '@/lib/currency';
+import { isThreeSignerUnit, isDirekturPendidikanUnit, DIREKTUR_PENDIDIKAN_NAMA } from '@/lib/unitSignatory';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useApbsDetail } from '@/hooks/useBudget';
 import { getPkts } from '@/services/planningService';
@@ -60,12 +62,23 @@ interface PrintContentProps {
         ttd_ketua_umum?: string | null;
     };
     programPrioritas: ProgramPrioritas[];
+    /** Nama Kabag Keuangan (unit 3-penandatangan), diisi lewat popup sebelum cetak. */
+    kabagKeuangan?: string;
+    /** Nama Kabag SDM dan Umum (unit 3-penandatangan), diisi lewat popup sebelum cetak. */
+    kabagSdmUmum?: string;
 }
 
-function PrintContent({ apbs, programPrioritas }: PrintContentProps) {
+function PrintContent({ apbs, programPrioritas, kabagKeuangan, kabagSdmUmum }: PrintContentProps) {
     const items = apbs.items ?? [];
     const unitNama = apbs.unit?.nama;
+    const isThreeSigner = isThreeSignerUnit(unitNama);
+    const isDirpen = isDirekturPendidikanUnit(unitNama);
+    const placeholderNama = '(................................)';
     const kepalaLabel = isSchoolUnit(unitNama) ? 'Kepala Sekolah' : 'Kepala Bagian';
+    // Penandatangan kolom utama untuk unit 3-penandatangan:
+    // Direktur Pendidikan pakai nama & jabatan khusus, unit lain pakai nama dari DB.
+    const kepalaNamaDisplay = isDirpen ? DIREKTUR_PENDIDIKAN_NAMA : (apbs.ttd_kepala_sekolah || placeholderNama);
+    const kepalaRole = isDirpen ? 'Direktur Pendidikan' : 'Kepala Bagian';
 
     return (
         <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Times New Roman, serif' }}>
@@ -227,34 +240,72 @@ function PrintContent({ apbs, programPrioritas }: PrintContentProps) {
                         : '............................'}
                 </p>
 
-                <div className="grid grid-cols-1 gap-4 text-center text-sm sm:grid-cols-3 sm:gap-8">
-                    {/* Kepala Sekolah / Kepala Bagian */}
-                    <div>
-                        <p className="font-semibold mb-16">{kepalaLabel}</p>
-                        <div className="border-b border-slate-400 mx-4 mb-1" />
-                        <p className="text-xs text-slate-500">
-                            {apbs.ttd_kepala_sekolah || '(................................)'}
-                        </p>
-                    </div>
+                {isThreeSigner ? (
+                    <>
+                        {/* Penandatangan: Kabag Keuangan | Kabag SDM dan Umum | Kepala Bagian/Direktur Pendidikan */}
+                        <div className="grid grid-cols-1 gap-4 text-center text-sm sm:grid-cols-3 sm:gap-8">
+                            <div>
+                                <p className="font-semibold mb-16">Kabag Keuangan</p>
+                                <div className="border-b border-slate-400 mx-4 mb-1" />
+                                <p className="text-xs text-slate-500">{kabagKeuangan || placeholderNama}</p>
+                            </div>
+                            <div>
+                                <p className="font-semibold mb-16">Kabag SDM dan Umum</p>
+                                <div className="border-b border-slate-400 mx-4 mb-1" />
+                                <p className="text-xs text-slate-500">{kabagSdmUmum || placeholderNama}</p>
+                            </div>
+                            <div>
+                                <p className="font-semibold mb-16">{kepalaRole}</p>
+                                <div className="border-b border-slate-400 mx-4 mb-1" />
+                                <p className="text-xs text-slate-500">{kepalaNamaDisplay}</p>
+                            </div>
+                        </div>
 
-                    {/* Bendahara */}
-                    <div>
-                        <p className="font-semibold mb-16">Bendahara</p>
-                        <div className="border-b border-slate-400 mx-4 mb-1" />
-                        <p className="text-xs text-slate-500">
-                            {apbs.ttd_bendahara || '(................................)'}
-                        </p>
-                    </div>
+                        {/* Mengetahui: Ketua Umum & Bendahara */}
+                        <p className="mt-10 mb-8 text-center text-sm font-semibold">Mengetahui</p>
+                        <div className="grid grid-cols-1 gap-4 text-center text-sm sm:grid-cols-2 sm:gap-8">
+                            <div>
+                                <p className="font-semibold mb-16">Ketua Umum</p>
+                                <div className="border-b border-slate-400 mx-4 mb-1" />
+                                <p className="text-xs text-slate-500">{apbs.ttd_ketua_umum || placeholderNama}</p>
+                            </div>
+                            <div>
+                                <p className="font-semibold mb-16">Bendahara</p>
+                                <div className="border-b border-slate-400 mx-4 mb-1" />
+                                <p className="text-xs text-slate-500">{apbs.ttd_bendahara || placeholderNama}</p>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="grid grid-cols-1 gap-4 text-center text-sm sm:grid-cols-3 sm:gap-8">
+                        {/* Kepala Sekolah / Kepala Bagian */}
+                        <div>
+                            <p className="font-semibold mb-16">{kepalaLabel}</p>
+                            <div className="border-b border-slate-400 mx-4 mb-1" />
+                            <p className="text-xs text-slate-500">
+                                {apbs.ttd_kepala_sekolah || placeholderNama}
+                            </p>
+                        </div>
 
-                    {/* Ketua Umum */}
-                    <div>
-                        <p className="font-semibold mb-16">Ketua Umum</p>
-                        <div className="border-b border-slate-400 mx-4 mb-1" />
-                        <p className="text-xs text-slate-500">
-                            {apbs.ttd_ketua_umum || '(................................)'}
-                        </p>
+                        {/* Bendahara */}
+                        <div>
+                            <p className="font-semibold mb-16">Bendahara</p>
+                            <div className="border-b border-slate-400 mx-4 mb-1" />
+                            <p className="text-xs text-slate-500">
+                                {apbs.ttd_bendahara || placeholderNama}
+                            </p>
+                        </div>
+
+                        {/* Ketua Umum */}
+                        <div>
+                            <p className="font-semibold mb-16">Ketua Umum</p>
+                            <div className="border-b border-slate-400 mx-4 mb-1" />
+                            <p className="text-xs text-slate-500">
+                                {apbs.ttd_ketua_umum || placeholderNama}
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Footer */}
@@ -277,6 +328,9 @@ export default function ApbsDetail() {
 
     const { data: apbs, isLoading, isError } = useApbsDetail(Number(id));
     const [programPrioritas, setProgramPrioritas] = useState<ProgramPrioritas[]>([]);
+    const [printDialogOpen, setPrintDialogOpen] = useState(false);
+    const [kabagKeuangan, setKabagKeuangan] = useState('');
+    const [kabagSdmUmum, setKabagSdmUmum] = useState('');
 
     useEffect(() => {
         if (!apbs?.unit_id) return;
@@ -301,6 +355,17 @@ export default function ApbsDetail() {
         contentRef: printRef,
         documentTitle: `APBS-${apbs?.nomor_dokumen || id}`,
     });
+
+    // Unit 3-penandatangan butuh nama Kabag dulu lewat popup sebelum cetak;
+    // unit lain langsung cetak.
+    const needsKabag = isThreeSignerUnit(apbs?.unit?.nama);
+    const onClickCetak = () => {
+        if (needsKabag) {
+            setPrintDialogOpen(true);
+        } else {
+            handlePrint();
+        }
+    };
 
     if (isLoading) {
         return (
@@ -349,7 +414,7 @@ export default function ApbsDetail() {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => handlePrint()}
+                                    onClick={onClickCetak}
                                     className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
                                 >
                                     <Printer className="h-4 w-4" />
@@ -416,10 +481,56 @@ export default function ApbsDetail() {
                             <p className="text-xs text-slate-500">Klik tombol "Cetak" untuk mencetak dokumen ini</p>
                         </div>
                         <div ref={printRef} className="print:shadow-none">
-                            <PrintContent apbs={apbs} programPrioritas={programPrioritas} />
+                            <PrintContent
+                                apbs={apbs}
+                                programPrioritas={programPrioritas}
+                                kabagKeuangan={kabagKeuangan}
+                                kabagSdmUmum={kabagSdmUmum}
+                            />
                         </div>
                     </div>
                 </motion.div>
+
+                {/* Popup pengisian nama Kabag sebelum cetak (unit 3-penandatangan) */}
+                <ConfirmDialog
+                    open={printDialogOpen}
+                    onOpenChange={setPrintDialogOpen}
+                    title="Cetak Pengesahan APBS"
+                    description="Isi nama Kabag yang akan tercantum sebagai penandatangan pada dokumen."
+                    confirmLabel="Cetak"
+                    cancelLabel="Batal"
+                    onConfirm={() => {
+                        setPrintDialogOpen(false);
+                        handlePrint();
+                    }}
+                >
+                    <div className="space-y-3">
+                        <div>
+                            <label className="mb-1 block text-xs font-medium text-slate-600">
+                                Kabag Keuangan
+                            </label>
+                            <input
+                                type="text"
+                                value={kabagKeuangan}
+                                onChange={(e) => setKabagKeuangan(e.target.value)}
+                                placeholder="Nama Kabag Keuangan"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-1 block text-xs font-medium text-slate-600">
+                                Kabag SDM dan Umum
+                            </label>
+                            <input
+                                type="text"
+                                value={kabagSdmUmum}
+                                onChange={(e) => setKabagSdmUmum(e.target.value)}
+                                placeholder="Nama Kabag SDM dan Umum"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                            />
+                        </div>
+                    </div>
+                </ConfirmDialog>
             </motion.div>
 
             {/* Print Styles */}

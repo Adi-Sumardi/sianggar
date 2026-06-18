@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 
 import { formatRupiah } from '@/lib/currency';
+import { isThreeSignerUnit, isDirekturPendidikanUnit, DIREKTUR_PENDIDIKAN_NAMA } from '@/lib/unitSignatory';
 import { getSubMataAnggarans, getDetailMataAnggarans } from '@/services/budgetService';
 import type { RapbsUnitData } from '@/services/budgetService';
 import type { Rapbs } from '@/types/models';
@@ -151,6 +152,10 @@ interface RapbsPersetujuanDocumentProps {
     rapbs?: Rapbs;
     /** Nama Kepala Sekolah/Kepala Unit, diisi lewat popup sebelum cetak. */
     kepalaSekolah?: string;
+    /** Nama Kabag Keuangan (unit 3-penandatangan), diisi lewat popup sebelum cetak. */
+    kabagKeuangan?: string;
+    /** Nama Kabag SDM dan Umum (unit 3-penandatangan), diisi lewat popup sebelum cetak. */
+    kabagSdmUmum?: string;
     /** Program unggulan unit untuk tahun ajaran ini. */
     programPrioritas?: ProgramPrioritas[];
 }
@@ -161,11 +166,22 @@ export function RapbsPersetujuanDocument({
     mataAnggarans,
     rapbs,
     kepalaSekolah,
+    kabagKeuangan,
+    kabagSdmUmum,
     programPrioritas = [],
 }: RapbsPersetujuanDocumentProps) {
     const tahunAnggaran = formatAcademicYear(tahun);
     const totalAnggaran = mataAnggarans.reduce((s, ma) => s + ma.total, 0);
+    const isThreeSigner = isThreeSignerUnit(unit.unit_nama);
+    const isDirpen = isDirekturPendidikanUnit(unit.unit_nama);
     const kepalaLabel = isSchoolUnit(unit.unit_nama) ? 'Kepala Sekolah' : 'Kepala Bagian';
+    const placeholderNama = '................................';
+    // Penandatangan kolom utama: Direktur Pendidikan pakai nama & jabatan khusus,
+    // unit lain pakai nama dari popup/pengaju dengan jabatan Kepala Bagian.
+    const kepalaNama = isDirpen
+        ? DIREKTUR_PENDIDIKAN_NAMA
+        : kepalaSekolah || rapbs?.submitter?.name || placeholderNama;
+    const kepalaRole = isDirpen ? 'Direktur Pendidikan' : 'Kepala Bagian';
 
     return (
         <div className="bg-white p-8 print:p-4" style={{ fontFamily: 'Times New Roman, serif' }}>
@@ -321,23 +337,47 @@ export function RapbsPersetujuanDocument({
 
             {/* Signature Section */}
             <div className="mt-12 page-break-inside-avoid text-sm">
-                {/* Blok 1: Direktur (kiri) & Kepala Sekolah/Bagian (kanan) */}
-                <div className="flex justify-between gap-8">
-                    <div>
-                        <p>Direktorat Pendidikan</p>
-                        <p>Yayasan Asrama Pelajar Islam</p>
-                        <p className="mt-20 font-bold underline">{DIREKTUR_NAMA}</p>
-                        <p>Direktur</p>
+                {isThreeSigner ? (
+                    /* Blok 1 (unit khusus): Kabag Keuangan | Kabag SDM dan Umum | Kepala Bagian/Direktur Pendidikan */
+                    <>
+                        <div className="text-right">
+                            <p>Jakarta, {formatTanggal(rapbs?.approved_at ?? new Date().toISOString())}</p>
+                            <p>{unit.unit_nama}</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-8 text-center">
+                            <div>
+                                <p className="mt-20 font-bold underline">{kabagKeuangan || placeholderNama}</p>
+                                <p>Kabag Keuangan</p>
+                            </div>
+                            <div>
+                                <p className="mt-20 font-bold underline">{kabagSdmUmum || placeholderNama}</p>
+                                <p>Kabag SDM dan Umum</p>
+                            </div>
+                            <div>
+                                <p className="mt-20 font-bold underline">{kepalaNama}</p>
+                                <p>{kepalaRole}</p>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    /* Blok 1 (default): Direktur (kiri) & Kepala Sekolah/Bagian (kanan) */
+                    <div className="flex justify-between gap-8">
+                        <div>
+                            <p>Direktorat Pendidikan</p>
+                            <p>Yayasan Asrama Pelajar Islam</p>
+                            <p className="mt-20 font-bold underline">{DIREKTUR_NAMA}</p>
+                            <p>Direktur</p>
+                        </div>
+                        <div>
+                            <p>Jakarta, {formatTanggal(rapbs?.approved_at ?? new Date().toISOString())}</p>
+                            <p>{unit.unit_nama}</p>
+                            <p className="mt-20 font-bold underline">
+                                {kepalaSekolah || rapbs?.submitter?.name || placeholderNama}
+                            </p>
+                            <p>{kepalaLabel}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p>Jakarta, {formatTanggal(rapbs?.approved_at ?? new Date().toISOString())}</p>
-                        <p>{unit.unit_nama}</p>
-                        <p className="mt-20 font-bold underline">
-                            {kepalaSekolah || rapbs?.submitter?.name || '................................'}
-                        </p>
-                        <p>{kepalaLabel}</p>
-                    </div>
-                </div>
+                )}
 
                 {/* Mengetahui */}
                 <div className="mt-10 text-center">

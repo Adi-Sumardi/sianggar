@@ -5,6 +5,7 @@ import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send,
 import { useReactToPrint } from 'react-to-print';
 import { exportUnitRapbsExcel, exportAllUnitsRapbsExcel } from '@/lib/exportRapbsExcel';
 import { RapbsPersetujuanDocument, buildPersetujuanData, type PersetujuanMataAnggaran, type ProgramPrioritas } from './RapbsPersetujuanPrint';
+import { isThreeSignerUnit, isDirekturPendidikanUnit } from '@/lib/unitSignatory';
 import { getPkts } from '@/services/planningService';
 import { toast } from 'sonner';
 import {
@@ -78,6 +79,8 @@ export default function RapbsList() {
     const [printingUnitId, setPrintingUnitId] = useState<number | null>(null);
     const [printDialog, setPrintDialog] = useState<RapbsUnitData[] | null>(null);
     const [kepalaNames, setKepalaNames] = useState<Record<number, string>>({});
+    const [kabagKeuanganNames, setKabagKeuanganNames] = useState<Record<number, string>>({});
+    const [kabagSdmUmumNames, setKabagSdmUmumNames] = useState<Record<number, string>>({});
     const printRef = useRef<HTMLDivElement>(null);
 
     const handleExportUnit = useCallback(async (unit: RapbsUnitData) => {
@@ -972,6 +975,8 @@ export default function RapbsList() {
                                     mataAnggarans={item.mataAnggarans}
                                     rapbs={findRapbsForUnit(item.unit.unit_id)}
                                     kepalaSekolah={kepalaNames[item.unit.unit_id]}
+                                    kabagKeuangan={kabagKeuanganNames[item.unit.unit_id]}
+                                    kabagSdmUmum={kabagSdmUmumNames[item.unit.unit_id]}
                                     programPrioritas={item.programPrioritas}
                                 />
                             </div>
@@ -986,7 +991,7 @@ export default function RapbsList() {
                         if (!open) setPrintDialog(null);
                     }}
                     title="Cetak Persetujuan Anggaran"
-                    description="Isi nama Kepala Sekolah/Kepala Unit yang akan tercantum sebagai penandatangan pada lembar persetujuan."
+                    description="Isi nama penandatangan yang akan tercantum pada lembar persetujuan."
                     confirmLabel="Cetak"
                     cancelLabel="Batal"
                     onConfirm={() => {
@@ -995,23 +1000,68 @@ export default function RapbsList() {
                         if (targets) preparePersetujuanPrint(targets);
                     }}
                 >
-                    <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
-                        {(printDialog ?? []).map((u) => (
-                            <div key={u.unit_id}>
-                                <label className="mb-1 block text-xs font-medium text-slate-600">
-                                    {u.unit_nama}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={kepalaNames[u.unit_id] ?? ''}
-                                    onChange={(e) =>
-                                        setKepalaNames((prev) => ({ ...prev, [u.unit_id]: e.target.value }))
-                                    }
-                                    placeholder="Nama Kepala Sekolah/Kepala Unit"
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                                />
-                            </div>
-                        ))}
+                    <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
+                        {(printDialog ?? []).map((u) => {
+                            const threeSigner = isThreeSignerUnit(u.unit_nama);
+                            const dirpen = isDirekturPendidikanUnit(u.unit_nama);
+                            const inputClass =
+                                'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200';
+                            return (
+                                <div key={u.unit_id} className="space-y-2">
+                                    <p className="text-sm font-semibold text-slate-700">{u.unit_nama}</p>
+                                    {/* Kepala Bagian hanya untuk unit non-Direktur Pendidikan
+                                        (Direktur Pendidikan namanya sudah tetap di dokumen) */}
+                                    {!dirpen && (
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium text-slate-600">
+                                                {threeSigner ? 'Kepala Bagian' : 'Kepala Sekolah/Kepala Unit'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={kepalaNames[u.unit_id] ?? ''}
+                                                onChange={(e) =>
+                                                    setKepalaNames((prev) => ({ ...prev, [u.unit_id]: e.target.value }))
+                                                }
+                                                placeholder={threeSigner ? 'Nama Kepala Bagian' : 'Nama Kepala Sekolah/Kepala Unit'}
+                                                className={inputClass}
+                                            />
+                                        </div>
+                                    )}
+                                    {threeSigner && (
+                                        <>
+                                            <div>
+                                                <label className="mb-1 block text-xs font-medium text-slate-600">
+                                                    Kabag Keuangan
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={kabagKeuanganNames[u.unit_id] ?? ''}
+                                                    onChange={(e) =>
+                                                        setKabagKeuanganNames((prev) => ({ ...prev, [u.unit_id]: e.target.value }))
+                                                    }
+                                                    placeholder="Nama Kabag Keuangan"
+                                                    className={inputClass}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="mb-1 block text-xs font-medium text-slate-600">
+                                                    Kabag SDM dan Umum
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={kabagSdmUmumNames[u.unit_id] ?? ''}
+                                                    onChange={(e) =>
+                                                        setKabagSdmUmumNames((prev) => ({ ...prev, [u.unit_id]: e.target.value }))
+                                                    }
+                                                    placeholder="Nama Kabag SDM dan Umum"
+                                                    className={inputClass}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </ConfirmDialog>
             </motion.div>
