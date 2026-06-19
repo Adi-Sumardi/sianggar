@@ -114,8 +114,9 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('units', UnitController::class);
         });
 
-        // Admin - Backup Database (otorisasi role Admin dicek di controller)
+        // Admin - Backup & Restore Database (otorisasi role Admin dicek di controller)
         Route::get('admin/backup/database', [BackupController::class, 'database']);
+        Route::post('admin/backup/restore', [BackupController::class, 'restore']);
 
         // ---------------------------------------------------------------------
         // Budget - Mata Anggaran (hierarchical)

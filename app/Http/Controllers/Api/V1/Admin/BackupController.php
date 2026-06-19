@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -109,6 +110,74 @@ class BackupController extends Controller
             'Content-Type' => 'application/sql',
             'Cache-Control' => 'no-store, no-cache, must-revalidate',
             'X-Accel-Buffering' => 'no',
+        ]);
+    }
+
+    /**
+     * Pulihkan database dari file backup .sql yang diunggah.
+     *
+     * OPERASI DESTRUKTIF: menjalankan seluruh isi file (DROP/CREATE/INSERT) ke
+     * database aktif sehingga menimpa data yang ada. Murni PHP (PDO), tanpa
+     * mysql CLI. Hanya untuk role Administrator.
+     */
+    public function restore(Request $request): JsonResponse
+    {
+        abort_unless(
+            $request->user()?->role === UserRole::Admin,
+            403,
+            'Hanya Administrator yang dapat memulihkan database.',
+        );
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:1048576'], // maks 1 GB (KB)
+        ]);
+
+        $connection = DB::connection();
+
+        abort_unless(
+            $connection->getDriverName() === 'mysql',
+            422,
+            'Restore database hanya didukung untuk koneksi MySQL.',
+        );
+
+        $file = $request->file('file');
+        $ext = strtolower((string) $file->getClientOriginalExtension());
+
+        abort_unless(
+            in_array($ext, ['sql', 'txt'], true),
+            422,
+            'File harus berformat .sql',
+        );
+
+        $sql = file_get_contents($file->getRealPath());
+
+        abort_if(
+            $sql === false || trim($sql) === '',
+            422,
+            'File backup kosong atau tidak dapat dibaca.',
+        );
+
+        // Sanity check minimal agar tidak menjalankan file sembarangan.
+        abort_unless(
+            str_contains($sql, 'CREATE TABLE') || str_contains($sql, 'INSERT INTO'),
+            422,
+            'File tidak dikenali sebagai backup database SIANGGAR.',
+        );
+
+        $connection->disableQueryLog();
+        @set_time_limit(0);
+
+        try {
+            // Bungkus dengan FK checks off agar urutan tabel tidak menggagalkan restore.
+            $connection->unprepared("SET FOREIGN_KEY_CHECKS=0;\n".$sql."\nSET FOREIGN_KEY_CHECKS=1;");
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Gagal memulihkan database: '.$e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Database berhasil dipulihkan dari backup.',
         ]);
     }
 }

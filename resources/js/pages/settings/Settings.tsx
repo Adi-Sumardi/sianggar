@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Lock, Eye, EyeOff, Loader2, Check, AlertCircle, Database, Download } from 'lucide-react';
+import { Lock, Eye, EyeOff, Loader2, Check, AlertCircle, Database, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleLabel, UserRole } from '@/types/enums';
-import { downloadDatabaseBackup } from '@/services/backupService';
+import { downloadDatabaseBackup, restoreDatabaseBackup } from '@/services/backupService';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -49,6 +50,31 @@ export default function Settings() {
             toast.error(err.response?.data?.message ?? 'Gagal membuat backup database');
         } finally {
             setIsBackingUp(false);
+        }
+    };
+
+    // Restore database (Administrator only) — operasi destruktif
+    const restoreInputRef = useRef<HTMLInputElement>(null);
+    const [restoreFile, setRestoreFile] = useState<File | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+    const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+
+    const handleRestore = async () => {
+        if (!restoreFile) return;
+        setShowRestoreConfirm(false);
+        setIsRestoring(true);
+        try {
+            const { message } = await restoreDatabaseBackup(restoreFile);
+            toast.success(message || 'Database berhasil dipulihkan');
+            setRestoreFile(null);
+            if (restoreInputRef.current) restoreInputRef.current.value = '';
+            // Data berubah total — muat ulang agar UI konsisten.
+            setTimeout(() => window.location.reload(), 1500);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            toast.error(err.response?.data?.message ?? 'Gagal memulihkan database');
+        } finally {
+            setIsRestoring(false);
         }
     };
 
@@ -351,10 +377,72 @@ export default function Settings() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Restore / Upload backup */}
+                            <div className="border-t border-slate-200 p-6">
+                                <div className="mb-3 flex items-center gap-2">
+                                    <Upload className="h-5 w-5 text-slate-400" />
+                                    <h3 className="text-base font-semibold text-slate-900">
+                                        Pulihkan Database
+                                    </h3>
+                                </div>
+                                <div className="mb-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                                    <p>
+                                        Memulihkan dari file backup akan <strong>menimpa seluruh
+                                        data saat ini</strong> dan tidak dapat dibatalkan. Pastikan
+                                        Anda sudah membuat backup terbaru sebelum melanjutkan.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                    <input
+                                        ref={restoreInputRef}
+                                        type="file"
+                                        accept=".sql,.txt"
+                                        onChange={(e) => setRestoreFile(e.target.files?.[0] ?? null)}
+                                        className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 sm:max-w-xs"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowRestoreConfirm(true)}
+                                        disabled={!restoreFile || isRestoring}
+                                        className="inline-flex shrink-0 items-center gap-2 rounded-md bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {isRestoring ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Memulihkan...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload className="h-4 w-4" />
+                                                Pulihkan Database
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                                {restoreFile && (
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        File terpilih: {restoreFile.name}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </motion.div>
                 )}
             </motion.div>
+
+            {/* Konfirmasi restore (destruktif) */}
+            <ConfirmDialog
+                open={showRestoreConfirm}
+                onOpenChange={setShowRestoreConfirm}
+                title="Pulihkan Database?"
+                description={`Seluruh data saat ini akan ditimpa oleh isi file "${restoreFile?.name ?? ''}". Tindakan ini tidak dapat dibatalkan. Lanjutkan?`}
+                confirmLabel="Ya, Pulihkan"
+                cancelLabel="Batal"
+                variant="destructive"
+                onConfirm={handleRestore}
+            />
         </PageTransition>
     );
 }
