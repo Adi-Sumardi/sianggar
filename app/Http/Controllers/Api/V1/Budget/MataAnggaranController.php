@@ -23,7 +23,9 @@ class MataAnggaranController extends Controller
         /** @var \App\Models\User $user */
         $user = $request->user();
         $query = MataAnggaran::with('unit')
-            ->withCount('subMataAnggarans');
+            ->withCount('subMataAnggarans')
+            // Total mata anggaran = penjumlahan detail-nya (sama dengan perhitungan RAPBS)
+            ->withSum('detailMataAnggarans as detail_total', 'jumlah');
 
         // Auto-filter by user's unit_id if they should only see their own data
         if ($user->role->shouldFilterByOwnData() && $user->unit_id !== null) {

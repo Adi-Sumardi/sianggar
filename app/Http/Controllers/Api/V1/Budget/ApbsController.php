@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Budget\StoreApbsRequest;
 use App\Http\Resources\ApbsResource;
 use App\Models\Apbs;
+use App\Models\DetailMataAnggaran;
 use App\Models\Rapbs;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -44,7 +46,40 @@ class ApbsController extends Controller
         $perPage = (int) $request->query('per_page', '15');
         $items = $query->orderByDesc('tahun')->paginate($perPage);
 
+        $this->applyLiveTotals($items->getCollection());
+
         return ApbsResource::collection($items);
+    }
+
+    /**
+     * Selaraskan total_anggaran & sisa_anggaran APBS dengan total RAPBS terkini,
+     * yaitu penjumlahan detail mata anggaran per unit & tahun (sama dengan halaman RAPBS).
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, \App\Models\Apbs>  $apbsList
+     */
+    private function applyLiveTotals(EloquentCollection $apbsList): void
+    {
+        if ($apbsList->isEmpty()) {
+            return;
+        }
+
+        $unitIds = $apbsList->pluck('unit_id')->unique()->values();
+        $tahuns = $apbsList->pluck('tahun')->unique()->values();
+
+        $totals = DetailMataAnggaran::query()
+            ->join('mata_anggarans', 'detail_mata_anggarans.mata_anggaran_id', '=', 'mata_anggarans.id')
+            ->whereIn('mata_anggarans.unit_id', $unitIds)
+            ->whereIn('mata_anggarans.tahun', $tahuns)
+            ->groupBy('mata_anggarans.unit_id', 'mata_anggarans.tahun')
+            ->selectRaw('mata_anggarans.unit_id, mata_anggarans.tahun, SUM(detail_mata_anggarans.jumlah) as total')
+            ->get()
+            ->keyBy(fn ($row) => $row->unit_id.'|'.$row->tahun);
+
+        foreach ($apbsList as $apbs) {
+            $total = (float) ($totals->get($apbs->unit_id.'|'.$apbs->tahun)->total ?? 0);
+            $apbs->total_anggaran = $total;
+            $apbs->sisa_anggaran = $total - (float) $apbs->total_realisasi;
+        }
     }
 
     /**
@@ -81,6 +116,7 @@ class ApbsController extends Controller
     public function show(Apbs $apb): JsonResponse
     {
         $apb->load(['unit', 'rapbs']);
+        $this->applyLiveTotals(new EloquentCollection([$apb]));
 
         return response()->json([
             'data' => new ApbsResource($apb),

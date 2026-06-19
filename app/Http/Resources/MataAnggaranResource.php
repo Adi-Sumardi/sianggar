@@ -24,6 +24,8 @@ class MataAnggaranResource extends JsonResource
             'tahun' => $this->tahun,
             'jenis' => $this->jenis,
             'keterangan' => $this->keterangan,
+            // Total anggaran = penjumlahan detail mata anggaran (di-load via withSum)
+            'jumlah' => (float) ($this->detail_total ?? 0),
             'unit' => new UnitResource($this->whenLoaded('unit')),
             'sub_mata_anggarans' => SubMataAnggaranResource::collection($this->whenLoaded('subMataAnggarans')),
             'sub_mata_anggarans_count' => $this->whenCounted('subMataAnggarans'),

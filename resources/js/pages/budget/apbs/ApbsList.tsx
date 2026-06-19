@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Plus, Save, X, Pencil, DollarSign, Loader2, Printer, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
+import { Plus, DollarSign, Loader2, Printer, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { staggerContainer, staggerItem, cardHover } from '@/lib/animations';
@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { SearchFilter } from '@/components/common/SearchFilter';
 import { StatCard } from '@/components/common/StatCard';
-import { useApbsList, useUpdateApbs, useCreateApbs, useMataAnggarans, useSubMataAnggarans, useDetailMataAnggarans } from '@/hooks/useBudget';
+import { useApbsList, useCreateApbs, useMataAnggarans, useSubMataAnggarans, useDetailMataAnggarans } from '@/hooks/useBudget';
 import { useUnitsList } from '@/hooks/useDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types/enums';
@@ -45,8 +45,6 @@ export default function ApbsList() {
     const isAdmin = user?.role === UserRole.Admin;
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [searchQuery, setSearchQuery] = useState('');
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [editValue, setEditValue] = useState('');
     const [expandedApbs, setExpandedApbs] = useState<Set<number>>(new Set());
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [includeBagianUmum, setIncludeBagianUmum] = useState(false);
@@ -57,8 +55,6 @@ export default function ApbsList() {
         tahun: filterValues.tahun || undefined,
         // Note: unit_id filter is handled automatically by backend based on user role
     });
-
-    const updateMutation = useUpdateApbs();
 
     // Extract data from paginated response
     const apbsData = (apbsResponse?.data || []) as ApbsWithUnit[];
@@ -85,40 +81,6 @@ export default function ApbsList() {
             return next;
         });
     }, []);
-
-    // Inline edit
-    const startEdit = useCallback((row: ApbsWithUnit) => {
-        setEditingId(row.id);
-        setEditValue(row.total_anggaran.toString());
-    }, []);
-
-    const cancelEdit = useCallback(() => {
-        setEditingId(null);
-        setEditValue('');
-    }, []);
-
-    const saveEdit = useCallback(async () => {
-        if (editingId === null) return;
-        const numeric = parseInt(editValue.replace(/\D/g, ''), 10) || 0;
-
-        try {
-            await updateMutation.mutateAsync({
-                id: editingId,
-                dto: { total_anggaran: numeric },
-            });
-            toast.success('Jumlah APBS berhasil diperbarui');
-            setEditingId(null);
-            setEditValue('');
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Gagal memperbarui APBS');
-        }
-    }, [editingId, editValue, updateMutation]);
-
-    // Format input value
-    const formatInput = (val: string) => {
-        const numeric = val.replace(/\D/g, '');
-        return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    };
 
     // Loading state
     if (isLoading) {
@@ -244,61 +206,9 @@ export default function ApbsList() {
                                         <div className="flex flex-wrap items-center gap-3 sm:gap-6">
                                             <div className="text-right">
                                                 <p className="text-xs text-slate-400">Anggaran</p>
-                                                {editingId === apbs.id ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="relative">
-                                                            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-xs font-medium text-slate-500">
-                                                                Rp
-                                                            </span>
-                                                            <input
-                                                                type="text"
-                                                                inputMode="numeric"
-                                                                value={formatInput(editValue)}
-                                                                onChange={(e) => setEditValue(e.target.value)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') saveEdit();
-                                                                    if (e.key === 'Escape') cancelEdit();
-                                                                }}
-                                                                autoFocus
-                                                                className="w-40 rounded-md border border-blue-400 bg-white py-1.5 pl-7 pr-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                            />
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={saveEdit}
-                                                            disabled={updateMutation.isPending}
-                                                            className="rounded p-1 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
-                                                            aria-label="Simpan"
-                                                        >
-                                                            <Save className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={cancelEdit}
-                                                            className="rounded p-1 text-slate-400 hover:bg-slate-100"
-                                                            aria-label="Batal"
-                                                        >
-                                                            <X className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-base font-bold text-slate-900">
-                                                            {formatRupiah(apbs.total_anggaran ?? 0)}
-                                                        </p>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                startEdit(apbs);
-                                                            }}
-                                                            className="rounded p-1 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
-                                                            aria-label="Edit jumlah"
-                                                        >
-                                                            <Pencil className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                <p className="text-base font-bold text-slate-900">
+                                                    {formatRupiah(Number(apbs.total_anggaran ?? 0))}
+                                                </p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-xs text-slate-400">Realisasi</p>
