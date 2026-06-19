@@ -142,6 +142,87 @@ export async function buildPersetujuanData(unit: RapbsUnitData): Promise<Persetu
 }
 
 // ---------------------------------------------------------------------------
+// Tabel Rincian Anggaran (hierarkis: mata anggaran → sub → detail)
+// Dipakai bersama oleh cetak RAPBS & halaman pengesahan APBS.
+// ---------------------------------------------------------------------------
+
+export function RincianAnggaranTable({
+    mataAnggarans,
+    totalAnggaran,
+}: {
+    mataAnggarans: PersetujuanMataAnggaran[];
+    totalAnggaran: number;
+}) {
+    return (
+        <table className="w-full text-xs border-collapse border border-slate-300">
+            <thead>
+                <tr className="bg-blue-600 text-white">
+                    <th className="border border-slate-300 px-2 py-1 text-center w-8">No.</th>
+                    <th className="border border-slate-300 px-2 py-1 text-left">Mata Anggaran</th>
+                    <th className="border border-slate-300 px-2 py-1 text-left">Sub Mata Anggaran</th>
+                    <th className="border border-slate-300 px-2 py-1 text-left">Detail Anggaran</th>
+                    <th className="border border-slate-300 px-2 py-1 text-right">Anggaran</th>
+                </tr>
+            </thead>
+            <tbody>
+                {mataAnggarans.map((ma, maIdx) => (
+                    <Fragment key={`${ma.kode}-${maIdx}`}>
+                        {/* Baris Mata Anggaran */}
+                        <tr className="bg-blue-50 font-semibold">
+                            <td className="border border-slate-300 px-2 py-1 text-center">{maIdx + 1}.</td>
+                            <td className="border border-slate-300 px-2 py-1" colSpan={3}>
+                                {ma.kode}&nbsp;&nbsp;{ma.nama}
+                            </td>
+                            <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(ma.total)}</td>
+                        </tr>
+
+                        {/* Detail langsung (mata anggaran tanpa sub) */}
+                        {ma.details.map((d, dIdx) => (
+                            <tr key={`d-${maIdx}-${dIdx}`}>
+                                <td className="border border-slate-300 px-2 py-1" />
+                                <td className="border border-slate-300 px-2 py-1" />
+                                <td className="border border-slate-300 px-2 py-1" />
+                                <td className="border border-slate-300 px-2 py-1 text-slate-600">{d.uraian}</td>
+                                <td className="border border-slate-300 px-2 py-1 text-right text-slate-600">{formatRupiah(d.jumlah)}</td>
+                            </tr>
+                        ))}
+
+                        {/* Sub Mata Anggaran + detailnya */}
+                        {ma.subs.map((sub, subIdx) => (
+                            <Fragment key={`s-${maIdx}-${subIdx}`}>
+                                <tr className="bg-slate-100">
+                                    <td className="border border-slate-300 px-2 py-1" />
+                                    <td className="border border-slate-300 px-2 py-1" />
+                                    <td className="border border-slate-300 px-2 py-1 font-semibold" colSpan={3}>
+                                        {sub.kode}&nbsp;&nbsp;{sub.nama}
+                                    </td>
+                                </tr>
+                                {sub.details.map((d, dIdx) => (
+                                    <tr key={`sd-${maIdx}-${subIdx}-${dIdx}`}>
+                                        <td className="border border-slate-300 px-2 py-1" />
+                                        <td className="border border-slate-300 px-2 py-1" />
+                                        <td className="border border-slate-300 px-2 py-1" />
+                                        <td className="border border-slate-300 px-2 py-1 text-slate-600">{d.uraian}</td>
+                                        <td className="border border-slate-300 px-2 py-1 text-right text-slate-600">{formatRupiah(d.jumlah)}</td>
+                                    </tr>
+                                ))}
+                            </Fragment>
+                        ))}
+                    </Fragment>
+                ))}
+                {/* Baris TOTAL diletakkan di tbody (bukan tfoot) agar tidak
+                    terulang di setiap halaman saat dokumen dicetak. */}
+                <tr className="bg-slate-800 text-white font-bold">
+                    <td className="border border-slate-300 px-2 py-1" />
+                    <td className="border border-slate-300 px-2 py-1" colSpan={3}>TOTAL ANGGARAN</td>
+                    <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(totalAnggaran)}</td>
+                </tr>
+            </tbody>
+        </table>
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Print Document Component
 // ---------------------------------------------------------------------------
 
@@ -268,71 +349,7 @@ export function RapbsPersetujuanDocument({
             {/* Rincian Anggaran - struktur sama dengan export Excel */}
             <div className="mb-8">
                 <h4 className="font-bold text-sm mb-2 border-b border-slate-300 pb-1">RINCIAN ANGGARAN</h4>
-                <table className="w-full text-xs border-collapse border border-slate-300">
-                    <thead>
-                        <tr className="bg-blue-600 text-white">
-                            <th className="border border-slate-300 px-2 py-1 text-center w-8">No.</th>
-                            <th className="border border-slate-300 px-2 py-1 text-left">Mata Anggaran</th>
-                            <th className="border border-slate-300 px-2 py-1 text-left">Sub Mata Anggaran</th>
-                            <th className="border border-slate-300 px-2 py-1 text-left">Detail Anggaran</th>
-                            <th className="border border-slate-300 px-2 py-1 text-right">Anggaran</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {mataAnggarans.map((ma, maIdx) => (
-                            <Fragment key={`${ma.kode}-${maIdx}`}>
-                                {/* Baris Mata Anggaran */}
-                                <tr className="bg-blue-50 font-semibold">
-                                    <td className="border border-slate-300 px-2 py-1 text-center">{maIdx + 1}.</td>
-                                    <td className="border border-slate-300 px-2 py-1" colSpan={3}>
-                                        {ma.kode}&nbsp;&nbsp;{ma.nama}
-                                    </td>
-                                    <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(ma.total)}</td>
-                                </tr>
-
-                                {/* Detail langsung (mata anggaran tanpa sub) */}
-                                {ma.details.map((d, dIdx) => (
-                                    <tr key={`d-${maIdx}-${dIdx}`}>
-                                        <td className="border border-slate-300 px-2 py-1" />
-                                        <td className="border border-slate-300 px-2 py-1" />
-                                        <td className="border border-slate-300 px-2 py-1" />
-                                        <td className="border border-slate-300 px-2 py-1 text-slate-600">{d.uraian}</td>
-                                        <td className="border border-slate-300 px-2 py-1 text-right text-slate-600">{formatRupiah(d.jumlah)}</td>
-                                    </tr>
-                                ))}
-
-                                {/* Sub Mata Anggaran + detailnya */}
-                                {ma.subs.map((sub, subIdx) => (
-                                    <Fragment key={`s-${maIdx}-${subIdx}`}>
-                                        <tr className="bg-slate-100">
-                                            <td className="border border-slate-300 px-2 py-1" />
-                                            <td className="border border-slate-300 px-2 py-1" />
-                                            <td className="border border-slate-300 px-2 py-1 font-semibold" colSpan={3}>
-                                                {sub.kode}&nbsp;&nbsp;{sub.nama}
-                                            </td>
-                                        </tr>
-                                        {sub.details.map((d, dIdx) => (
-                                            <tr key={`sd-${maIdx}-${subIdx}-${dIdx}`}>
-                                                <td className="border border-slate-300 px-2 py-1" />
-                                                <td className="border border-slate-300 px-2 py-1" />
-                                                <td className="border border-slate-300 px-2 py-1" />
-                                                <td className="border border-slate-300 px-2 py-1 text-slate-600">{d.uraian}</td>
-                                                <td className="border border-slate-300 px-2 py-1 text-right text-slate-600">{formatRupiah(d.jumlah)}</td>
-                                            </tr>
-                                        ))}
-                                    </Fragment>
-                                ))}
-                            </Fragment>
-                        ))}
-                        {/* Baris TOTAL diletakkan di tbody (bukan tfoot) agar tidak
-                            terulang di setiap halaman saat dokumen dicetak. */}
-                        <tr className="bg-slate-800 text-white font-bold">
-                            <td className="border border-slate-300 px-2 py-1" />
-                            <td className="border border-slate-300 px-2 py-1" colSpan={3}>TOTAL ANGGARAN</td>
-                            <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(totalAnggaran)}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <RincianAnggaranTable mataAnggarans={mataAnggarans} totalAnggaran={totalAnggaran} />
             </div>
 
             {/* Signature Section */}

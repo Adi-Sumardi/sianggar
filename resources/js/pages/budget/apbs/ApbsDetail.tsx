@@ -12,6 +12,8 @@ import { isThreeSignerUnit, isDirekturPendidikanUnit, DIREKTUR_PENDIDIKAN_NAMA }
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useApbsDetail } from '@/hooks/useBudget';
 import { getPkts } from '@/services/planningService';
+import { getRapbsList } from '@/services/budgetService';
+import { buildPersetujuanData, RincianAnggaranTable, type PersetujuanMataAnggaran } from '../rapbs/RapbsPersetujuanPrint';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -62,14 +64,16 @@ interface PrintContentProps {
         ttd_ketua_umum?: string | null;
     };
     programPrioritas: ProgramPrioritas[];
+    /** Rincian anggaran hierarkis (mata anggaran → sub → detail), sama dengan cetak RAPBS. */
+    rincian: PersetujuanMataAnggaran[];
     /** Nama Kabag Keuangan (unit 3-penandatangan), diisi lewat popup sebelum cetak. */
     kabagKeuangan?: string;
     /** Nama Kabag SDM dan Umum (unit 3-penandatangan), diisi lewat popup sebelum cetak. */
     kabagSdmUmum?: string;
 }
 
-function PrintContent({ apbs, programPrioritas, kabagKeuangan, kabagSdmUmum }: PrintContentProps) {
-    const items = apbs.items ?? [];
+function PrintContent({ apbs, programPrioritas, rincian, kabagKeuangan, kabagSdmUmum }: PrintContentProps) {
+    const rincianTotal = rincian.reduce((s, ma) => s + ma.total, 0);
     const unitNama = apbs.unit?.nama;
     const isThreeSigner = isThreeSignerUnit(unitNama);
     const isDirpen = isDirekturPendidikanUnit(unitNama);
@@ -166,6 +170,14 @@ function PrintContent({ apbs, programPrioritas, kabagKeuangan, kabagSdmUmum }: P
                 )}
             </div>
 
+            {/* Rincian Anggaran - hierarkis, sama dengan cetak RAPBS */}
+            {rincian.length > 0 && (
+                <div className="mb-6">
+                    <h4 className="font-bold text-sm mb-2 border-b border-slate-300 pb-1">RINCIAN ANGGARAN</h4>
+                    <RincianAnggaranTable mataAnggarans={rincian} totalAnggaran={rincianTotal} />
+                </div>
+            )}
+
             {/* Budget Summary */}
             <div className="mb-6">
                 <h4 className="font-bold text-sm mb-2 border-b border-slate-300 pb-1">RINGKASAN ANGGARAN</h4>
@@ -186,45 +198,6 @@ function PrintContent({ apbs, programPrioritas, kabagKeuangan, kabagSdmUmum }: P
                     </tbody>
                 </table>
             </div>
-
-            {/* Detail Items */}
-            {items.length > 0 && (
-                <div className="mb-8">
-                    <h4 className="font-bold text-sm mb-2 border-b border-slate-300 pb-1">RINCIAN ANGGARAN</h4>
-                    <table className="w-full text-xs border-collapse border border-slate-300">
-                        <thead>
-                            <tr className="bg-slate-100">
-                                <th className="border border-slate-300 px-2 py-1 text-left">No</th>
-                                <th className="border border-slate-300 px-2 py-1 text-left">Kode COA</th>
-                                <th className="border border-slate-300 px-2 py-1 text-left">Uraian</th>
-                                <th className="border border-slate-300 px-2 py-1 text-right">Anggaran</th>
-                                <th className="border border-slate-300 px-2 py-1 text-right">Realisasi</th>
-                                <th className="border border-slate-300 px-2 py-1 text-right">Sisa</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((item, idx) => (
-                                <tr key={item.id}>
-                                    <td className="border border-slate-300 px-2 py-1">{idx + 1}</td>
-                                    <td className="border border-slate-300 px-2 py-1">{item.kode_coa || '-'}</td>
-                                    <td className="border border-slate-300 px-2 py-1">{item.nama}</td>
-                                    <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(item.anggaran)}</td>
-                                    <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(item.realisasi)}</td>
-                                    <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(item.sisa)}</td>
-                                </tr>
-                            ))}
-                            {/* Baris TOTAL diletakkan di tbody (bukan tfoot) agar tidak
-                                terulang di setiap halaman saat dokumen dicetak. */}
-                            <tr className="bg-slate-50 font-semibold">
-                                <td className="border border-slate-300 px-2 py-1" colSpan={3}>TOTAL</td>
-                                <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(apbs.total_anggaran)}</td>
-                                <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(apbs.total_realisasi)}</td>
-                                <td className="border border-slate-300 px-2 py-1 text-right">{formatRupiah(apbs.sisa_anggaran)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            )}
 
             {/* Signature Section */}
             <div className="mt-12 page-break-inside-avoid">
@@ -328,6 +301,7 @@ export default function ApbsDetail() {
 
     const { data: apbs, isLoading, isError } = useApbsDetail(Number(id));
     const [programPrioritas, setProgramPrioritas] = useState<ProgramPrioritas[]>([]);
+    const [rincian, setRincian] = useState<PersetujuanMataAnggaran[]>([]);
     const [printDialogOpen, setPrintDialogOpen] = useState(false);
     const [kabagKeuangan, setKabagKeuangan] = useState('');
     const [kabagSdmUmum, setKabagSdmUmum] = useState('');
@@ -349,6 +323,24 @@ export default function ApbsDetail() {
                 setProgramPrioritas(list);
             })
             .catch(() => {/* silent fail - not critical for print */});
+    }, [apbs]);
+
+    // Ambil rincian anggaran hierarkis (mata anggaran → sub → detail) dari data
+    // RAPBS unit, supaya dokumen pengesahan APBS menampilkan detail seperti cetak RAPBS.
+    useEffect(() => {
+        if (!apbs?.unit_id) return;
+        let cancelled = false;
+
+        getRapbsList({ unit_id: apbs.unit_id, tahun: apbs.tahun })
+            .then(async (units) => {
+                const unit = units.find((u) => u.unit_id === apbs.unit_id);
+                if (!unit) return;
+                const data = await buildPersetujuanData(unit);
+                if (!cancelled) setRincian(data);
+            })
+            .catch(() => {/* silent fail - not critical for print */});
+
+        return () => { cancelled = true; };
     }, [apbs]);
 
     const handlePrint = useReactToPrint({
@@ -484,6 +476,7 @@ export default function ApbsDetail() {
                             <PrintContent
                                 apbs={apbs}
                                 programPrioritas={programPrioritas}
+                                rincian={rincian}
                                 kabagKeuangan={kabagKeuangan}
                                 kabagSdmUmum={kabagSdmUmum}
                             />
