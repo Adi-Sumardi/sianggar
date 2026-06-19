@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download, Printer } from 'lucide-react';
+import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download, Printer, AlertTriangle } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { exportUnitRapbsExcel, exportAllUnitsRapbsExcel } from '@/lib/exportRapbsExcel';
 import { RapbsPersetujuanDocument, buildPersetujuanData, type PersetujuanMataAnggaran, type ProgramPrioritas } from './RapbsPersetujuanPrint';
@@ -149,10 +149,7 @@ export default function RapbsList() {
             toast.error('RAPBS tidak dapat disubmit');
             return;
         }
-        if (rapbs.is_over_budget) {
-            toast.error('Total Anggaran melebihi Total Plafon. Sesuaikan anggaran terlebih dahulu.');
-            return;
-        }
+        // RAPBS yang melebihi plafon tetap boleh disubmit (anggaran sudah disetujui).
         submitRapbs.mutate(rapbs.id, {
             onSuccess: () => {
                 toast.success('RAPBS berhasil disubmit untuk approval');
@@ -502,11 +499,17 @@ export default function RapbsList() {
                                                 Detail
                                             </Link>
                                             {rapbs.can_submit && (
-                                                <div className="relative group">
+                                                <>
+                                                    {rapbs.is_over_budget && (
+                                                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+                                                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                                            Melebihi plafon — tetap dapat disubmit
+                                                        </span>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleSubmitRapbs(rapbs)}
-                                                        disabled={submitRapbs.isPending || !!rapbs.is_over_budget}
+                                                        disabled={submitRapbs.isPending}
                                                         className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
                                                         {submitRapbs.isPending ? (
@@ -516,13 +519,7 @@ export default function RapbsList() {
                                                         )}
                                                         Submit untuk Approval
                                                     </button>
-                                                    {rapbs.is_over_budget && (
-                                                        <div className="absolute right-0 top-full z-10 mt-2 w-64 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
-                                                            <p className="font-semibold">Total Anggaran melebihi Total Plafon</p>
-                                                            <p className="mt-1">Sesuaikan anggaran agar tidak melebihi plafon sebelum mengajukan.</p>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                </>
                                             )}
                                         </div>
                                     </div>

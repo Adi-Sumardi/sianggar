@@ -107,11 +107,8 @@ class RapbsApprovalController extends Controller
             ], 422);
         }
 
-        if ($rapbs->isOverBudget()) {
-            return response()->json([
-                'message' => 'Total Anggaran melebihi Total Plafon. Sesuaikan anggaran terlebih dahulu.',
-            ], 422);
-        }
+        // Catatan: RAPBS yang melebihi plafon tetap diperbolehkan disubmit
+        // karena anggaran sudah disetujui; pelampauan plafon hanya jadi peringatan.
 
         $this->approvalService->submit($rapbs, $request->user());
 
