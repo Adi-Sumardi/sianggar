@@ -13,7 +13,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useApbsDetail } from '@/hooks/useBudget';
 import { getPkts } from '@/services/planningService';
 import { getRapbsList } from '@/services/budgetService';
-import { buildPersetujuanData, RincianAnggaranTable, type PersetujuanMataAnggaran } from '../rapbs/RapbsPersetujuanPrint';
+import { buildPersetujuanData, RincianAnggaranTable, sortProgramPrioritas, type PersetujuanMataAnggaran } from '../rapbs/RapbsPersetujuanPrint';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -320,7 +320,7 @@ export default function ApbsDetail() {
                         list.push({ kode: k.kode ?? null, nama: k.nama ?? '', deskripsi: (k as { deskripsi?: string | null }).deskripsi ?? null });
                     }
                 }
-                setProgramPrioritas(list);
+                setProgramPrioritas(sortProgramPrioritas(list));
             })
             .catch(() => {/* silent fail - not critical for print */});
     }, [apbs]);

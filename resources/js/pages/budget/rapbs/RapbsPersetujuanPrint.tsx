@@ -56,6 +56,18 @@ export interface ProgramPrioritas {
     deskripsi: string | null;
 }
 
+/**
+ * Urutkan program prioritas berdasarkan kode mata anggaran (menaik, natural sort).
+ * Item tanpa kode diletakkan di akhir. Mengembalikan array baru.
+ */
+export function sortProgramPrioritas(list: ProgramPrioritas[]): ProgramPrioritas[] {
+    return [...list].sort((a, b) => {
+        if (!a.kode) return 1;
+        if (!b.kode) return -1;
+        return a.kode.localeCompare(b.kode, undefined, { numeric: true });
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

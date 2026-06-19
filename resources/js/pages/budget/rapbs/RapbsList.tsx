@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { BarChart3, Building2, Wallet, Loader2, ChevronDown, ChevronRight, Send, Eye, FileCheck, Check, X, GitCompareArrows, Download, Printer, AlertTriangle } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { exportUnitRapbsExcel, exportAllUnitsRapbsExcel } from '@/lib/exportRapbsExcel';
-import { RapbsPersetujuanDocument, buildPersetujuanData, type PersetujuanMataAnggaran, type ProgramPrioritas } from './RapbsPersetujuanPrint';
+import { RapbsPersetujuanDocument, buildPersetujuanData, sortProgramPrioritas, type PersetujuanMataAnggaran, type ProgramPrioritas } from './RapbsPersetujuanPrint';
 import { isThreeSignerUnit, isDirekturPendidikanUnit } from '@/lib/unitSignatory';
 import { getPkts } from '@/services/planningService';
 import { toast } from 'sonner';
@@ -252,7 +252,7 @@ export default function RapbsList() {
                         programPrioritas.push({ kode: k.kode ?? null, nama: k.nama ?? '', deskripsi: k.deskripsi ?? null });
                     }
                 }
-                items.push({ unit, mataAnggarans, programPrioritas });
+                items.push({ unit, mataAnggarans, programPrioritas: sortProgramPrioritas(programPrioritas) });
                 setPrintPreparing({ current: i + 1, total: targets.length });
             }
             setPrintQueue(items);
