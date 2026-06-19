@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Lock, Eye, EyeOff, Loader2, Check, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, Loader2, Check, AlertCircle, Database, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useAuth } from '@/hooks/useAuth';
-import { getRoleLabel } from '@/types/enums';
+import { getRoleLabel, UserRole } from '@/types/enums';
+import { downloadDatabaseBackup } from '@/services/backupService';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -25,6 +26,31 @@ export default function Settings() {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Backup database (Administrator only)
+    const isAdmin = user?.role === UserRole.Admin;
+    const [isBackingUp, setIsBackingUp] = useState(false);
+
+    const handleBackup = async () => {
+        setIsBackingUp(true);
+        try {
+            const { blob, filename } = await downloadDatabaseBackup();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Backup database berhasil diunduh');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            toast.error(err.response?.data?.message ?? 'Gagal membuat backup database');
+        } finally {
+            setIsBackingUp(false);
+        }
+    };
 
     // Validation
     const passwordsMatch = newPassword === confirmPassword;
@@ -282,6 +308,52 @@ export default function Settings() {
                         </form>
                     </div>
                 </motion.div>
+
+                {/* Backup Database Card (Administrator only) */}
+                {isAdmin && (
+                    <motion.div variants={staggerItem}>
+                        <div className="rounded-lg border border-slate-200 bg-white">
+                            <div className="border-b border-slate-200 px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                    <Database className="h-5 w-5 text-slate-400" />
+                                    <h2 className="text-base font-semibold text-slate-900">
+                                        Backup Database
+                                    </h2>
+                                </div>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Unduh cadangan seluruh database dalam format .sql
+                                </p>
+                            </div>
+                            <div className="p-6">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="max-w-md text-sm text-slate-600">
+                                        File backup berisi struktur dan seluruh data tabel. Simpan di
+                                        tempat aman — file ini memuat data sensitif. Proses bisa
+                                        memakan waktu beberapa saat untuk database besar.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={handleBackup}
+                                        disabled={isBackingUp}
+                                        className="inline-flex shrink-0 items-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {isBackingUp ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Menyiapkan...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download className="h-4 w-4" />
+                                                Unduh Backup
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
             </motion.div>
         </PageTransition>
     );

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\BackupController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\UnitController;
@@ -112,6 +113,9 @@ Route::prefix('v1')->group(function () {
         Route::middleware('permission:manage-units')->group(function () {
             Route::apiResource('units', UnitController::class);
         });
+
+        // Admin - Backup Database (otorisasi role Admin dicek di controller)
+        Route::get('admin/backup/database', [BackupController::class, 'database']);
 
         // ---------------------------------------------------------------------
         // Budget - Mata Anggaran (hierarchical)
