@@ -53,6 +53,9 @@ export default function ApbsList() {
     const { data: apbsResponse, isLoading, isError, error } = useApbsList({
         search: searchQuery || undefined,
         tahun: filterValues.tahun || undefined,
+        // Ambil semua unit dalam satu halaman (hindari paginasi default 15 yang
+        // menyembunyikan unit ke-16 dst).
+        per_page: 1000,
         // Note: unit_id filter is handled automatically by backend based on user role
     });
 
