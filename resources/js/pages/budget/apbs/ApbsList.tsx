@@ -49,6 +49,7 @@ export default function ApbsList() {
     const [editValue, setEditValue] = useState('');
     const [expandedApbs, setExpandedApbs] = useState<Set<number>>(new Set());
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [includeBagianUmum, setIncludeBagianUmum] = useState(false);
 
     // Fetch data from API - backend automatically filters by user's unit_id
     const { data: apbsResponse, isLoading, isError, error } = useApbsList({
@@ -62,8 +63,15 @@ export default function ApbsList() {
     // Extract data from paginated response
     const apbsData = (apbsResponse?.data || []) as ApbsWithUnit[];
 
-    // Total
-    const totalApbs = apbsData.reduce((sum, item) => sum + (item.total_anggaran || 0), 0);
+    // Unit "Bagian Umum" bisa dikecualikan dari rekap total via checkbox
+    const isBagianUmum = (item: ApbsWithUnit) =>
+        (item.unit?.nama ?? '').toLowerCase().includes('bagian umum') ||
+        (item.unit?.kode ?? '').toLowerCase().includes('bagian umum');
+    const hasBagianUmum = apbsData.some(isBagianUmum);
+    const summedApbs = includeBagianUmum ? apbsData : apbsData.filter((a) => !isBagianUmum(a));
+
+    // Total (Number() agar tidak terjadi penggabungan string saat total_anggaran berupa string)
+    const totalApbs = summedApbs.reduce((sum, item) => sum + Number(item.total_anggaran || 0), 0);
 
     // Toggle APBS expand
     const toggleApbsExpand = useCallback((id: number) => {
@@ -327,6 +335,27 @@ export default function ApbsList() {
 
                 {/* Summary footer */}
                 <motion.div variants={staggerItem}>
+                    {hasBagianUmum && (
+                        <div className="mb-3 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-2.5">
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                                <span className="font-medium text-slate-700">Unit Bagian Umum:</span>
+                                <span>
+                                    {includeBagianUmum
+                                        ? 'ikut dijumlahkan dalam total'
+                                        : 'sementara tidak dijumlahkan dalam total'}
+                                </span>
+                            </div>
+                            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-700">
+                                <input
+                                    type="checkbox"
+                                    checked={includeBagianUmum}
+                                    onChange={(e) => setIncludeBagianUmum(e.target.checked)}
+                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                Sertakan Bagian Umum
+                            </label>
+                        </div>
+                    )}
                     <div className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-blue-800">
