@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Email;
+use App\Notifications\Concerns\FormatsEmailWa;
 use Illuminate\Notifications\Notification;
 
 class NewEmailNotification extends Notification
 {
+    use FormatsEmailWa;
+
     /**
      * Create a new notification instance.
      */
@@ -28,8 +31,7 @@ class NewEmailNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
-        $senderName = $this->email->user?->name ?? 'Unknown';
-        return "✉️ *SIANGGAR*\nSurat baru dari {$senderName}: {$this->email->name_surat}";
+        return "🔔 *Notification*\n*#Surat Baru* ✉️\n\n" . $this->waEmailDetail($this->email);
     }
 
     /**

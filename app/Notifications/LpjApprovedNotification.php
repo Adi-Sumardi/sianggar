@@ -6,10 +6,13 @@ namespace App\Notifications;
 
 use App\Models\Lpj;
 use App\Models\User;
+use App\Notifications\Concerns\FormatsLpjWa;
 use Illuminate\Notifications\Notification;
 
 class LpjApprovedNotification extends Notification
 {
+    use FormatsLpjWa;
+
     /**
      * Create a new notification instance.
      */
@@ -32,10 +35,12 @@ class LpjApprovedNotification extends Notification
     public function toSaungWa(object $notifiable): string
     {
         if ($this->isFinal) {
-            return "✅ *SIANGGAR*\nLPJ \"{$this->lpj->perihal}\" telah disetujui sepenuhnya oleh {$this->approver->name}.";
+            return "✅ *Notification*\n*#LPJ Disetujui Sepenuhnya*\nOleh : {$this->approver->name}\n\n"
+                . $this->waLpjDetail($this->lpj);
         }
 
-        return "✅ *SIANGGAR*\nLPJ \"{$this->lpj->perihal}\" telah disetujui oleh {$this->approver->name} dan dilanjutkan ke tahap berikutnya.";
+        return "✅ *Notification*\n*#LPJ Disetujui*\nOleh : {$this->approver->name} (dilanjutkan ke tahap berikutnya)\n\n"
+            . $this->waLpjDetail($this->lpj);
     }
 
     /**

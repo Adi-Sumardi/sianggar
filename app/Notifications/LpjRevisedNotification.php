@@ -6,10 +6,13 @@ namespace App\Notifications;
 
 use App\Models\Lpj;
 use App\Models\User;
+use App\Notifications\Concerns\FormatsLpjWa;
 use Illuminate\Notifications\Notification;
 
 class LpjRevisedNotification extends Notification
 {
+    use FormatsLpjWa;
+
     /**
      * Create a new notification instance.
      */
@@ -31,9 +34,9 @@ class LpjRevisedNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
-        $msg = "⚠️ *SIANGGAR*\nLPJ \"{$this->lpj->perihal}\" perlu direvisi.";
+        $msg = "⚠️ *Notification*\n*#LPJ Perlu Revisi*\n\n" . $this->waLpjDetail($this->lpj);
         if ($this->catatan !== '') {
-            $msg .= "\n\nCatatan: {$this->catatan}";
+            $msg .= "\n\nCatatan : {$this->catatan}";
         }
         return $msg;
     }

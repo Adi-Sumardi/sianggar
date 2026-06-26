@@ -6,10 +6,13 @@ namespace App\Notifications;
 
 use App\Models\Lpj;
 use App\Models\User;
+use App\Notifications\Concerns\FormatsLpjWa;
 use Illuminate\Notifications\Notification;
 
 class LpjRejectedNotification extends Notification
 {
+    use FormatsLpjWa;
+
     /**
      * Create a new notification instance.
      */
@@ -31,9 +34,9 @@ class LpjRejectedNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
-        $msg = "❌ *SIANGGAR*\nLPJ \"{$this->lpj->perihal}\" ditolak oleh {$this->approver->name}.";
+        $msg = "❌ *Notification*\n*#LPJ Ditolak*\nOleh : {$this->approver->name}\n\n" . $this->waLpjDetail($this->lpj);
         if ($this->catatan !== '') {
-            $msg .= "\n\nAlasan: {$this->catatan}";
+            $msg .= "\n\nAlasan : {$this->catatan}";
         }
         return $msg;
     }

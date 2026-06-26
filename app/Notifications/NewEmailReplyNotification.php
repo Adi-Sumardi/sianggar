@@ -6,10 +6,13 @@ namespace App\Notifications;
 
 use App\Models\Email;
 use App\Models\EmailReply;
+use App\Notifications\Concerns\FormatsEmailWa;
 use Illuminate\Notifications\Notification;
 
 class NewEmailReplyNotification extends Notification
 {
+    use FormatsEmailWa;
+
     /**
      * Create a new notification instance.
      */
@@ -31,7 +34,8 @@ class NewEmailReplyNotification extends Notification
     public function toSaungWa(object $notifiable): string
     {
         $replierName = $this->reply->user?->name ?? 'Unknown';
-        return "↩️ *SIANGGAR*\n{$replierName} membalas surat: {$this->email->name_surat}";
+        return "🔔 *Notification*\n*#Balasan Surat* ↩️\nDibalas oleh : {$replierName}\n\n"
+            . $this->waEmailDetail($this->email);
     }
 
     /**

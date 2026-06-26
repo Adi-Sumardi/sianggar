@@ -6,10 +6,13 @@ namespace App\Notifications;
 
 use App\Enums\LpjApprovalStage;
 use App\Models\Lpj;
+use App\Notifications\Concerns\FormatsLpjWa;
 use Illuminate\Notifications\Notification;
 
 class NewLpjNotification extends Notification
 {
+    use FormatsLpjWa;
+
     /**
      * Create a new notification instance.
      */
@@ -30,7 +33,8 @@ class NewLpjNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
-        return "📋 *SIANGGAR*\nLPJ baru \"{$this->lpj->perihal}\" menunggu persetujuan Anda pada tahap {$this->stage->label()}.";
+        return "🔔 *Notification*\n*#LPJ Menunggu Persetujuan* 📥\nTahap : {$this->stage->label()}\n\n"
+            . $this->waLpjDetail($this->lpj);
     }
 
     /**
