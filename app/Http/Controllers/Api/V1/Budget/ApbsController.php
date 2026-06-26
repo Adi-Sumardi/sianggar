@@ -76,7 +76,15 @@ class ApbsController extends Controller
             ->keyBy(fn ($row) => $row->unit_id.'|'.$row->tahun);
 
         foreach ($apbsList as $apbs) {
-            $total = (float) ($totals->get($apbs->unit_id.'|'.$apbs->tahun)->total ?? 0);
+            $row = $totals->get($apbs->unit_id.'|'.$apbs->tahun);
+
+            // Tidak ada data mata anggaran untuk unit+tahun ini → pertahankan
+            // nilai tersimpan (jangan timpa dengan 0).
+            if ($row === null) {
+                continue;
+            }
+
+            $total = (float) $row->total;
             $apbs->total_anggaran = $total;
             $apbs->sisa_anggaran = $total - (float) $apbs->total_realisasi;
         }

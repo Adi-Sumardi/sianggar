@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -133,8 +132,14 @@ return new class extends Migration
 
     private function indexExists(string $table, string $indexName): bool
     {
-        return collect(DB::select("SHOW INDEX FROM `{$table}`"))
-            ->pluck('Key_name')
-            ->contains($indexName);
+        // Pakai introspeksi Schema (lintas-driver: MySQL, SQLite, dll.) agar
+        // tidak bergantung pada "SHOW INDEX" yang khusus MySQL.
+        foreach (Schema::getIndexes($table) as $index) {
+            if (($index['name'] ?? null) === $indexName) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };

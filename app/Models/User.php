@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -85,12 +86,14 @@ class User extends Authenticatable
     {
         static::created(function (User $user) {
             if ($user->role !== null) {
+                Role::findOrCreate($user->role->value);
                 $user->syncRoles([$user->role->value]);
             }
         });
 
         static::updated(function (User $user) {
             if ($user->wasChanged('role') && $user->role !== null) {
+                Role::findOrCreate($user->role->value);
                 $user->syncRoles([$user->role->value]);
             }
         });
