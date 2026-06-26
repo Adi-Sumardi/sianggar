@@ -19,6 +19,7 @@ use App\Models\FinanceValidation;
 use App\Models\PengajuanAnggaran;
 use App\Models\User;
 use App\Notifications\NewProposalNotification;
+use App\Notifications\PengajuanCreatedNotification;
 use App\Notifications\ProposalApprovedNotification;
 use App\Notifications\ProposalRejectedNotification;
 use App\Notifications\ProposalRevisedNotification;
@@ -65,6 +66,7 @@ class ApprovalService
 
         // Notify outside transaction (non-critical)
         $this->notifyApproversForStage($pengajuan, $initialStage);
+        $this->notifyCreatorOfSubmission($pengajuan);
     }
 
     /**
@@ -905,6 +907,18 @@ class ApprovalService
                 pengajuan: $pengajuan,
                 stage: $stage,
             ));
+        }
+    }
+
+    /**
+     * Notify the creator that their proposal was successfully submitted.
+     */
+    private function notifyCreatorOfSubmission(PengajuanAnggaran $pengajuan): void
+    {
+        $creator = $pengajuan->user;
+
+        if ($creator) {
+            $creator->notify(new PengajuanCreatedNotification($pengajuan));
         }
     }
 

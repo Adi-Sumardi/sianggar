@@ -7,10 +7,13 @@ namespace App\Notifications;
 use App\Enums\ApprovalStage;
 use App\Models\PengajuanAnggaran;
 use App\Models\User;
+use App\Notifications\Concerns\FormatsPengajuanWa;
 use Illuminate\Notifications\Notification;
 
 class ProposalApprovedNotification extends Notification
 {
+    use FormatsPengajuanWa;
+
     /**
      * Create a new notification instance.
      */
@@ -34,13 +37,15 @@ class ProposalApprovedNotification extends Notification
     public function toSaungWa(object $notifiable): string
     {
         if ($this->isFullyApproved) {
-            return "✅ *SIANGGAR*\nPengajuan {$this->pengajuan->nomor} telah disetujui sepenuhnya dan siap diproses.";
+            return "✅ *Notification*\n*#Pengajuan Disetujui Sepenuhnya* — siap diproses\n\n"
+                . $this->waPengajuanDetail($this->pengajuan);
         }
 
         $approverName = $this->approver?->name ?? 'Sistem';
         $stageLabel   = $this->stage?->label() ?? '-';
 
-        return "✅ *SIANGGAR*\nPengajuan {$this->pengajuan->nomor} telah disetujui oleh {$approverName} pada tahap {$stageLabel}.";
+        return "✅ *Notification*\n*#Pengajuan Disetujui*\nOleh : {$approverName} (tahap {$stageLabel})\n\n"
+            . $this->waPengajuanDetail($this->pengajuan);
     }
 
     /**
@@ -54,8 +59,8 @@ class ProposalApprovedNotification extends Notification
             return [
                 'type' => 'proposal_fully_approved',
                 'pengajuan_id' => $this->pengajuan->id,
-                'nomor' => $this->pengajuan->nomor,
-                'message' => "Pengajuan {$this->pengajuan->nomor} telah disetujui sepenuhnya dan siap diproses",
+                'nomor' => $this->pengajuan->nomor_pengajuan,
+                'message' => "Pengajuan {$this->pengajuan->no_surat} telah disetujui sepenuhnya dan siap diproses",
                 'icon' => 'check-circle',
                 'color' => 'success',
             ];
@@ -67,11 +72,11 @@ class ProposalApprovedNotification extends Notification
         return [
             'type' => 'proposal_approved',
             'pengajuan_id' => $this->pengajuan->id,
-            'nomor' => $this->pengajuan->nomor,
+            'nomor' => $this->pengajuan->nomor_pengajuan,
             'approver_id' => $this->approver?->id,
             'approver_name' => $approverName,
             'stage' => $this->stage?->value,
-            'message' => "Pengajuan {$this->pengajuan->nomor} telah disetujui oleh {$approverName} pada tahap {$stageLabel}",
+            'message' => "Pengajuan {$this->pengajuan->no_surat} telah disetujui oleh {$approverName} pada tahap {$stageLabel}",
             'icon' => 'check',
             'color' => 'info',
         ];

@@ -4,26 +4,22 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
-use App\Enums\ApprovalStage;
 use App\Models\PengajuanAnggaran;
 use App\Notifications\Concerns\FormatsPengajuanWa;
 use Illuminate\Notifications\Notification;
 
-class NewProposalNotification extends Notification
+/**
+ * Dikirim ke pembuat pengajuan saat pengajuan berhasil diajukan untuk approval.
+ */
+class PengajuanCreatedNotification extends Notification
 {
     use FormatsPengajuanWa;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(
         public readonly PengajuanAnggaran $pengajuan,
-        public readonly ApprovalStage $stage,
     ) {}
 
     /**
-     * Get the notification's delivery channels.
-     *
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -33,26 +29,23 @@ class NewProposalNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
-        return "🔔 *Notification*\n*#Pengajuan Menunggu Persetujuan* 📥\nTahap : {$this->stage->label()}\n\n"
+        return "🔔 *Notification*\n*#Pengajuan Berhasil Dibuat* 📨\n\n"
+            . "Waktu Pengajuan : {$this->waWaktuPengajuan($this->pengajuan)}\n"
             . $this->waPengajuanDetail($this->pengajuan);
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
         return [
-            'type' => 'new_proposal',
+            'type' => 'pengajuan_created',
             'pengajuan_id' => $this->pengajuan->id,
             'nomor' => $this->pengajuan->nomor_pengajuan,
             'perihal' => $this->pengajuan->perihal,
-            'stage' => $this->stage->value,
-            'stage_label' => $this->stage->label(),
             'creator_id' => $this->pengajuan->user_id,
-            'message' => "Pengajuan baru {$this->pengajuan->no_surat} menunggu persetujuan Anda pada tahap {$this->stage->label()}",
+            'message' => "Pengajuan {$this->pengajuan->no_surat} berhasil dibuat dan diajukan untuk approval.",
             'icon' => 'file-text',
             'color' => 'primary',
         ];

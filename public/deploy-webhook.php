@@ -141,6 +141,47 @@ if (!is_link($storageLink)) {
     echo "==> Storage link already exists.\n";
 }
 
+// Step 3.5: Sinkronkan kredensial rahasia dari header deploy ke .env server.
+// Nilai dikirim GitHub Actions dari GitHub Secrets (tidak pernah masuk git).
+// Hanya menulis bila header tersedia & tidak kosong, sehingga nilai manual di
+// .env tidak terhapus saat secret belum di-set di GitHub.
+$secretEnv = [
+    'WATZAP_API_KEY'    => $_SERVER['HTTP_X_WATZAP_API_KEY'] ?? '',
+    'WATZAP_NUMBER_KEY' => $_SERVER['HTTP_X_WATZAP_NUMBER_KEY'] ?? '',
+];
+$secretEnv = array_filter($secretEnv, static fn ($v) => trim((string) $v) !== '');
+
+if (!empty($secretEnv) && file_exists($envFile)) {
+    echo "\n==> Sinkronisasi kredensial dari deploy headers...\n";
+    $lines = preg_split('/\r\n|\r|\n/', (string) file_get_contents($envFile));
+
+    foreach ($secretEnv as $key => $value) {
+        // Kutip bila mengandung spasi/karakter khusus.
+        $val = preg_match('/\s|#|"/', $value)
+            ? '"' . str_replace('"', '\"', $value) . '"'
+            : $value;
+
+        $newLine = $key . '=' . $val;
+        $replaced = false;
+
+        foreach ($lines as $i => $line) {
+            if (strpos($line, $key . '=') === 0) {
+                $lines[$i] = $newLine;
+                $replaced = true;
+                break;
+            }
+        }
+
+        if (!$replaced) {
+            $lines[] = $newLine;
+        }
+
+        echo "    {$key} di-set.\n"; // nilai sengaja tidak ditampilkan
+    }
+
+    file_put_contents($envFile, implode("\n", $lines));
+}
+
 // Step 4: Run artisan commands via Laravel bootstrap (no exec needed)
 if ($allSuccess && file_exists($appPath . '/vendor/autoload.php')) {
     echo "\n==> Running artisan commands...\n";

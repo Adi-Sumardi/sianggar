@@ -6,10 +6,13 @@ namespace App\Notifications;
 
 use App\Models\PengajuanAnggaran;
 use App\Models\User;
+use App\Notifications\Concerns\FormatsPengajuanWa;
 use Illuminate\Notifications\Notification;
 
 class ProposalRevisedNotification extends Notification
 {
+    use FormatsPengajuanWa;
+
     /**
      * Create a new notification instance.
      */
@@ -31,9 +34,10 @@ class ProposalRevisedNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
-        $msg = "⚠️ *SIANGGAR*\nPengajuan {$this->pengajuan->nomor} perlu direvisi.";
+        $msg = "⚠️ *Notification*\n*#Pengajuan Perlu Revisi*\n\n"
+            . $this->waPengajuanDetail($this->pengajuan);
         if ($this->catatan !== '') {
-            $msg .= "\n\nCatatan: {$this->catatan}";
+            $msg .= "\n\nCatatan : {$this->catatan}";
         }
         return $msg;
     }
@@ -45,7 +49,7 @@ class ProposalRevisedNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $message = "Pengajuan {$this->pengajuan->nomor} perlu direvisi.";
+        $message = "Pengajuan {$this->pengajuan->no_surat} perlu direvisi.";
 
         if ($this->catatan !== '') {
             $message .= " Catatan: {$this->catatan}";
@@ -54,7 +58,7 @@ class ProposalRevisedNotification extends Notification
         return [
             'type' => 'proposal_revised',
             'pengajuan_id' => $this->pengajuan->id,
-            'nomor' => $this->pengajuan->nomor,
+            'nomor' => $this->pengajuan->nomor_pengajuan,
             'approver_id' => $this->approver->id,
             'approver_name' => $this->approver->name,
             'catatan' => $this->catatan,

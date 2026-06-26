@@ -40,4 +40,9 @@ return [
         'authkey' => env('SAUNGWA_AUTHKEY'),
     ],
 
+    'watzap' => [
+        'api_key'    => env('WATZAP_API_KEY'),
+        'number_key' => env('WATZAP_NUMBER_KEY'),
+    ],
+
 ];

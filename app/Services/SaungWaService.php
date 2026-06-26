@@ -15,8 +15,8 @@ class SaungWaService
 
     public function __construct()
     {
-        $this->appkey  = config('services.saungwa.appkey', '');
-        $this->authkey = config('services.saungwa.authkey', '');
+        $this->appkey  = (string) config('services.saungwa.appkey', '');
+        $this->authkey = (string) config('services.saungwa.authkey', '');
     }
 
     /**

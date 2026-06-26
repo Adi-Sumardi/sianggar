@@ -6,10 +6,13 @@ namespace App\Notifications;
 
 use App\Models\PengajuanAnggaran;
 use App\Models\User;
+use App\Notifications\Concerns\FormatsPengajuanWa;
 use Illuminate\Notifications\Notification;
 
 class ProposalRejectedNotification extends Notification
 {
+    use FormatsPengajuanWa;
+
     /**
      * Create a new notification instance.
      */
@@ -31,9 +34,10 @@ class ProposalRejectedNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
-        $msg = "❌ *SIANGGAR*\nPengajuan {$this->pengajuan->nomor} ditolak oleh {$this->approver->name}.";
+        $msg = "❌ *Notification*\n*#Pengajuan Ditolak*\nOleh : {$this->approver->name}\n\n"
+            . $this->waPengajuanDetail($this->pengajuan);
         if ($this->catatan !== '') {
-            $msg .= "\n\nAlasan: {$this->catatan}";
+            $msg .= "\n\nAlasan : {$this->catatan}";
         }
         return $msg;
     }
@@ -45,7 +49,7 @@ class ProposalRejectedNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $message = "Pengajuan {$this->pengajuan->nomor} ditolak oleh {$this->approver->name}.";
+        $message = "Pengajuan {$this->pengajuan->no_surat} ditolak oleh {$this->approver->name}.";
 
         if ($this->catatan !== '') {
             $message .= " Alasan: {$this->catatan}";
@@ -54,7 +58,7 @@ class ProposalRejectedNotification extends Notification
         return [
             'type' => 'proposal_rejected',
             'pengajuan_id' => $this->pengajuan->id,
-            'nomor' => $this->pengajuan->nomor,
+            'nomor' => $this->pengajuan->nomor_pengajuan,
             'approver_id' => $this->approver->id,
             'approver_name' => $this->approver->name,
             'catatan' => $this->catatan,

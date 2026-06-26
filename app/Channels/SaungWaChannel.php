@@ -4,17 +4,24 @@ declare(strict_types=1);
 
 namespace App\Channels;
 
-use App\Services\SaungWaService;
+use App\Services\WhatsappService;
 use Illuminate\Notifications\Notification;
 
+/**
+ * Channel notifikasi WhatsApp. Pengiriman didelegasikan ke WhatsappService
+ * yang memakai Watzap sebagai default dan fallback ke SaungWA bila gagal.
+ *
+ * Nama kelas & hook (routeNotificationFor('saungwa'), toSaungWa) dipertahankan
+ * agar notifikasi yang sudah ada tidak perlu diubah.
+ */
 class SaungWaChannel
 {
     public function __construct(
-        protected SaungWaService $saungWa,
+        protected WhatsappService $whatsapp,
     ) {}
 
     /**
-     * Send the given notification via SaungWA WhatsApp.
+     * Send the given notification via WhatsApp (Watzap default, SaungWA fallback).
      */
     public function send(object $notifiable, Notification $notification): void
     {
@@ -34,6 +41,6 @@ class SaungWaChannel
             return;
         }
 
-        $this->saungWa->send($phone, $message);
+        $this->whatsapp->send($phone, $message);
     }
 }
