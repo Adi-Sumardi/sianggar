@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Listeners\LogApprovalAction;
 use App\Listeners\NotifyProposalCreator;
-use App\Listeners\SendApprovalNotification;
 use App\Models\Email;
 use App\Models\Lpj;
 use App\Models\PengajuanAnggaran;
@@ -54,8 +52,6 @@ class AppServiceProvider extends ServiceProvider
         // The UpdateBudgetBalance listener uses handle() with a single
         // event, so it will be auto-discovered.
         // -----------------------------------------------------------------
-        Event::subscribe(SendApprovalNotification::class);
-        Event::subscribe(LogApprovalAction::class);
         Event::subscribe(NotifyProposalCreator::class);
     }
 }

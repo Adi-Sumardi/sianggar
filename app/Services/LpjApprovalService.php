@@ -9,6 +9,7 @@ use App\Enums\LpjApprovalStage;
 use App\Enums\LpjStatus;
 use App\Enums\ReferenceType;
 use App\Enums\UserRole;
+use App\Models\ActivityLog;
 use App\Models\Approval;
 use App\Models\Lpj;
 use App\Models\LpjValidation;
@@ -262,6 +263,14 @@ class LpjApprovalService
             'approved_at' => now(),
         ]);
 
+        ActivityLog::log(
+            $lpj,
+            'lpj_approved',
+            null,
+            ['stage' => $stage->value, 'notes' => $notes, 'no_surat' => $lpj->no_surat],
+            $approver->id,
+        );
+
         // Update LPJ status based on stage
         $newStatus = $this->getStatusAfterApproval($stage);
         if ($newStatus) {
@@ -335,6 +344,14 @@ class LpjApprovalService
         // Seed initial revision comment thread
         app(RevisionCommentService::class)->seedInitialNote($lpj, $approver, $notes);
 
+        ActivityLog::log(
+            $lpj,
+            'lpj_revised',
+            null,
+            ['stage' => $currentStage, 'notes' => $notes, 'no_surat' => $lpj->no_surat],
+            $approver->id,
+        );
+
         // Notify the creator that revision is needed
         $this->notifyCreatorOfRevision($lpj, $approver, $notes);
 
@@ -363,6 +380,14 @@ class LpjApprovalService
             'proses' => LpjStatus::Rejected->value,
             'current_approval_stage' => null,
         ]);
+
+        ActivityLog::log(
+            $lpj,
+            'lpj_rejected',
+            null,
+            ['stage' => $currentApproval->stage->value, 'notes' => $notes, 'no_surat' => $lpj->no_surat],
+            $approver->id,
+        );
 
         // Notify the creator that LPJ is rejected
         $this->notifyCreatorOfRejection($lpj, $approver, $notes);

@@ -10,6 +10,7 @@ use App\Enums\ApprovalStatus;
 use App\Enums\ProposalStatus;
 use App\Enums\ReferenceType;
 use App\Enums\UserRole;
+use App\Models\ActivityLog;
 use App\Models\AmountEditLog;
 use App\Models\Approval;
 use App\Models\DetailMataAnggaran;
@@ -20,7 +21,6 @@ use App\Models\PengajuanAnggaran;
 use App\Models\User;
 use App\Notifications\NewProposalNotification;
 use App\Notifications\PengajuanCreatedNotification;
-use App\Notifications\ProposalApprovedNotification;
 use App\Notifications\ProposalRejectedNotification;
 use App\Notifications\ProposalRevisedNotification;
 use Illuminate\Support\Collection;
@@ -208,6 +208,14 @@ class ApprovalService
             'approved_at' => now(),
         ]);
 
+        ActivityLog::log(
+            $pengajuan,
+            'approved',
+            null,
+            ['stage' => $stage->value, 'notes' => $notes, 'no_surat' => $pengajuan->no_surat],
+            $approver->id,
+        );
+
         // Update proposal status based on milestone
         $newStatus = $stage->statusAfterApproval();
         if ($newStatus) {
@@ -246,11 +254,10 @@ class ApprovalService
                 'current_approval_stage' => null,
             ]);
 
-            // Dispatch event to update budget balance
+            // Dispatch event: memperbarui saldo budget DAN memberi tahu pembuat
+            // (lewat NotifyProposalCreator::handleFullyApproved). Tidak memanggil
+            // notify langsung di sini agar notifikasi tidak dobel.
             \App\Events\ProposalFullyApproved::dispatch($pengajuan);
-
-            // Notify the creator that proposal is fully approved
-            $this->notifyCreatorOfApproval($pengajuan, $approver, $stage, isFullyApproved: true);
         }
 
         return $currentApproval->fresh();
@@ -334,6 +341,14 @@ class ApprovalService
         // Seed initial revision comment thread
         app(RevisionCommentService::class)->seedInitialNote($pengajuan, $approver, $notes);
 
+        ActivityLog::log(
+            $pengajuan,
+            'revised',
+            null,
+            ['stage' => $currentStage, 'notes' => $notes, 'no_surat' => $pengajuan->no_surat],
+            $approver->id,
+        );
+
         // Notify the creator that revision is needed
         $this->notifyCreatorOfRevision($pengajuan, $approver, $notes);
 
@@ -365,6 +380,14 @@ class ApprovalService
 
         // Return reserved budget (bank-like credit)
         $this->releaseBudget($pengajuan);
+
+        ActivityLog::log(
+            $pengajuan,
+            'rejected',
+            null,
+            ['stage' => $currentApproval->stage->value, 'notes' => $notes, 'no_surat' => $pengajuan->no_surat],
+            $approver->id,
+        );
 
         // Notify the creator that proposal is rejected
         $this->notifyCreatorOfRejection($pengajuan, $approver, $notes);
@@ -919,27 +942,6 @@ class ApprovalService
 
         if ($creator) {
             $creator->notify(new PengajuanCreatedNotification($pengajuan));
-        }
-    }
-
-    /**
-     * Notify the proposal creator that it has been approved.
-     */
-    private function notifyCreatorOfApproval(
-        PengajuanAnggaran $pengajuan,
-        User $approver,
-        ApprovalStage $stage,
-        bool $isFullyApproved = false,
-    ): void {
-        $creator = $pengajuan->user;
-
-        if ($creator) {
-            $creator->notify(new ProposalApprovedNotification(
-                pengajuan: $pengajuan,
-                approver: $approver,
-                stage: $stage,
-                isFullyApproved: $isFullyApproved,
-            ));
         }
     }
 
