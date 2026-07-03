@@ -52,6 +52,7 @@ export interface MonthlyChartDataItem {
 export interface RecentPengajuanItem {
     id: number;
     nomor: string;
+    no_surat: string | null;
     perihal: string;
     unit: string;
     total: number;

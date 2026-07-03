@@ -520,7 +520,7 @@ function AdminDashboard({ userName }: { userName: string }) {
                                         className="transition-colors hover:bg-slate-50/50"
                                     >
                                         <td className="whitespace-nowrap px-5 py-3 font-medium text-blue-600">
-                                            {item.nomor}
+                                            {item.no_surat || item.nomor}
                                         </td>
                                         <td className="max-w-[240px] truncate px-5 py-3 text-slate-700">
                                             {item.perihal}
@@ -748,7 +748,7 @@ function UnitDashboard({ userName }: { userName: string }) {
                                         className="transition-colors hover:bg-slate-50/50"
                                     >
                                         <td className="whitespace-nowrap px-5 py-3 font-medium text-blue-600">
-                                            {item.nomor}
+                                            {item.no_surat || item.nomor}
                                         </td>
                                         <td className="max-w-[280px] truncate px-5 py-3 text-slate-700">
                                             {item.perihal}
@@ -962,7 +962,7 @@ function ApproverDashboard({ userName }: { userName: string }) {
                                         className="transition-colors hover:bg-slate-50/50"
                                     >
                                         <td className="whitespace-nowrap px-5 py-3 font-medium text-blue-600">
-                                            {item.nomor}
+                                            {item.no_surat || item.nomor}
                                         </td>
                                         <td className="max-w-[240px] truncate px-5 py-3 text-slate-700">
                                             {item.perihal}
@@ -1175,7 +1175,7 @@ function FinanceDashboard({ userName }: { userName: string }) {
                                         className="transition-colors hover:bg-slate-50/50"
                                     >
                                         <td className="whitespace-nowrap px-5 py-3 font-medium text-blue-600">
-                                            {item.nomor}
+                                            {item.no_surat || item.nomor}
                                         </td>
                                         <td className="max-w-[240px] truncate px-5 py-3 text-slate-700">
                                             {item.perihal}
@@ -1737,7 +1737,7 @@ function LeadershipDashboard({ userName }: { userName: string }) {
                                         className="transition-colors hover:bg-slate-50/50"
                                     >
                                         <td className="whitespace-nowrap px-5 py-3 font-medium text-blue-600">
-                                            {item.nomor}
+                                            {item.no_surat || item.nomor}
                                         </td>
                                         <td className="max-w-[240px] truncate px-5 py-3 text-slate-700">
                                             {item.perihal}

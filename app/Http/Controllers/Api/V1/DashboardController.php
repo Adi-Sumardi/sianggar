@@ -209,6 +209,7 @@ class DashboardController extends Controller
                 $item = [
                     'id' => $p->id,
                     'nomor' => $p->nomor_pengajuan ?? 'PA/' . $p->tahun . '/' . str_pad((string) $p->id, 3, '0', STR_PAD_LEFT),
+                    'no_surat' => $p->no_surat,
                     'perihal' => $p->perihal,
                     'unit' => $p->unitRelation?->nama ?? $p->unit ?? '-',
                     'total' => $p->jumlah_pengajuan_total,
