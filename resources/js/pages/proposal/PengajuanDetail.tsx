@@ -21,7 +21,8 @@ import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ApprovalTimeline } from '@/components/common/ApprovalTimeline';
-import { formatRupiah, formatVolume } from '@/lib/currency';
+import { formatRupiah } from '@/lib/currency';
+import { formatPct, usagePctClass } from '@/lib/budgetDisplay';
 import { formatDate } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
@@ -351,10 +352,10 @@ export default function PengajuanDetail() {
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Mata Anggaran</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Sub</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Detail / Uraian</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Vol</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Satuan</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Harga Satuan</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Jumlah</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Anggaran Awal</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Saldo</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">% Pemakaian</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Jumlah Pengajuan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -365,7 +366,15 @@ export default function PengajuanDetail() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            details.map((detail, index) => (
+                                            details.map((detail, index) => {
+                                                const dma = detail.detail_mata_anggaran;
+                                                const anggaranAwal = dma?.anggaran_awal ?? null;
+                                                const saldo = dma?.saldo_tersedia ?? null;
+                                                const pct = dma && dma.anggaran_awal > 0
+                                                    ? (dma.saldo_dipakai / dma.anggaran_awal) * 100
+                                                    : null;
+
+                                                return (
                                                 <tr key={detail.id} className="hover:bg-slate-50/50">
                                                     <td className="px-4 py-3 text-slate-500">{index + 1}</td>
                                                     <td className="px-4 py-3 text-slate-700">
@@ -387,16 +396,24 @@ export default function PengajuanDetail() {
                                                     <td className="px-4 py-3 text-slate-700">
                                                         {detail.uraian || detail.detail_mata_anggaran?.nama || '-'}
                                                     </td>
-                                                    <td className="px-4 py-3 text-right text-slate-700">{detail.volume != null ? formatVolume(detail.volume) : '-'}</td>
-                                                    <td className="px-4 py-3 text-slate-700">{detail.satuan || '-'}</td>
-                                                    <td className="px-4 py-3 text-right text-slate-700">
-                                                        {detail.harga_satuan ? formatRupiah(detail.harga_satuan) : '-'}
+                                                    <td className="px-4 py-3 text-right text-slate-600">
+                                                        {anggaranAwal != null ? formatRupiah(anggaranAwal) : '-'}
+                                                    </td>
+                                                    <td className={cn(
+                                                        'px-4 py-3 text-right font-medium',
+                                                        saldo == null ? 'text-slate-400' : saldo > 0 ? 'text-emerald-600' : 'text-red-600',
+                                                    )}>
+                                                        {saldo != null ? formatRupiah(saldo) : '-'}
+                                                    </td>
+                                                    <td className={cn('px-4 py-3 text-right font-medium', usagePctClass(pct))}>
+                                                        {pct != null ? formatPct(pct) : '-'}
                                                     </td>
                                                     <td className="px-4 py-3 text-right font-medium text-slate-900">
                                                         {formatRupiah(detail.jumlah || 0)}
                                                     </td>
                                                 </tr>
-                                            ))
+                                                );
+                                            })
                                         )}
                                     </tbody>
                                     <tfoot>

@@ -30,6 +30,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { RevisionCommentThread } from '@/components/common/RevisionCommentThread';
 import { VoucherModal } from '@/components/common/VoucherModal';
 import { formatRupiah } from '@/lib/currency';
+import { formatPct, usagePctClass } from '@/lib/budgetDisplay';
 import { formatDate } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
@@ -674,13 +675,11 @@ export default function ApprovalDetail() {
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Mata Anggaran</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Sub</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Detail / Uraian</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Pagu</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Anggaran Awal</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Terpakai</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Saldo</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Vol</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Satuan</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Harga Satuan</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Jumlah</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">% Pemakaian</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-slate-500">Jumlah Pengajuan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -689,6 +688,9 @@ export default function ApprovalDetail() {
                                             const terpakai = detail.detail_mata_anggaran?.saldo_dipakai ?? 0;
                                             const saldo = detail.detail_mata_anggaran?.saldo_tersedia ?? (pagu - terpakai);
                                             const isSaldoKurang = detail.jumlah > saldo;
+                                            const pct = detail.detail_mata_anggaran && pagu > 0
+                                                ? (terpakai / pagu) * 100
+                                                : null;
 
                                             return (
                                                 <tr key={detail.id} className="hover:bg-slate-50/50">
@@ -704,9 +706,9 @@ export default function ApprovalDetail() {
                                                     )}>
                                                         {formatRupiah(saldo)}
                                                     </td>
-                                                    <td className="px-4 py-3 text-right text-slate-700">{detail.volume || 1}</td>
-                                                    <td className="px-4 py-3 text-slate-700">{detail.satuan || '-'}</td>
-                                                    <td className="px-4 py-3 text-right text-slate-700">{formatRupiah(detail.harga_satuan || 0)}</td>
+                                                    <td className={cn('px-4 py-3 text-right font-medium', usagePctClass(pct))}>
+                                                        {pct != null ? formatPct(pct) : '-'}
+                                                    </td>
                                                     <td className={cn(
                                                         "px-4 py-3 text-right font-medium",
                                                         isSaldoKurang ? "text-red-600" : "text-slate-900"
@@ -722,7 +724,7 @@ export default function ApprovalDetail() {
                                     </tbody>
                                     <tfoot>
                                         <tr className="border-t-2 border-slate-200 bg-slate-50">
-                                            <td colSpan={10} className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                                            <td colSpan={8} className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
                                                 Total Pengajuan
                                             </td>
                                             <td className="px-4 py-3 text-right text-base font-bold text-blue-600">
@@ -731,7 +733,7 @@ export default function ApprovalDetail() {
                                         </tr>
                                         {pengajuan.approved_amount && (
                                             <tr className="bg-emerald-50">
-                                                <td colSpan={10} className="px-4 py-3 text-right text-sm font-semibold text-emerald-700">
+                                                <td colSpan={8} className="px-4 py-3 text-right text-sm font-semibold text-emerald-700">
                                                     Nominal Disetujui
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-base font-bold text-emerald-600">
