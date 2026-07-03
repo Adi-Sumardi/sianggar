@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -23,6 +24,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { ApprovalTimeline } from '@/components/common/ApprovalTimeline';
 import { formatRupiah } from '@/lib/currency';
 import { formatPct, usagePctClass } from '@/lib/budgetDisplay';
+import { PengajuanCetakDocument } from './PengajuanCetakDocument';
 import { formatDate } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
@@ -176,6 +178,13 @@ export default function PengajuanDetail() {
     const { data: pengajuan, isLoading, isError, error } = usePengajuan(pengajuanId);
     const submitMutation = useSubmitPengajuan();
     const resubmitMutation = useResubmitPengajuan();
+
+    const printRef = useRef<HTMLDivElement>(null);
+    const handlePrint = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: `Pengajuan-${pengajuan?.no_surat || pengajuan?.nomor_pengajuan || pengajuanId}`,
+        pageStyle: '@page { size: A4; margin: 15mm; }',
+    });
 
     // Loading state
     if (isLoading) {
@@ -559,13 +568,20 @@ export default function PengajuanDetail() {
 
                     <button
                         type="button"
-                        onClick={() => window.print()}
+                        onClick={() => handlePrint()}
                         className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                     >
                         <Printer className="h-4 w-4" />
                         Cetak
                     </button>
                 </motion.div>
+
+                {/* Kontainer cetak tersembunyi (Surat Permohonan Pengajuan Dana) */}
+                <div style={{ overflow: 'hidden', height: 0 }}>
+                    <div ref={printRef}>
+                        <PengajuanCetakDocument pengajuan={pengajuan} details={details} />
+                    </div>
+                </div>
             </motion.div>
 
             {/* File Preview Modal */}
