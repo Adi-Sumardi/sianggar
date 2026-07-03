@@ -31,6 +31,23 @@ interface PengajuanCetakDocumentProps {
     details: CetakDetailItem[];
 }
 
+/**
+ * Petakan nama unit ke file kop surat di /public/logo/kop.
+ * Unit tanpa kop khusus mengembalikan null (fallback ke logo YAPI).
+ */
+function resolveKop(unitNama?: string | null): string | null {
+    if (!unitNama) return null;
+    const n = unitNama.toLowerCase();
+    if (n.includes('playgroup')) return '/logo/kop/kop-pg.png';
+    if (n.includes('raudhatul') || n.includes('ra sakinah') || /\bra\b/.test(n)) return '/logo/kop/kop-ra.png';
+    if (n.includes('tk') && n.includes('13')) return '/logo/kop/kop-tk13.png';
+    if (n.includes('sd') && n.includes('13')) return '/logo/kop/kop-sd13.png';
+    if (n.includes('smp') && n.includes('12')) return '/logo/kop/kop-smp12.png';
+    if (n.includes('smp') && n.includes('55')) return '/logo/kop/kop-smp55.png';
+    if (n.includes('sma') && n.includes('33')) return '/logo/kop/kop-smaia33.png';
+    return null;
+}
+
 function formatDateTime(value?: string | null): string {
     if (!value) return '-';
     const d = new Date(value);
@@ -44,17 +61,22 @@ function formatDateTime(value?: string | null): string {
 export function PengajuanCetakDocument({ pengajuan, details }: PengajuanCetakDocumentProps) {
     const namaPermintaan = pengajuan.nama_pengajuan || pengajuan.perihal || '-';
     const total = Number(pengajuan.jumlah_pengajuan_total ?? 0);
+    const kop = resolveKop(pengajuan.unit?.nama);
 
     return (
         <div className="bg-white p-10 text-[13px] leading-relaxed text-slate-800" style={{ fontFamily: 'Times New Roman, serif' }}>
-            {/* Kop: logo */}
-            <div className="mb-6">
-                <img
-                    src="/logo/yapi.png"
-                    alt="Logo YAPI"
-                    style={{ width: 84, height: 84, borderRadius: '50%', objectFit: 'cover' }}
-                />
-            </div>
+            {/* Kop surat: pakai kop unit bila ada, jika tidak fallback logo YAPI */}
+            {kop ? (
+                <img src={kop} alt="Kop Surat" className="mb-4" style={{ width: '100%', display: 'block' }} />
+            ) : (
+                <div className="mb-6">
+                    <img
+                        src="/logo/yapi.png"
+                        alt="Logo YAPI"
+                        style={{ width: 84, height: 84, borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                </div>
+            )}
 
             {/* Nomor & tanggal */}
             <div className="mb-6 flex items-start justify-between">
