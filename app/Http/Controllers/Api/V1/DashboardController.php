@@ -210,7 +210,9 @@ class DashboardController extends Controller
                     'id' => $p->id,
                     'nomor' => $p->nomor_pengajuan ?? 'PA/' . $p->tahun . '/' . str_pad((string) $p->id, 3, '0', STR_PAD_LEFT),
                     'no_surat' => $p->no_surat,
-                    'perihal' => $p->perihal,
+                    // Samakan dengan halaman /pengajuan: tampilkan nama_pengajuan,
+                    // fallback ke perihal bila kosong.
+                    'perihal' => $p->nama_pengajuan ?: $p->perihal,
                     'unit' => $p->unitRelation?->nama ?? $p->unit ?? '-',
                     'total' => $p->jumlah_pengajuan_total,
                     'status' => $p->status_proses,
