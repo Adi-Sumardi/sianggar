@@ -18,6 +18,15 @@ enum ProposalStatus: string
     case Done = 'done';
     case Paid = 'paid';
 
+    /**
+     * Apakah pemilik pengajuan masih boleh mengedit (data & lampiran).
+     * Satu sumber kebenaran untuk policy update & guard lampiran.
+     */
+    public function canEdit(): bool
+    {
+        return in_array($this, [self::Draft, self::Revised, self::RevisionRequired], true);
+    }
+
     public function label(): string
     {
         return match ($this) {

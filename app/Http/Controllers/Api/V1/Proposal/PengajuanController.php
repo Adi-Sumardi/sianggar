@@ -412,11 +412,10 @@ class PengajuanController extends Controller
             ], 404);
         }
 
-        $status = $pengajuan->status_proses instanceof \App\Enums\ProposalStatus
-            ? $pengajuan->status_proses->value
-            : $pengajuan->status_proses;
-
-        if (! in_array($status, ['draft', 'revision-required'])) {
+        // Selaras dengan policy update (ProposalStatus::canEdit): draft, revised,
+        // revision-required. Sebelumnya guard ini tidak mengizinkan 'revised'.
+        if (! ($pengajuan->status_proses instanceof \App\Enums\ProposalStatus
+            && $pengajuan->status_proses->canEdit())) {
             return response()->json([
                 'message' => 'Tidak dapat menghapus lampiran pada pengajuan yang sudah diproses.',
             ], 422);

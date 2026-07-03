@@ -77,13 +77,10 @@ class PengajuanPolicy
             return true;
         }
 
-        // Owner can update only when status is draft, revised, or revision-required
+        // Owner can update only when status masih editable (draft/revised/revision-required)
         if ($user->id === $pengajuan->user_id) {
-            return in_array($pengajuan->status_proses, [
-                ProposalStatus::Draft,
-                ProposalStatus::Revised,
-                ProposalStatus::RevisionRequired,
-            ], true);
+            return $pengajuan->status_proses instanceof ProposalStatus
+                && $pengajuan->status_proses->canEdit();
         }
 
         return false;
