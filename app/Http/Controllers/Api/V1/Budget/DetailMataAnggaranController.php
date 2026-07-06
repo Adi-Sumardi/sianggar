@@ -84,6 +84,13 @@ class DetailMataAnggaranController extends Controller
             $validated['tahun'] = $mataAnggaran?->tahun ?? AcademicYear::current();
         }
 
+        // Inisialisasi saldo anggaran dari jumlah agar detail langsung dapat
+        // dipakai untuk pengajuan (anggaran_awal & balance = jumlah, belum terpakai).
+        $jumlah = (float) ($validated['jumlah'] ?? 0);
+        $validated['anggaran_awal'] = $jumlah;
+        $validated['balance'] = $jumlah;
+        $validated['saldo_dipakai'] = 0;
+
         $detail = DetailMataAnggaran::create($validated);
         $detail->load(['mataAnggaran', 'subMataAnggaran', 'unit', 'pkt']);
 
@@ -123,6 +130,17 @@ class DetailMataAnggaranController extends Controller
         ]);
 
         $detailMataAnggaran->update($validated);
+
+        // Bila jumlah diubah, selaraskan anggaran_awal & balance (pertahankan pemakaian).
+        if (array_key_exists('jumlah', $validated)) {
+            $jumlah = (float) ($validated['jumlah'] ?? 0);
+            $saldoDipakai = (float) ($detailMataAnggaran->saldo_dipakai ?? 0);
+            $detailMataAnggaran->update([
+                'anggaran_awal' => $jumlah,
+                'balance' => max(0, $jumlah - $saldoDipakai),
+            ]);
+        }
+
         $detailMataAnggaran->load(['mataAnggaran', 'subMataAnggaran', 'unit', 'pkt']);
 
         return response()->json([
