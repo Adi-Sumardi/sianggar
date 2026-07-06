@@ -19,6 +19,7 @@ class NewProposalNotification extends Notification
     public function __construct(
         public readonly PengajuanAnggaran $pengajuan,
         public readonly ApprovalStage $stage,
+        public readonly bool $isResubmit = false,
     ) {}
 
     /**
@@ -33,6 +34,11 @@ class NewProposalNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
+        if ($this->isResubmit) {
+            return "🔔 *Notification*\n*#Pengajuan Telah Direvisi* 🔁\nSudah diperbaiki pembuat dan dapat ditinjau kembali.\nTahap : {$this->stage->label()}\n\n"
+                . $this->waPengajuanDetail($this->pengajuan);
+        }
+
         return "🔔 *Notification*\n*#Pengajuan Menunggu Persetujuan* 📥\nTahap : {$this->stage->label()}\n\n"
             . $this->waPengajuanDetail($this->pengajuan);
     }
@@ -44,15 +50,19 @@ class NewProposalNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        $message = $this->isResubmit
+            ? "Pengajuan {$this->pengajuan->no_surat} telah direvisi dan dapat ditinjau kembali pada tahap {$this->stage->label()}"
+            : "Pengajuan baru {$this->pengajuan->no_surat} menunggu persetujuan Anda pada tahap {$this->stage->label()}";
+
         return [
-            'type' => 'new_proposal',
+            'type' => $this->isResubmit ? 'proposal_resubmitted' : 'new_proposal',
             'pengajuan_id' => $this->pengajuan->id,
             'nomor' => $this->pengajuan->nomor_pengajuan,
             'perihal' => $this->pengajuan->perihal,
             'stage' => $this->stage->value,
             'stage_label' => $this->stage->label(),
             'creator_id' => $this->pengajuan->user_id,
-            'message' => "Pengajuan baru {$this->pengajuan->no_surat} menunggu persetujuan Anda pada tahap {$this->stage->label()}",
+            'message' => $message,
             'icon' => 'file-text',
             'color' => 'primary',
         ];

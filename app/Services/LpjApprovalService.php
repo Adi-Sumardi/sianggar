@@ -15,6 +15,7 @@ use App\Models\Lpj;
 use App\Models\LpjValidation;
 use App\Models\User;
 use App\Notifications\LpjApprovedNotification;
+use App\Notifications\LpjCreatedNotification;
 use App\Notifications\LpjRejectedNotification;
 use App\Notifications\LpjRevisedNotification;
 use App\Notifications\NewLpjNotification;
@@ -61,6 +62,9 @@ class LpjApprovalService
 
         // Notify approvers at initial stage
         $this->notifyApproversForStage($lpj, $initialStage);
+
+        // Notif ke pembuat: LPJ berhasil dibuat
+        $submitter->notify(new LpjCreatedNotification($lpj));
     }
 
     /**
@@ -115,8 +119,8 @@ class LpjApprovalService
             'status_revisi' => null,
         ]);
 
-        // Notify approvers at the revision stage
-        $this->notifyApproversForStage($lpj, $targetStage);
+        // Notify approvers at the revision stage (sudah direvisi, tinjau kembali)
+        $this->notifyApproversForStage($lpj, $targetStage, isResubmit: true);
     }
 
     /**
@@ -151,8 +155,8 @@ class LpjApprovalService
             'status' => ApprovalStatus::Pending->value,
         ]);
 
-        // Notify approvers at initial stage
-        $this->notifyApproversForStage($lpj, $initialStage);
+        // Notify approvers at initial stage (sudah direvisi, tinjau kembali)
+        $this->notifyApproversForStage($lpj, $initialStage, isResubmit: true);
     }
 
     // =========================================================================
@@ -582,7 +586,7 @@ class LpjApprovalService
     /**
      * Notify all users who can approve a specific stage.
      */
-    private function notifyApproversForStage(Lpj $lpj, LpjApprovalStage $stage): void
+    private function notifyApproversForStage(Lpj $lpj, LpjApprovalStage $stage, bool $isResubmit = false): void
     {
         $requiredRole = $stage->requiredRole();
 
@@ -592,6 +596,7 @@ class LpjApprovalService
             $approver->notify(new NewLpjNotification(
                 lpj: $lpj,
                 stage: $stage,
+                isResubmit: $isResubmit,
             ));
         }
     }

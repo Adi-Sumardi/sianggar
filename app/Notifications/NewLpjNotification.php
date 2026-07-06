@@ -19,6 +19,7 @@ class NewLpjNotification extends Notification
     public function __construct(
         public readonly Lpj $lpj,
         public readonly LpjApprovalStage $stage,
+        public readonly bool $isResubmit = false,
     ) {}
 
     /**
@@ -33,6 +34,11 @@ class NewLpjNotification extends Notification
 
     public function toSaungWa(object $notifiable): string
     {
+        if ($this->isResubmit) {
+            return "🔔 *Notification*\n*#LPJ Telah Direvisi* 🔁\nSudah diperbaiki pembuat dan dapat ditinjau kembali.\nTahap : {$this->stage->label()}\n\n"
+                . $this->waLpjDetail($this->lpj);
+        }
+
         return "🔔 *Notification*\n*#LPJ Menunggu Persetujuan* 📥\nTahap : {$this->stage->label()}\n\n"
             . $this->waLpjDetail($this->lpj);
     }
@@ -44,14 +50,18 @@ class NewLpjNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        $message = $this->isResubmit
+            ? "LPJ \"{$this->lpj->perihal}\" telah direvisi dan dapat ditinjau kembali pada tahap {$this->stage->label()}"
+            : "LPJ baru \"{$this->lpj->perihal}\" menunggu persetujuan Anda pada tahap {$this->stage->label()}";
+
         return [
-            'type' => 'new_lpj',
+            'type' => $this->isResubmit ? 'lpj_resubmitted' : 'new_lpj',
             'lpj_id' => $this->lpj->id,
             'perihal' => $this->lpj->perihal,
             'unit' => $this->lpj->unit,
             'stage' => $this->stage->value,
             'stage_label' => $this->stage->label(),
-            'message' => "LPJ baru \"{$this->lpj->perihal}\" menunggu persetujuan Anda pada tahap {$this->stage->label()}",
+            'message' => $message,
             'icon' => 'clipboard-check',
             'color' => 'purple',
         ];

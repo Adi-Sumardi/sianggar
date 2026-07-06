@@ -14,6 +14,11 @@ use App\Models\PerubahanAnggaran;
 use App\Models\PerubahanAnggaranItem;
 use App\Models\PerubahanAnggaranLog;
 use App\Models\User;
+use App\Notifications\NewPerubahanNotification;
+use App\Notifications\PerubahanApprovedNotification;
+use App\Notifications\PerubahanCreatedNotification;
+use App\Notifications\PerubahanRejectedNotification;
+use App\Notifications\PerubahanRevisedNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -70,6 +75,10 @@ class PerubahanAnggaranService
             'stage_order' => 1,
             'status' => ApprovalStatus::Pending->value,
         ]);
+
+        // Notifikasi: approver tahap awal + konfirmasi ke pembuat
+        $this->notifyApproversForStage($perubahan, $initialStage);
+        $submitter->notify(new PerubahanCreatedNotification($perubahan));
     }
 
     /**
@@ -114,6 +123,9 @@ class PerubahanAnggaranService
             'stage_order' => 1,
             'status' => ApprovalStatus::Pending->value,
         ]);
+
+        // Notifikasi approver: sudah direvisi pembuat, dapat ditinjau kembali
+        $this->notifyApproversForStage($perubahan, $initialStage, isResubmit: true);
     }
 
     // =========================================================================
@@ -168,6 +180,9 @@ class PerubahanAnggaranService
             $perubahan->update([
                 'current_approval_stage' => $nextStage->value,
             ]);
+
+            // Notifikasi approver tahap berikutnya
+            $this->notifyApproversForStage($perubahan, $nextStage);
         } else {
             // End of workflow - execute the transfer
             $this->executeTransfer($perubahan, $approver);
@@ -177,6 +192,9 @@ class PerubahanAnggaranService
                 'processed_at' => now(),
                 'processed_by' => $approver->id,
             ]);
+
+            // Notifikasi pembuat: geser anggaran disetujui penuh & transfer dieksekusi
+            $perubahan->user?->notify(new PerubahanApprovedNotification($perubahan, $approver));
         }
 
         return $currentApproval->fresh();
@@ -208,6 +226,9 @@ class PerubahanAnggaranService
         // Seed initial revision comment thread
         app(RevisionCommentService::class)->seedInitialNote($perubahan, $approver, $notes);
 
+        // Notifikasi pembuat: perlu revisi
+        $perubahan->user?->notify(new PerubahanRevisedNotification($perubahan, $approver, $notes));
+
         return $currentApproval->fresh();
     }
 
@@ -233,6 +254,9 @@ class PerubahanAnggaranService
             'status' => PerubahanAnggaranStatus::Rejected->value,
             'current_approval_stage' => null,
         ]);
+
+        // Notifikasi pembuat: ditolak
+        $perubahan->user?->notify(new PerubahanRejectedNotification($perubahan, $approver, $notes));
 
         return $currentApproval->fresh();
     }
@@ -459,6 +483,24 @@ class PerubahanAnggaranService
             ->where('status', ApprovalStatus::Pending->value)
             ->orderBy('stage_order')
             ->first();
+    }
+
+    /**
+     * Notify all users who can approve a specific stage.
+     */
+    private function notifyApproversForStage(PerubahanAnggaran $perubahan, ApprovalStage $stage, bool $isResubmit = false): void
+    {
+        $requiredRole = $stage->requiredRole();
+
+        $approvers = User::where('role', $requiredRole->value)->get();
+
+        foreach ($approvers as $approver) {
+            $approver->notify(new NewPerubahanNotification(
+                perubahan: $perubahan,
+                stage: $stage,
+                isResubmit: $isResubmit,
+            ));
+        }
     }
 
     /**

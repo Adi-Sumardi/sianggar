@@ -130,7 +130,8 @@ class ApprovalService
         });
 
         // Notify approvers at the revision stage (outside transaction — only on success)
-        $this->notifyApproversForStage($pengajuan, $targetStage);
+        // isResubmit: pengajuan sudah direvisi pembuat, dapat ditinjau kembali
+        $this->notifyApproversForStage($pengajuan, $targetStage, isResubmit: true);
     }
 
     /**
@@ -174,7 +175,8 @@ class ApprovalService
         });
 
         // Notify approvers at initial stage (outside transaction — only on success)
-        $this->notifyApproversForStage($pengajuan, $initialStage);
+        // isResubmit: pengajuan sudah direvisi pembuat, dapat ditinjau kembali
+        $this->notifyApproversForStage($pengajuan, $initialStage, isResubmit: true);
     }
 
     // =========================================================================
@@ -923,7 +925,7 @@ class ApprovalService
     /**
      * Notify all users who can approve a specific stage.
      */
-    private function notifyApproversForStage(PengajuanAnggaran $pengajuan, ApprovalStage $stage): void
+    private function notifyApproversForStage(PengajuanAnggaran $pengajuan, ApprovalStage $stage, bool $isResubmit = false): void
     {
         $requiredRole = $stage->requiredRole();
 
@@ -933,6 +935,7 @@ class ApprovalService
             $approver->notify(new NewProposalNotification(
                 pengajuan: $pengajuan,
                 stage: $stage,
+                isResubmit: $isResubmit,
             ));
         }
     }
