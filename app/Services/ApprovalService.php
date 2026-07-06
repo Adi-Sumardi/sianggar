@@ -628,17 +628,13 @@ class ApprovalService
                 'order' => $order++,
             ];
 
-            // For stages that haven't been reached yet and we don't have reference_type,
-            // we can't compute the full chain — stop at StaffKeuangan
+            // Tanpa reference_type, tahap setelah StaffKeuangan tidak bisa
+            // ditentukan (getNextStage(StaffKeuangan) akan melempar exception).
+            // Hentikan di sini untuk SEMUA kasus tanpa reference_type — termasuk
+            // pengajuan yang ditolak/revisi sebelum Staf Keuangan validasi
+            // (kalau tidak, show() jadi 500).
             if (! $pengajuan->reference_type && $currentStage === ApprovalStage::StaffKeuangan) {
-                // Stop here if approval is pending or doesn't exist yet
-                $approvalStatus = $approval?->status;
-                $isPending = ! $approval ||
-                    $approvalStatus === ApprovalStatus::Pending ||
-                    $approvalStatus === 'pending';
-                if ($isPending) {
-                    break;
-                }
+                break;
             }
 
             $currentStage = $this->getNextStage($pengajuan, $currentStage);

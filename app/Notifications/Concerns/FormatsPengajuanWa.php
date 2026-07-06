@@ -23,7 +23,8 @@ trait FormatsPengajuanWa
         return implode("\n", [
             "Unit : {$unit}",
             'No. Surat : ' . ($p->no_surat ?: '-'),
-            'Perihal : ' . ($p->perihal ?: '-'),
+            // Judul sebenarnya ada di nama_pengajuan; perihal sering kosong.
+            'Perihal : ' . ($p->nama_pengajuan ?: $p->perihal ?: '-'),
             'Tgl. Kegiatan : ' . ($p->waktu_kegiatan ?: '-'),
             "Jumlah Pengajuan : {$jumlah}",
         ]);
