@@ -20,8 +20,9 @@ class SecurityHeaders
         // Prevent MIME type sniffing
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
-        // Prevent clickjacking
-        $response->headers->set('X-Frame-Options', 'DENY');
+        // Prevent clickjacking dari situs lain, tapi izinkan iframe same-origin
+        // (dipakai preview lampiran PDF dalam modal).
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
 
         // XSS Protection (legacy browsers)
         $response->headers->set('X-XSS-Protection', '1; mode=block');
@@ -42,7 +43,7 @@ class SecurityHeaders
                 "img-src 'self' data: blob:",
                 "font-src 'self' data:",
                 "connect-src 'self' http://localhost:* ws://localhost:*",
-                "frame-ancestors 'none'",
+                "frame-ancestors 'self'",
                 "base-uri 'self'",
                 "form-action 'self'",
             ]));
@@ -54,7 +55,7 @@ class SecurityHeaders
                 "img-src 'self' data: blob:",
                 "font-src 'self' data: https://fonts.gstatic.com",
                 "connect-src 'self'",
-                "frame-ancestors 'none'",
+                "frame-ancestors 'self'",
                 "base-uri 'self'",
                 "form-action 'self'",
                 "upgrade-insecure-requests",
