@@ -637,7 +637,15 @@ class ApprovalService
                 break;
             }
 
-            $currentStage = $this->getNextStage($pengajuan, $currentStage);
+            // Safety net utk SEMUA step: jika routing belum bisa ditentukan
+            // (reference_type/amount_category belum ada / nilai invalid) helper
+            // routing bisa melempar. Ini hanya penyusunan tahap untuk tampilan,
+            // jadi jangan sampai membuat show() jadi 500 — cukup hentikan.
+            try {
+                $currentStage = $this->getNextStage($pengajuan, $currentStage);
+            } catch (\Throwable $e) {
+                break;
+            }
         }
 
         return $stages;
