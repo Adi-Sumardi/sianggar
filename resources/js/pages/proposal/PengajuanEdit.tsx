@@ -26,6 +26,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { usePengajuan, useUpdatePengajuan, useResubmitPengajuan, useUploadPengajuanAttachment } from '@/hooks/useProposals';
 import { useMataAnggarans, useSubMataAnggarans, useDetailMataAnggarans } from '@/hooks/useBudget';
+import { getFileUrl } from '@/lib/fileUrl';
 import { useAuthStore } from '@/stores/authStore';
 import type { UpdatePengajuanDTO } from '@/types/api';
 
@@ -302,7 +303,7 @@ export default function PengajuanEdit() {
         return pengajuan.attachments.map(a => ({
             id: a.id,
             name: a.nama,
-            url: `/storage/${a.path}`,
+            url: getFileUrl(a.path),
         }));
     }, [pengajuan]);
 

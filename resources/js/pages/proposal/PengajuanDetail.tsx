@@ -24,6 +24,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { ApprovalTimeline } from '@/components/common/ApprovalTimeline';
 import { formatRupiah } from '@/lib/currency';
 import { formatPct, usagePctClass } from '@/lib/budgetDisplay';
+import { getFileUrl } from '@/lib/fileUrl';
 import { PengajuanCetakDocument } from './PengajuanCetakDocument';
 import { formatDate } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
@@ -53,13 +54,6 @@ function isPreviewable(mimeType: string): boolean {
         mimeType?.startsWith('image/') ||
         mimeType === 'application/pdf'
     );
-}
-
-function getFileUrl(path: string): string {
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
-    }
-    return `/storage/${path}`;
 }
 
 // ---------------------------------------------------------------------------

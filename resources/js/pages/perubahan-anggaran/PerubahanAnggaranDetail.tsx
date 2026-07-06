@@ -29,6 +29,7 @@ import { FileUpload } from '@/components/common/FileUpload';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { formatRupiah } from '@/lib/currency';
 import { formatDate, formatDateTime } from '@/lib/date';
+import { getFileUrl } from '@/lib/fileUrl';
 import {
     usePerubahanAnggaran,
     usePerubahanAnggaranExpectedStages,
@@ -674,7 +675,7 @@ export default function PerubahanAnggaranDetail() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <a
-                                                    href={`/storage/${attachment.path}`}
+                                                    href={getFileUrl(attachment.path)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="rounded p-1.5 text-blue-600 hover:bg-blue-50"
@@ -683,7 +684,7 @@ export default function PerubahanAnggaranDetail() {
                                                     <Eye className="h-4 w-4" />
                                                 </a>
                                                 <a
-                                                    href={`/storage/${attachment.path}`}
+                                                    href={getFileUrl(attachment.path)}
                                                     download={attachment.nama}
                                                     className="rounded p-1.5 text-green-600 hover:bg-green-50"
                                                     title="Download"

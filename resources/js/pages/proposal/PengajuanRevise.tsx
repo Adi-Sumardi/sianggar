@@ -35,6 +35,7 @@ import {
     useUploadPengajuanAttachment,
     useDeletePengajuanAttachment,
 } from '@/hooks/useProposals';
+import { getFileUrl } from '@/lib/fileUrl';
 import { getStageLabel, ApprovalStatus } from '@/types/enums';
 import type { DetailPengajuan, Approval } from '@/types/models';
 
@@ -152,7 +153,7 @@ export default function PengajuanRevise() {
         return pengajuan.attachments.map((a) => ({
             id: a.id,
             name: a.nama,
-            url: `/storage/${a.path}`,
+            url: getFileUrl(a.path),
             mime_type: a.mime_type,
         }));
     }, [pengajuan]);
