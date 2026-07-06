@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -37,6 +38,7 @@ import { cn } from '@/lib/utils';
 import { ApprovalStage, ReferenceType, UserRole } from '@/types/enums';
 import { useAuthStore } from '@/stores/authStore';
 import { usePengajuan } from '@/hooks/useProposals';
+import { PengajuanCetakDocument } from './PengajuanCetakDocument';
 import { usePengajuanApprovals, useApprovePengajuan, useRevisePengajuan, useRejectPengajuan, useValidateFinance, useEditAmount, usePrintVoucher, useMarkAsPaid, useDiscussion, useOpenDiscussion, useCloseDiscussion, useAddDiscussionMessage } from '@/hooks/useApprovals';
 
 
@@ -225,6 +227,14 @@ export default function ApprovalDetail() {
 
     // Fetch approval history from API
     const { data: approvals = [] } = usePengajuanApprovals(pengajuanId);
+
+    // Cetak Surat Permohonan Pengajuan (dokumen formal, sama dgn halaman detail)
+    const printRef = useRef<HTMLDivElement>(null);
+    const handlePrint = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: `Pengajuan-${pengajuan?.no_surat || pengajuan?.nomor_pengajuan || pengajuanId}`,
+        pageStyle: '@page { size: A4; margin: 15mm; }',
+    });
 
     // Mutation hooks for actions
     const approveMutation = useApprovePengajuan();
@@ -987,11 +997,11 @@ export default function ApprovalDetail() {
                         <>
                             <button
                                 type="button"
-                                onClick={() => window.print()}
+                                onClick={() => handlePrint()}
                                 className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                             >
                                 <Printer className="h-4 w-4" />
-                                Cetak
+                                Cetak Surat Permohonan Pengajuan
                             </button>
 
                             {/* Edit Amount button for Keuangan and Bendahara */}
@@ -1824,6 +1834,13 @@ export default function ApprovalDetail() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Kontainer cetak tersembunyi (Surat Permohonan Pengajuan Dana) */}
+            <div style={{ overflow: 'hidden', height: 0 }}>
+                <div ref={printRef}>
+                    <PengajuanCetakDocument pengajuan={pengajuan} details={pengajuan.detail_pengajuans ?? []} />
+                </div>
+            </div>
         </PageTransition>
     );
 }
