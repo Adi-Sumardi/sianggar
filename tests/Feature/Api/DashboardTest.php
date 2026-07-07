@@ -54,6 +54,40 @@ describe('Dashboard API', function () {
             $response->assertOk();
         });
 
+        it('computes total_anggaran live from detail mata anggaran, not stale apbs value', function () {
+            // Kasus PT YAPI Talent Academy: tabel apbs punya total_anggaran=0 (basi),
+            // padahal detail mata anggaran (budget line items) sudah terisi. Stat
+            // dashboard unit harus ikut nilai live, bukan angka basi di tabel apbs.
+            $unit = \App\Models\Unit::factory()->create();
+            $unitUser = User::factory()->create([
+                'role' => \App\Enums\UserRole::SD->value,
+                'unit_id' => $unit->id,
+            ]);
+            $unitUser->givePermissionTo('view-dashboard');
+
+            $tahun = \App\Helpers\AcademicYear::current();
+
+            \App\Models\Apbs::factory()->create([
+                'unit_id' => $unit->id,
+                'tahun' => $tahun,
+                'total_anggaran' => 0,
+                'total_realisasi' => 0,
+            ]);
+
+            $mataAnggaran = \App\Models\MataAnggaran::factory()->forUnit($unit)->forYear($tahun)->create();
+            \App\Models\DetailMataAnggaran::factory()
+                ->forMataAnggaran($mataAnggaran)
+                ->forYear($tahun)
+                ->withBudget(15000000)
+                ->create();
+
+            $response = $this->actingAs($unitUser)
+                ->getJson('/api/v1/dashboard/stats');
+
+            $response->assertOk()
+                ->assertJsonPath('data.stats.total_anggaran', 15000000);
+        });
+
         it('treats non-approver substansi role (mis. Yta/Laz) as unit dashboard, not approver', function () {
             // Substansi non-approver (Asrama/Laz/Litbang/Stebank/SDM/Umum/Yta) harus
             // dapat dashboard type "unit" (lihat unit sendiri saja), BUKAN "approver"

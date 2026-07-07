@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Apbs;
 use App\Models\Approval;
+use App\Models\DetailMataAnggaran;
 use App\Models\Lpj;
 use App\Models\Penerimaan;
 use App\Models\PengajuanAnggaran;
@@ -347,14 +348,29 @@ class DashboardController extends Controller
             ];
         }
 
+        $tahun = AcademicYear::current();
+
         $apbs = Apbs::where('unit_id', $unitId)
-            ->where('tahun', AcademicYear::current())
+            ->where('tahun', $tahun)
             ->first();
 
+        // Total anggaran dihitung LIVE dari detail mata anggaran, konsisten dengan
+        // halaman /budget/apbs (ApbsController::applyLiveTotals). Nilai total_anggaran
+        // yang tersimpan di tabel apbs bisa basi/0 walau mata anggaran sudah diisi.
+        // Fallback ke nilai tersimpan hanya bila belum ada detail mata anggaran sama sekali.
+        $liveTotal = (float) DetailMataAnggaran::query()
+            ->join('mata_anggarans', 'detail_mata_anggarans.mata_anggaran_id', '=', 'mata_anggarans.id')
+            ->where('mata_anggarans.unit_id', $unitId)
+            ->where('mata_anggarans.tahun', $tahun)
+            ->sum('detail_mata_anggarans.jumlah');
+
+        $totalAnggaran = $liveTotal > 0 ? $liveTotal : (float) ($apbs?->total_anggaran ?? 0);
+        $totalRealisasi = (float) ($apbs?->total_realisasi ?? 0);
+
         return [
-            'saldo_anggaran' => $apbs?->sisa_anggaran ?? 0,
-            'total_anggaran' => $apbs?->total_anggaran ?? 0,
-            'total_realisasi' => $apbs?->total_realisasi ?? 0,
+            'saldo_anggaran' => $totalAnggaran - $totalRealisasi,
+            'total_anggaran' => $totalAnggaran,
+            'total_realisasi' => $totalRealisasi,
             'pending_pengajuan' => PengajuanAnggaran::where('unit_id', $unitId)
                 ->whereIn('status_proses', ['draft', 'submitted', 'in-review'])
                 ->count(),
