@@ -117,6 +117,18 @@ export default function PengajuanEdit() {
                     harga_satuan: detail.harga_satuan || 0,
                     jumlah: detail.jumlah || 0,
                 })));
+
+                // Prime the sub/detail mata anggaran option queries with the
+                // first item's ids, otherwise their SearchableSelect options
+                // stay empty on load and the saved value renders blank even
+                // though it's already correctly set in item state.
+                const firstDetail = pengajuan.detail_pengajuans[0];
+                if (firstDetail.mata_anggaran_id) {
+                    setActiveMataAnggaranId(firstDetail.mata_anggaran_id);
+                }
+                if (firstDetail.sub_mata_anggaran_id) {
+                    setActiveSubMataAnggaranId(firstDetail.sub_mata_anggaran_id);
+                }
             } else {
                 setItems([{
                     id: generateId(),

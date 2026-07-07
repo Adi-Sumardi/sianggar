@@ -242,7 +242,7 @@ export default function PktCreate() {
     };
 
     const isSubmitting = createPkt.isPending;
-    const canSubmit = form.tahun && form.kegiatan_id && form.mata_anggaran_id && form.sub_mata_anggaran_id && form.saldo_anggaran > 0;
+    const canSubmit = form.tahun && form.kegiatan_id && form.mata_anggaran_id && form.sub_mata_anggaran_id && form.saldo_anggaran >= 0;
 
     return (
         <PageTransition>

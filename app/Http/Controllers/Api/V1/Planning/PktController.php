@@ -111,7 +111,7 @@ class PktController extends Controller
             'unit' => ['nullable', 'string', 'max:50'], // Legacy string field
             'deskripsi_kegiatan' => ['nullable', 'string'],
             'tujuan_kegiatan' => ['nullable', 'string'],
-            'saldo_anggaran' => ['required', 'numeric', 'gt:0'],
+            'saldo_anggaran' => ['required', 'numeric', 'min:0'],
             'volume' => ['nullable', 'numeric', 'min:0'],
             'satuan' => ['nullable', 'string', 'max:50'],
         ]);
@@ -190,7 +190,7 @@ class PktController extends Controller
             'unit' => ['nullable', 'string', 'max:50'],
             'deskripsi_kegiatan' => ['nullable', 'string'],
             'tujuan_kegiatan' => ['nullable', 'string'],
-            'saldo_anggaran' => ['sometimes', 'required', 'numeric', 'gt:0'],
+            'saldo_anggaran' => ['sometimes', 'required', 'numeric', 'min:0'],
             'volume' => ['nullable', 'numeric', 'min:0'],
             'satuan' => ['nullable', 'string', 'max:50'],
         ]);

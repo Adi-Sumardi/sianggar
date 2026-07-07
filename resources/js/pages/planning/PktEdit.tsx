@@ -159,8 +159,8 @@ export default function PktEdit() {
             return;
         }
 
-        if (!form.saldo_anggaran || form.saldo_anggaran <= 0) {
-            toast.error('Nilai Anggaran Awal yang Diajukan wajib diisi dan harus lebih dari 0');
+        if (form.saldo_anggaran == null || form.saldo_anggaran < 0) {
+            toast.error('Nilai Anggaran Awal yang Diajukan wajib diisi');
             return;
         }
 

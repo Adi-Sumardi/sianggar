@@ -59,6 +59,11 @@ interface ItemRow {
     budget_anggaran_awal?: number;
     budget_saldo_dipakai?: number;
     budget_saldo_tersedia?: number;
+    // Jumlah pengajuan ini sendiri sebelum diedit di halaman revisi. Saldo
+    // tidak dilepas saat status revisi, jadi jumlah lama ini masih
+    // mengendap di budget_saldo_tersedia dan harus ditambahkan kembali saat
+    // menghitung saldo yang benar-benar tersedia untuk resubmit.
+    original_jumlah: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,6 +128,7 @@ export default function PengajuanRevise() {
                         budget_anggaran_awal: detailMA?.anggaran_awal ?? 0,
                         budget_saldo_dipakai: detailMA?.saldo_dipakai ?? 0,
                         budget_saldo_tersedia: detailMA?.saldo_tersedia ?? 0,
+                        original_jumlah: jumlah,
                     };
                 })
             );
@@ -218,6 +224,12 @@ export default function PengajuanRevise() {
         return sum + jumlah;
     }, 0);
 
+    // Saldo tersedia yang efektif untuk item ini, dengan jumlah lama pengajuan
+    // ini sendiri ditambahkan kembali (karena saldo tidak dilepas saat revisi).
+    const getEffectiveSaldoTersedia = useCallback((item: ItemRow) => {
+        return (item.budget_saldo_tersedia ?? 0) + (item.original_jumlah ?? 0);
+    }, []);
+
     // Check budget sufficiency before resubmit
     const checkBudgetSufficiency = useCallback(() => {
         const insufficient: BudgetCheckResultItem[] = [];
@@ -225,23 +237,25 @@ export default function PengajuanRevise() {
         for (const item of items) {
             if (!item.detail_mata_anggaran_id || item.budget_saldo_tersedia == null) continue;
 
-            if (item.jumlah > item.budget_saldo_tersedia) {
+            const effectiveSaldoTersedia = getEffectiveSaldoTersedia(item);
+
+            if (item.jumlah > effectiveSaldoTersedia) {
                 insufficient.push({
                     detail_mata_anggaran_id: item.detail_mata_anggaran_id,
                     kode: item.budget_kode || '',
                     nama: item.mata_anggaran_label || '',
                     anggaran_awal: item.budget_anggaran_awal || 0,
                     saldo_dipakai: item.budget_saldo_dipakai || 0,
-                    saldo_tersedia: item.budget_saldo_tersedia || 0,
+                    saldo_tersedia: effectiveSaldoTersedia,
                     jumlah_diminta: item.jumlah,
                     is_sufficient: false,
-                    kekurangan: item.jumlah - (item.budget_saldo_tersedia || 0),
+                    kekurangan: item.jumlah - effectiveSaldoTersedia,
                 });
             }
         }
 
         return insufficient;
-    }, [items]);
+    }, [items, getEffectiveSaldoTersedia]);
 
     const handleContactFinance = () => {
         window.open('https://wa.me/6281234567890?text=Halo Tim Keuangan, saya ingin konsultasi mengenai revisi pengajuan anggaran.', '_blank');
@@ -418,7 +432,8 @@ export default function PengajuanRevise() {
         >
             {items.map((item, index) => {
                 const hasBudgetInfo = item.budget_saldo_tersedia != null;
-                const isBudgetInsufficient = hasBudgetInfo && item.jumlah > (item.budget_saldo_tersedia ?? 0);
+                const effectiveSaldoTersedia = getEffectiveSaldoTersedia(item);
+                const isBudgetInsufficient = hasBudgetInfo && item.jumlah > effectiveSaldoTersedia;
 
                 return (
                 <div
@@ -507,7 +522,7 @@ export default function PengajuanRevise() {
                                 kode={item.budget_kode}
                                 anggaranAwal={item.budget_anggaran_awal || 0}
                                 saldoDigunakan={item.budget_saldo_dipakai || 0}
-                                saldoTersedia={item.budget_saldo_tersedia || 0}
+                                saldoTersedia={effectiveSaldoTersedia}
                                 jumlahDiminta={item.jumlah}
                                 compact
                             />
