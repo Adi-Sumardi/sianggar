@@ -262,6 +262,50 @@ describe('PKT API', function () {
 
             $response->assertForbidden();
         });
+
+        it('cannot update draft PKT when unit RAPBS is already approved/active', function () {
+            $user = User::factory()->unit()->create();
+            $user->givePermissionTo('manage-planning');
+
+            $pkt = Pkt::factory()->draft()->create([
+                'unit_id' => $user->unit_id,
+                'created_by' => $user->id,
+            ]);
+
+            \App\Models\Rapbs::factory()->active()->create([
+                'unit_id' => $user->unit_id,
+                'tahun' => $pkt->tahun,
+            ]);
+
+            $response = $this->actingAs($user)
+                ->putJson("/api/v1/pkt/{$pkt->id}", [
+                    'deskripsi_kegiatan' => 'Updated Kegiatan',
+                ]);
+
+            $response->assertUnprocessable();
+        });
+
+        it('allows admin to update draft PKT even when unit RAPBS is already approved/active', function () {
+            // Superadmin tidak boleh terkunci oleh status RAPBS unit mana pun.
+            $admin = User::factory()->admin()->create();
+            $admin->givePermissionTo('manage-planning');
+
+            $unit = Unit::factory()->create();
+            $pkt = Pkt::factory()->draft()->create(['unit_id' => $unit->id]);
+
+            \App\Models\Rapbs::factory()->active()->create([
+                'unit_id' => $unit->id,
+                'tahun' => $pkt->tahun,
+            ]);
+
+            $response = $this->actingAs($admin)
+                ->putJson("/api/v1/pkt/{$pkt->id}", [
+                    'deskripsi_kegiatan' => 'Updated Kegiatan',
+                ]);
+
+            $response->assertOk()
+                ->assertJsonPath('data.deskripsi_kegiatan', 'Updated Kegiatan');
+        });
     });
 
     describe('DELETE /api/v1/pkt/{id}', function () {

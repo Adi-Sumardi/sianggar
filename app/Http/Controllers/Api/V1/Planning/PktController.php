@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Planning;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PktResource;
 use App\Models\Pkt;
 use App\Models\Rapbs;
+use App\Models\User;
 use App\Services\PktService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -114,7 +116,7 @@ class PktController extends Controller
             'satuan' => ['nullable', 'string', 'max:50'],
         ]);
 
-        if ($error = $this->checkRapbsLocked($validated['unit_id'] ?? $request->user()->unit_id, $validated['tahun'])) {
+        if ($error = $this->checkRapbsLocked($validated['unit_id'] ?? $request->user()->unit_id, $validated['tahun'], $request->user())) {
             return $error;
         }
 
@@ -171,7 +173,7 @@ class PktController extends Controller
             ], 403);
         }
 
-        if ($error = $this->checkRapbsLocked($pkt->unit_id, $pkt->tahun)) {
+        if ($error = $this->checkRapbsLocked($pkt->unit_id, $pkt->tahun, $request->user())) {
             return $error;
         }
 
@@ -224,7 +226,7 @@ class PktController extends Controller
             ], 403);
         }
 
-        if ($error = $this->checkRapbsLocked($pkt->unit_id, $pkt->tahun)) {
+        if ($error = $this->checkRapbsLocked($pkt->unit_id, $pkt->tahun, $request->user())) {
             return $error;
         }
 
@@ -255,8 +257,14 @@ class PktController extends Controller
     /**
      * Check if the unit's RAPBS is locked (not editable).
      */
-    private function checkRapbsLocked(?int $unitId, string $tahun): ?JsonResponse
+    private function checkRapbsLocked(?int $unitId, string $tahun, User $user): ?JsonResponse
     {
+        // Superadmin tidak pernah terkunci oleh status RAPBS — bisa
+        // tambah/ubah/hapus PKT unit mana pun, kapan pun.
+        if ($user->role === UserRole::Admin) {
+            return null;
+        }
+
         $rapbs = Rapbs::where('unit_id', $unitId)->where('tahun', $tahun)->first();
 
         if ($rapbs && !$rapbs->canEdit()) {
