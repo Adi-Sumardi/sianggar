@@ -142,7 +142,11 @@ export default function PktList() {
         user?.unit_id ? { unit_id: user.unit_id } : undefined,
     );
     const unitRapbs = rapbsData?.data?.[0];
-    const rapbsLocked = !!unitRapbs &&
+    // Superadmin tidak pernah terkunci oleh status RAPBS (bisa edit/tambah PKT
+    // kapan pun, unit mana pun). Selain itu, user?.unit_id kosong utk admin
+    // sehingga unitRapbs di atas tidak merepresentasikan unit yang sedang
+    // dilihat — jangan dipakai mengunci admin.
+    const rapbsLocked = !isAdmin && !!unitRapbs &&
         unitRapbs.status !== RapbsStatus.Draft &&
         unitRapbs.status !== RapbsStatus.Rejected;
     const rapbsApproved = !!unitRapbs && (
