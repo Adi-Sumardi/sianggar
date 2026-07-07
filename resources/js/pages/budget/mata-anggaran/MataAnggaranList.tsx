@@ -44,7 +44,8 @@ export default function MataAnggaranList() {
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
     const [deleteItem, setDeleteItem] = useState<MataAnggaranWithSubs | null>(null);
 
-    const showUnitFilter = user?.role === UserRole.Admin || (user?.role && isApproverRole(user.role as UserRole));
+    const isAdmin = user?.role === UserRole.Admin;
+    const showUnitFilter = isAdmin || (user?.role && isApproverRole(user.role as UserRole));
     const { data: units } = useUnitsList();
 
     const filters = useMemo(() => {
@@ -219,6 +220,7 @@ export default function MataAnggaranList() {
                                                     key={item.id}
                                                     item={item}
                                                     isExpanded={isExpanded}
+                                                    isAdmin={!!isAdmin}
                                                     onToggle={() => toggleExpand(item.id)}
                                                     onView={() => navigate(`/budget/mata-anggaran/${item.id}`)}
                                                     onEdit={() => navigate(`/budget/mata-anggaran/${item.id}/edit`)}
@@ -258,15 +260,18 @@ export default function MataAnggaranList() {
 interface MataAnggaranRowProps {
     item: MataAnggaranWithSubs;
     isExpanded: boolean;
+    isAdmin: boolean;
     onToggle: () => void;
     onView: () => void;
     onEdit: () => void;
     onDelete: () => void;
 }
 
-function MataAnggaranRow({ item, isExpanded, onToggle, onView, onEdit, onDelete }: MataAnggaranRowProps) {
+function MataAnggaranRow({ item, isExpanded, isAdmin, onToggle, onView, onEdit, onDelete }: MataAnggaranRowProps) {
     const subCount = item.sub_mata_anggarans_count ?? item.sub_mata_anggarans?.length ?? 0;
-    const unitEditable = canUnitEditBudget(item.unit?.nama, item.unit?.kode);
+    // Superadmin bisa edit/hapus mata anggaran unit mana pun, tanpa dibatasi
+    // whitelist unit (Bagian Umum/STEBANK/YAPI Sekertariat).
+    const unitEditable = isAdmin || canUnitEditBudget(item.unit?.nama, item.unit?.kode);
 
     // Fetch sub mata anggarans when expanded
     const {

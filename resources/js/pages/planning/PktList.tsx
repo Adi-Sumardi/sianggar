@@ -247,7 +247,8 @@ export default function PktList() {
             header: '',
             enableSorting: false,
             cell: ({ row }) => {
-                const unitEditable = canUnitEditBudget(
+                // Superadmin bisa edit PKT unit mana pun, tanpa dibatasi whitelist unit.
+                const unitEditable = isAdmin || canUnitEditBudget(
                     row.original.unit_relation?.nama,
                     row.original.unit_relation?.kode,
                     row.original.unit || user?.unit?.nama,

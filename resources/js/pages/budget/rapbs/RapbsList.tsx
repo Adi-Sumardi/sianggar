@@ -21,7 +21,6 @@ import {
 
 import { cn } from '@/lib/utils';
 import { staggerContainer, staggerItem, cardHover } from '@/lib/animations';
-import { canUnitEditBudget } from '@/lib/unitEditPolicy';
 import { formatRupiah, formatVolume } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -688,7 +687,9 @@ export default function RapbsList() {
                                                             onToggle={() => toggleMaExpand(ma.id)}
                                                             onUpdateComparison={handleUpdateBudgetComparison}
                                                             isUpdating={updateBudgetComparison.isPending}
-                                                            canEdit={isAdmin && canUnitEditBudget(unit.unit_nama, unit.unit_kode)}
+                                                            // Superadmin bisa edit perbandingan anggaran unit mana pun
+                                                            // (tidak dibatasi whitelist unit).
+                                                            canEdit={isAdmin}
                                                         />
                                                     );
                                                 })}
