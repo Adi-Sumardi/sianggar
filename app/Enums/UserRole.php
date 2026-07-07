@@ -140,7 +140,11 @@ enum UserRole: string
             return 'admin';
         }
 
-        if ($this->isUnit()) {
+        // Substansi non-approver (Asrama, Laz, Litbang, Stebank, SDM, Umum, Yta) adalah
+        // akun submitter seperti unit sekolah — harus lihat dashboard/antrian milik unit
+        // sendiri, bukan dashboard approver. StaffDirektur/StaffSekretariat dikecualikan
+        // karena mereka juga approver (butuh visibilitas lintas-unit untuk tugas approval).
+        if ($this->isUnit() || ($this->isSubstansi() && ! $this->isApprover())) {
             return 'unit';
         }
 

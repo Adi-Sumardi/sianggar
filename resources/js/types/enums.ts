@@ -436,7 +436,10 @@ export function getAmountCategoryLabel(cat: AmountCategory | string): string {
  */
 export function getDashboardType(role: UserRole): 'admin' | 'unit' | 'finance' | 'leadership' | 'approver' | 'kasir' | 'payment' {
     if (role === UserRole.Admin) return 'admin';
-    if (isUnitRole(role)) return 'unit';
+    // Substansi non-approver (Asrama, Laz, Litbang, Stebank, SDM, Umum, Yta) adalah
+    // akun submitter seperti unit sekolah — harus lihat dashboard unit sendiri, bukan
+    // dashboard approver. StaffDirektur/StaffSekretariat dikecualikan (mereka approver).
+    if (isUnitRole(role) || (isSubstansiRole(role) && !isApproverRole(role))) return 'unit';
 
     // Kasir has its own dashboard
     if (role === UserRole.Kasir) return 'kasir';

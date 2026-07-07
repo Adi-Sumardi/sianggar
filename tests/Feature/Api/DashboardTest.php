@@ -54,6 +54,22 @@ describe('Dashboard API', function () {
             $response->assertOk();
         });
 
+        it('treats non-approver substansi role (mis. Yta/Laz) as unit dashboard, not approver', function () {
+            // Substansi non-approver (Asrama/Laz/Litbang/Stebank/SDM/Umum/Yta) harus
+            // dapat dashboard type "unit" (lihat unit sendiri saja), BUKAN "approver"
+            // (yang sebelumnya bocor karena fallback default dashboardType()).
+            $substansiUser = User::factory()->substansi('asrama')->create([
+                'unit_id' => \App\Models\Unit::factory()->create()->id,
+            ]);
+            $substansiUser->givePermissionTo('view-dashboard');
+
+            $response = $this->actingAs($substansiUser)
+                ->getJson('/api/v1/dashboard/stats');
+
+            $response->assertOk()
+                ->assertJsonPath('data.type', 'unit');
+        });
+
         it('returns 401 for unauthenticated request', function () {
             $response = $this->getJson('/api/v1/dashboard/stats');
 
@@ -104,6 +120,30 @@ describe('Dashboard API', function () {
 
             // Should limit to recent items
             expect(count($response->json('data')))->toBeLessThanOrEqual(10);
+        });
+
+        it('only shows own unit pengajuan for substansi non-approver role', function () {
+            $ownUnit = \App\Models\Unit::factory()->create();
+            $otherUnit = \App\Models\Unit::factory()->create();
+
+            $substansiUser = User::factory()->substansi('laz')->create([
+                'unit_id' => $ownUnit->id,
+            ]);
+            $substansiUser->givePermissionTo('view-dashboard');
+
+            PengajuanAnggaran::factory()->count(2)->create(['unit_id' => $ownUnit->id]);
+            PengajuanAnggaran::factory()->count(3)->create(['unit_id' => $otherUnit->id]);
+
+            $response = $this->actingAs($substansiUser)
+                ->getJson('/api/v1/dashboard/recent-pengajuan');
+
+            $response->assertOk();
+            $data = $response->json('data');
+
+            expect(count($data))->toBe(2);
+            foreach ($data as $item) {
+                expect($item['unit'])->toBe($ownUnit->nama);
+            }
         });
     });
 
