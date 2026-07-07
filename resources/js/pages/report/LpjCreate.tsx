@@ -74,7 +74,7 @@ export default function LpjCreate() {
             }
 
             toast.success('LPJ berhasil disimpan sebagai draft');
-            navigate(`/lpj/${lpj.id}`);
+            navigate(`/lpj/${lpj.ulid ?? lpj.id}`);
         } catch (error) {
             toast.error('Gagal menyimpan LPJ');
             console.error(error);

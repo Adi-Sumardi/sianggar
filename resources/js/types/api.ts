@@ -410,7 +410,8 @@ export interface UpdateEmailDTO {
 }
 
 export interface CreateEmailReplyDTO {
-    email_id: number;
+    /** ULID (baru) atau id numerik (legacy) — dipakai membangun URL, bukan field tervalidasi di backend. */
+    email_id: number | string;
     isi: string;
     files?: File[];
 }

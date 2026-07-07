@@ -169,6 +169,22 @@ describe('LPJ API', function () {
                 ->assertJsonPath('data.id', $lpj->id);
         });
 
+        it('returns LPJ details by ulid (route binding utama)', function () {
+            $admin = User::factory()->admin()->create();
+            $admin->givePermissionTo('view-reports');
+
+            $lpj = Lpj::factory()->create();
+
+            expect($lpj->ulid)->not->toBeNull();
+
+            $response = $this->actingAs($admin)
+                ->getJson("/api/v1/lpj/{$lpj->ulid}");
+
+            $response->assertOk()
+                ->assertJsonPath('data.id', $lpj->id)
+                ->assertJsonPath('data.ulid', $lpj->ulid);
+        });
+
         it('returns 404 for non-existent LPJ', function () {
             $admin = User::factory()->admin()->create();
             $admin->givePermissionTo('view-reports');

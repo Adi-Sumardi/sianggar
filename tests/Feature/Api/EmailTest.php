@@ -82,6 +82,22 @@ describe('Email API', function () {
                 ]);
         });
 
+        it('returns email details by ulid (route binding utama)', function () {
+            $user = User::factory()->admin()->create();
+            $user->givePermissionTo('view-emails');
+
+            $email = Email::factory()->create();
+
+            expect($email->ulid)->not->toBeNull();
+
+            $response = $this->actingAs($user)
+                ->getJson("/api/v1/emails/{$email->ulid}");
+
+            $response->assertOk()
+                ->assertJsonPath('data.id', $email->id)
+                ->assertJsonPath('data.ulid', $email->ulid);
+        });
+
         it('returns 404 for non-existent email', function () {
             $user = User::factory()->admin()->create();
             $user->givePermissionTo('view-emails');

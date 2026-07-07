@@ -8,6 +8,9 @@ import type {
     PerubahanAnggaranFilterParams,
 } from '@/types/api';
 
+/** Identifier perubahan anggaran untuk API: ULID (baru) atau id numerik (legacy). */
+export type PerubahanAnggaranId = number | string;
+
 // =============================================================================
 // Perubahan Anggaran CRUD
 // =============================================================================
@@ -22,7 +25,7 @@ export async function getPerubahanAnggarans(
     return data;
 }
 
-export async function getPerubahanAnggaran(id: number): Promise<PerubahanAnggaran> {
+export async function getPerubahanAnggaran(id: PerubahanAnggaranId): Promise<PerubahanAnggaran> {
     const { data } = await api.get<{ data: PerubahanAnggaran }>(`/perubahan-anggaran/${id}`);
     return data.data;
 }
@@ -35,7 +38,7 @@ export async function createPerubahanAnggaran(
 }
 
 export async function updatePerubahanAnggaran(
-    id: number,
+    id: PerubahanAnggaranId,
     dto: UpdatePerubahanAnggaranDTO,
 ): Promise<PerubahanAnggaran> {
     const { data } = await api.put<ApiResponse<PerubahanAnggaran>>(
@@ -45,7 +48,7 @@ export async function updatePerubahanAnggaran(
     return data.data;
 }
 
-export async function deletePerubahanAnggaran(id: number): Promise<void> {
+export async function deletePerubahanAnggaran(id: PerubahanAnggaranId): Promise<void> {
     await api.delete(`/perubahan-anggaran/${id}`);
 }
 
@@ -53,14 +56,14 @@ export async function deletePerubahanAnggaran(id: number): Promise<void> {
 // Submission & Approval Actions
 // =============================================================================
 
-export async function submitPerubahanAnggaran(id: number): Promise<PerubahanAnggaran> {
+export async function submitPerubahanAnggaran(id: PerubahanAnggaranId): Promise<PerubahanAnggaran> {
     const { data } = await api.post<ApiResponse<PerubahanAnggaran>>(
         `/perubahan-anggaran/${id}/submit`,
     );
     return data.data;
 }
 
-export async function resubmitPerubahanAnggaran(id: number): Promise<PerubahanAnggaran> {
+export async function resubmitPerubahanAnggaran(id: PerubahanAnggaranId): Promise<PerubahanAnggaran> {
     const { data } = await api.post<ApiResponse<PerubahanAnggaran>>(
         `/perubahan-anggaran/${id}/resubmit`,
     );
@@ -68,7 +71,7 @@ export async function resubmitPerubahanAnggaran(id: number): Promise<PerubahanAn
 }
 
 export async function approvePerubahanAnggaran(
-    id: number,
+    id: PerubahanAnggaranId,
     notes?: string,
 ): Promise<PerubahanAnggaran> {
     const { data } = await api.post<ApiResponse<PerubahanAnggaran>>(
@@ -79,7 +82,7 @@ export async function approvePerubahanAnggaran(
 }
 
 export async function revisePerubahanAnggaran(
-    id: number,
+    id: PerubahanAnggaranId,
     notes: string,
 ): Promise<PerubahanAnggaran> {
     const { data } = await api.post<ApiResponse<PerubahanAnggaran>>(
@@ -90,7 +93,7 @@ export async function revisePerubahanAnggaran(
 }
 
 export async function rejectPerubahanAnggaran(
-    id: number,
+    id: PerubahanAnggaranId,
     notes: string,
 ): Promise<PerubahanAnggaran> {
     const { data } = await api.post<ApiResponse<PerubahanAnggaran>>(
@@ -111,7 +114,7 @@ export async function getPerubahanAnggaranApprovalQueue(): Promise<PerubahanAngg
     return data;
 }
 
-export async function getExpectedStages(id: number): Promise<ExpectedStage[]> {
+export async function getExpectedStages(id: PerubahanAnggaranId): Promise<ExpectedStage[]> {
     const { data } = await api.get<{ data: ExpectedStage[] }>(
         `/perubahan-anggaran/${id}/expected-stages`,
     );
@@ -123,7 +126,7 @@ export async function getExpectedStages(id: number): Promise<ExpectedStage[]> {
 // =============================================================================
 
 export async function uploadPerubahanAnggaranAttachment(
-    perubahanAnggaranId: number,
+    perubahanAnggaranId: PerubahanAnggaranId,
     file: File,
 ): Promise<void> {
     const formData = new FormData();
@@ -133,7 +136,7 @@ export async function uploadPerubahanAnggaranAttachment(
 }
 
 export async function deletePerubahanAnggaranAttachment(
-    perubahanAnggaranId: number,
+    perubahanAnggaranId: PerubahanAnggaranId,
     attachmentId: number,
 ): Promise<void> {
     await api.delete(`/perubahan-anggaran/${perubahanAnggaranId}/attachments/${attachmentId}`);

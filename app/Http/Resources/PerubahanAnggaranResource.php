@@ -18,6 +18,7 @@ class PerubahanAnggaranResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'ulid' => $this->ulid,
             'nomor_perubahan' => $this->nomor_perubahan,
             'user_id' => $this->user_id,
             'unit_id' => $this->unit_id,

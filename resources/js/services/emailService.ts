@@ -13,6 +13,9 @@ import type {
 // Email / Surat
 // =============================================================================
 
+/** Identifier email/surat untuk API: ULID (baru) atau id numerik (legacy). */
+export type EmailId = number | string;
+
 export interface EmailRecipientOption {
     type: 'user' | 'role';
     user_id: number | null;
@@ -38,7 +41,7 @@ export async function getEmailRecipients(): Promise<EmailRecipientsResponse> {
     return data.data;
 }
 
-export async function getEmail(id: number): Promise<Email> {
+export async function getEmail(id: EmailId): Promise<Email> {
     const { data } = await api.get<ApiResponse<Email>>(`/emails/${id}`);
     return data.data;
 }
@@ -75,19 +78,19 @@ export async function createEmail(dto: CreateEmailDTO): Promise<Email> {
     return data.data;
 }
 
-export async function updateEmail(id: number, dto: UpdateEmailDTO): Promise<Email> {
+export async function updateEmail(id: EmailId, dto: UpdateEmailDTO): Promise<Email> {
     const { data } = await api.put<ApiResponse<Email>>(`/emails/${id}`, dto);
     return data.data;
 }
 
-export async function deleteEmail(id: number): Promise<void> {
+export async function deleteEmail(id: EmailId): Promise<void> {
     await api.delete(`/emails/${id}`);
 }
 
 /**
  * Send a draft email (change status to sent).
  */
-export async function sendEmail(id: number): Promise<Email> {
+export async function sendEmail(id: EmailId): Promise<Email> {
     const { data } = await api.post<ApiResponse<Email>>(`/emails/${id}/send`);
     return data.data;
 }
@@ -95,7 +98,7 @@ export async function sendEmail(id: number): Promise<Email> {
 /**
  * Archive an email.
  */
-export async function archiveEmail(id: number): Promise<Email> {
+export async function archiveEmail(id: EmailId): Promise<Email> {
     const { data } = await api.post<ApiResponse<Email>>(`/emails/${id}/archive`);
     return data.data;
 }
@@ -104,7 +107,7 @@ export async function archiveEmail(id: number): Promise<Email> {
 // Email Replies
 // =============================================================================
 
-export async function getEmailReplies(emailId: number): Promise<EmailReply[]> {
+export async function getEmailReplies(emailId: EmailId): Promise<EmailReply[]> {
     const { data } = await api.get<ApiResponse<EmailReply[]>>(`/emails/${emailId}/replies`);
     return data.data;
 }
@@ -133,7 +136,7 @@ export async function createEmailReply(dto: CreateEmailReplyDTO): Promise<EmailR
     return data.data;
 }
 
-export async function deleteEmailReply(emailId: number, replyId: number): Promise<void> {
+export async function deleteEmailReply(emailId: EmailId, replyId: number): Promise<void> {
     await api.delete(`/emails/${emailId}/replies/${replyId}`);
 }
 
@@ -141,7 +144,7 @@ export async function deleteEmailReply(emailId: number, replyId: number): Promis
 // Email Attachments
 // =============================================================================
 
-export async function uploadEmailAttachment(emailId: number, file: File): Promise<void> {
+export async function uploadEmailAttachment(emailId: EmailId, file: File): Promise<void> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -149,7 +152,7 @@ export async function uploadEmailAttachment(emailId: number, file: File): Promis
 }
 
 export async function deleteEmailAttachment(
-    emailId: number,
+    emailId: EmailId,
     attachmentId: number,
 ): Promise<void> {
     await api.delete(`/emails/${emailId}/attachments/${attachmentId}`);

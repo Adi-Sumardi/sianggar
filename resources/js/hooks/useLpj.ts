@@ -33,7 +33,7 @@ export function useLpjStats() {
     });
 }
 
-export function useLpj(id: number | null) {
+export function useLpj(id: number | string | null) {
     return useQuery({
         queryKey: ['lpjs', id],
         queryFn: () => reportService.getLpj(id!),
@@ -56,7 +56,7 @@ export function useCreateLpj() {
 export function useUpdateLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto: UpdateLpjDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto: UpdateLpjDTO }) =>
             reportService.updateLpj(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
@@ -69,7 +69,7 @@ export function useUpdateLpj() {
 export function useDeleteLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => reportService.deleteLpj(id),
+        mutationFn: (id: number | string) => reportService.deleteLpj(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -80,7 +80,7 @@ export function useDeleteLpj() {
 export function useSubmitLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => reportService.submitLpj(id),
+        mutationFn: (id: number | string) => reportService.submitLpj(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
             queryClient.invalidateQueries({ queryKey: ['lpjs', id] });
@@ -93,7 +93,7 @@ export function useSubmitLpj() {
 export function useResubmitLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => reportService.resubmitLpj(id),
+        mutationFn: (id: number | string) => reportService.resubmitLpj(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
             queryClient.invalidateQueries({ queryKey: ['lpjs', id] });
@@ -113,7 +113,7 @@ export function useResubmitLpj() {
 export function useValidateLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto: ValidateLpjDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto: ValidateLpjDTO }) =>
             reportService.validateLpj(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
@@ -129,7 +129,7 @@ export function useValidateLpj() {
 export function useApproveLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto?: ApproveLpjDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto?: ApproveLpjDTO }) =>
             reportService.approveLpj(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
@@ -145,7 +145,7 @@ export function useApproveLpj() {
 export function useReviseLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto: ReviseLpjDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto: ReviseLpjDTO }) =>
             reportService.reviseLpj(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
@@ -161,7 +161,7 @@ export function useReviseLpj() {
 export function useRejectLpj() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto: RejectLpjDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto: RejectLpjDTO }) =>
             reportService.rejectLpj(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs'] });
@@ -174,7 +174,7 @@ export function useRejectLpj() {
 /**
  * Get approval timeline for LPJ.
  */
-export function useLpjTimeline(id: number | null) {
+export function useLpjTimeline(id: number | string | null) {
     return useQuery({
         queryKey: ['lpjs', id, 'timeline'],
         queryFn: () => reportService.getLpjTimeline(id!),
@@ -189,7 +189,7 @@ export function useLpjTimeline(id: number | null) {
 export function useUploadLpjAttachment() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ lpjId, file }: { lpjId: number; file: File }) =>
+        mutationFn: ({ lpjId, file }: { lpjId: number | string; file: File }) =>
             reportService.uploadLpjAttachment(lpjId, file),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['lpjs', variables.lpjId] });
@@ -204,7 +204,7 @@ export function useDeleteLpjAttachment() {
             lpjId,
             attachmentId,
         }: {
-            lpjId: number;
+            lpjId: number | string;
             attachmentId: number;
         }) => reportService.deleteLpjAttachment(lpjId, attachmentId),
         onSuccess: (_data, variables) => {
@@ -219,13 +219,13 @@ export function useDeleteLpjAttachment() {
 
 export function useExportLpj() {
     return useMutation({
-        mutationFn: (id: number) => reportService.exportLpj(id),
+        mutationFn: (id: number | string) => reportService.exportLpj(id),
     });
 }
 
 export function usePrintLpj() {
     return useMutation({
-        mutationFn: (id: number) => reportService.printLpj(id),
+        mutationFn: (id: number | string) => reportService.printLpj(id),
     });
 }
 

@@ -56,7 +56,7 @@ export default function LpjDetail() {
     const [approveNotes, setApproveNotes] = useState('');
 
     // Fetch LPJ data
-    const lpjId = id ? parseInt(id, 10) : null;
+    const lpjId = id ?? null;
     const { data: lpj, isLoading, isError, error } = useLpj(lpjId);
 
     // Mutations

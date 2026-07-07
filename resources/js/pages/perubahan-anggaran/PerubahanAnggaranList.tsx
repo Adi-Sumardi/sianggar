@@ -181,7 +181,7 @@ export default function PerubahanAnggaranList() {
                 return (
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => navigate(`/perubahan-anggaran/${item.id}`)}
+                            onClick={() => navigate(`/perubahan-anggaran/${item.ulid ?? item.id}`)}
                             className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                             title="Lihat Detail"
                         >
@@ -189,7 +189,7 @@ export default function PerubahanAnggaranList() {
                         </button>
                         {canEdit && (
                             <button
-                                onClick={() => navigate(`/perubahan-anggaran/${item.id}/edit`)}
+                                onClick={() => navigate(`/perubahan-anggaran/${item.ulid ?? item.id}/edit`)}
                                 className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-blue-600"
                                 title="Edit"
                             >

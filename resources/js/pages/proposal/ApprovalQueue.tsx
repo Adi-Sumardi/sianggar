@@ -74,6 +74,7 @@ function transformLpj(lpj: Lpj): QueueItem {
     const total = lpj.jumlah_realisasi || lpj.total_realisasi || 0;
     return {
         id: lpj.id,
+        ulid: lpj.ulid,
         type: 'lpj',
         nomor: lpj.nomor_lpj || lpj.nomor || '-',
         perihal: lpj.perihal || `LPJ - ${lpj.pengajuan_anggaran?.perihal || '-'}`,
@@ -91,6 +92,7 @@ function transformLpj(lpj: Lpj): QueueItem {
 function transformPerubahanAnggaran(pa: PerubahanAnggaran): QueueItem {
     return {
         id: pa.id,
+        ulid: pa.ulid,
         type: 'geser-anggaran',
         nomor: pa.nomor_perubahan || '-',
         perihal: pa.perihal || 'Geser Anggaran',
@@ -440,7 +442,7 @@ export default function ApprovalQueue() {
 
     const handleCardClick = (item: QueueItem) => {
         if (item.type === 'geser-anggaran') {
-            navigate(`/perubahan-anggaran/${item.id}`);
+            navigate(`/perubahan-anggaran/${item.ulid ?? item.id}`);
         } else if (item.type === 'rapbs') {
             navigate(`/planning/rapbs/${item.id}`);
         } else {

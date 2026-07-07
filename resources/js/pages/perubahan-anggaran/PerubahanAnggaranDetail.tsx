@@ -256,7 +256,7 @@ export default function PerubahanAnggaranDetail() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
-    const perubahanId = id ? parseInt(id, 10) : null;
+    const perubahanId = id ?? null;
 
     const [actionDialog, setActionDialog] = useState<{
         open: boolean;

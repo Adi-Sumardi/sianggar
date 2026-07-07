@@ -47,7 +47,7 @@ export async function getPengajuanApprovals(pengajuanId: number | string): Promi
     return data.data;
 }
 
-export async function getLpjApprovals(lpjId: number): Promise<Approval[]> {
+export async function getLpjApprovals(lpjId: number | string): Promise<Approval[]> {
     const { data } = await api.get<ApiResponse<Approval[]>>(
         `/lpj/${lpjId}/approvals`,
     );
@@ -222,7 +222,7 @@ export async function addDiscussionMessage(
 // =============================================================================
 
 export async function approveLpj(
-    lpjId: number,
+    lpjId: number | string,
     dto?: ApproveDTO,
 ): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(
@@ -233,7 +233,7 @@ export async function approveLpj(
 }
 
 export async function reviseLpj(
-    lpjId: number,
+    lpjId: number | string,
     dto: ReviseDTO,
 ): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(
@@ -244,7 +244,7 @@ export async function reviseLpj(
 }
 
 export async function rejectLpj(
-    lpjId: number,
+    lpjId: number | string,
     dto: RejectDTO,
 ): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(

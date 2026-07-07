@@ -104,6 +104,22 @@ describe('Perubahan Anggaran API', function () {
                 ->assertJsonPath('data.id', $perubahan->id);
         });
 
+        it('returns perubahan anggaran details by ulid (route binding utama)', function () {
+            $admin = User::factory()->admin()->create();
+            $admin->givePermissionTo('view-proposals');
+
+            $perubahan = PerubahanAnggaran::factory()->create();
+
+            expect($perubahan->ulid)->not->toBeNull();
+
+            $response = $this->actingAs($admin)
+                ->getJson("/api/v1/perubahan-anggaran/{$perubahan->ulid}");
+
+            $response->assertOk()
+                ->assertJsonPath('data.id', $perubahan->id)
+                ->assertJsonPath('data.ulid', $perubahan->ulid);
+        });
+
         it('returns 404 for non-existent perubahan', function () {
             $admin = User::factory()->admin()->create();
             $admin->givePermissionTo('view-proposals');

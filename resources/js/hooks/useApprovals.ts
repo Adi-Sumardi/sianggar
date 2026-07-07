@@ -44,7 +44,7 @@ export function usePengajuanApprovals(pengajuanId: number | string | null) {
     });
 }
 
-export function useLpjApprovals(lpjId: number | null) {
+export function useLpjApprovals(lpjId: number | string | null) {
     return useQuery({
         queryKey: ['lpjs', lpjId, 'approvals'],
         queryFn: () => approvalService.getLpjApprovals(lpjId!),

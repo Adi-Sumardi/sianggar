@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\ApprovalStage;
 use App\Enums\PerubahanAnggaranStatus;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,9 +16,44 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class PerubahanAnggaran extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUlids;
 
     protected $table = 'perubahan_anggarans';
+
+    /**
+     * Hanya kolom `ulid` yang di-generate otomatis (PK numerik tetap increment).
+     *
+     * @return array<int, string>
+     */
+    public function uniqueIds(): array
+    {
+        return ['ulid'];
+    }
+
+    /**
+     * Identifier publik untuk URL/route adalah ulid, bukan id numerik.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'ulid';
+    }
+
+    /**
+     * Route binding dual: terima ULID (URL baru) maupun ID numerik
+     * (kompatibilitas link/notifikasi lama). Otorisasi tetap dijaga policy.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if ($field !== null) {
+            return $this->where($field, $value)->first();
+        }
+
+        if (is_numeric($value)) {
+            return $this->where('id', $value)->first();
+        }
+
+        return $this->where('ulid', $value)->first();
+    }
 
     protected $fillable = [
         'nomor_perubahan',

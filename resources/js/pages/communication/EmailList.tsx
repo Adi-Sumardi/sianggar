@@ -142,7 +142,7 @@ export default function EmailList() {
                                     initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.2 }}
-                                    onClick={() => navigate(`/emails/${email.id}`)}
+                                    onClick={() => navigate(`/emails/${email.ulid ?? email.id}`)}
                                     className="flex cursor-pointer items-start gap-4 rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-md"
                                 >
                                     {/* Icon */}

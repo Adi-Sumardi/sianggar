@@ -399,6 +399,8 @@ export interface DetailPengajuan {
 
 export interface Lpj {
     id: number;
+    /** Identifier publik untuk URL (route binding backend pakai ulid). */
+    ulid?: string;
     pengajuan_anggaran_id: number;
     unit: string;
     no_surat: string | null;
@@ -633,6 +635,8 @@ export interface EmailRecipient {
 
 export interface Email {
     id: number;
+    /** Identifier publik untuk URL (route binding backend pakai ulid). */
+    ulid?: string;
     user_id: number;
     name_surat: string;
     no_surat: string | null;
@@ -919,6 +923,8 @@ export interface LampiranMataAnggaran {
 
 export interface PerubahanAnggaran {
     id: number;
+    /** Identifier publik untuk URL (route binding backend pakai ulid). */
+    ulid?: string;
     nomor_perubahan: string;
     user_id: number;
     unit_id: number | null;

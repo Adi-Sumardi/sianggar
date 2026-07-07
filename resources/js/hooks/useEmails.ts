@@ -18,7 +18,7 @@ export function useEmails(params?: EmailFilterParams) {
     });
 }
 
-export function useEmail(id: number | null) {
+export function useEmail(id: number | string | null) {
     return useQuery({
         queryKey: ['emails', id],
         queryFn: () => emailService.getEmail(id!),
@@ -46,7 +46,7 @@ export function useCreateEmail() {
 export function useUpdateEmail() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto: UpdateEmailDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto: UpdateEmailDTO }) =>
             emailService.updateEmail(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['emails'] });
@@ -58,7 +58,7 @@ export function useUpdateEmail() {
 export function useDeleteEmail() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => emailService.deleteEmail(id),
+        mutationFn: (id: number | string) => emailService.deleteEmail(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['emails'] });
         },
@@ -68,7 +68,7 @@ export function useDeleteEmail() {
 export function useSendEmail() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => emailService.sendEmail(id),
+        mutationFn: (id: number | string) => emailService.sendEmail(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: ['emails'] });
             queryClient.invalidateQueries({ queryKey: ['emails', id] });
@@ -79,7 +79,7 @@ export function useSendEmail() {
 export function useArchiveEmail() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => emailService.archiveEmail(id),
+        mutationFn: (id: number | string) => emailService.archiveEmail(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: ['emails'] });
             queryClient.invalidateQueries({ queryKey: ['emails', id] });
@@ -91,7 +91,7 @@ export function useArchiveEmail() {
 // Email Reply hooks
 // =============================================================================
 
-export function useEmailReplies(emailId: number | null) {
+export function useEmailReplies(emailId: number | string | null) {
     return useQuery({
         queryKey: ['emails', emailId, 'replies'],
         queryFn: () => emailService.getEmailReplies(emailId!),
@@ -121,7 +121,7 @@ export function useDeleteEmailReply() {
             emailId,
             replyId,
         }: {
-            emailId: number;
+            emailId: number | string;
             replyId: number;
         }) => emailService.deleteEmailReply(emailId, replyId),
         onSuccess: (_data, variables) => {
@@ -139,7 +139,7 @@ export function useDeleteEmailReply() {
 export function useUploadEmailAttachment() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ emailId, file }: { emailId: number; file: File }) =>
+        mutationFn: ({ emailId, file }: { emailId: number | string; file: File }) =>
             emailService.uploadEmailAttachment(emailId, file),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
@@ -156,7 +156,7 @@ export function useDeleteEmailAttachment() {
             emailId,
             attachmentId,
         }: {
-            emailId: number;
+            emailId: number | string;
             attachmentId: number;
         }) => emailService.deleteEmailAttachment(emailId, attachmentId),
         onSuccess: (_data, variables) => {

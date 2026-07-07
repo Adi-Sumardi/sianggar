@@ -12,6 +12,9 @@ import type {
     RejectLpjDTO,
 } from '@/types/api';
 
+/** Identifier LPJ untuk API: ULID (baru) atau id numerik (legacy). */
+export type LpjId = number | string;
+
 // =============================================================================
 // LPJ (Laporan Pertanggungjawaban)
 // =============================================================================
@@ -36,7 +39,7 @@ export async function getLpjStats(): Promise<LpjStats> {
     return data.data;
 }
 
-export async function getLpj(id: number): Promise<Lpj> {
+export async function getLpj(id: LpjId): Promise<Lpj> {
     const { data } = await api.get<ApiResponse<Lpj>>(`/lpj/${id}`);
     return data.data;
 }
@@ -46,19 +49,19 @@ export async function createLpj(dto: CreateLpjDTO): Promise<Lpj> {
     return data.data;
 }
 
-export async function updateLpj(id: number, dto: UpdateLpjDTO): Promise<Lpj> {
+export async function updateLpj(id: LpjId, dto: UpdateLpjDTO): Promise<Lpj> {
     const { data } = await api.put<ApiResponse<Lpj>>(`/lpj/${id}`, dto);
     return data.data;
 }
 
-export async function deleteLpj(id: number): Promise<void> {
+export async function deleteLpj(id: LpjId): Promise<void> {
     await api.delete(`/lpj/${id}`);
 }
 
 /**
  * Submit a draft LPJ for review.
  */
-export async function submitLpj(id: number): Promise<Lpj> {
+export async function submitLpj(id: LpjId): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(`/lpj/${id}/submit`);
     return data.data;
 }
@@ -66,7 +69,7 @@ export async function submitLpj(id: number): Promise<Lpj> {
 /**
  * Resubmit a revised LPJ.
  */
-export async function resubmitLpj(id: number): Promise<Lpj> {
+export async function resubmitLpj(id: LpjId): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(`/lpj/${id}/resubmit`);
     return data.data;
 }
@@ -78,7 +81,7 @@ export async function resubmitLpj(id: number): Promise<Lpj> {
 /**
  * Validate LPJ with checklist (Staf Keuangan stage only).
  */
-export async function validateLpj(id: number, dto: ValidateLpjDTO): Promise<Lpj> {
+export async function validateLpj(id: LpjId, dto: ValidateLpjDTO): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(`/lpj/${id}/validate`, dto);
     return data.data;
 }
@@ -86,7 +89,7 @@ export async function validateLpj(id: number, dto: ValidateLpjDTO): Promise<Lpj>
 /**
  * Approve LPJ (middle approver and Keuangan stages).
  */
-export async function approveLpj(id: number, dto?: ApproveLpjDTO): Promise<Lpj> {
+export async function approveLpj(id: LpjId, dto?: ApproveLpjDTO): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(`/lpj/${id}/approve`, dto ?? {});
     return data.data;
 }
@@ -94,7 +97,7 @@ export async function approveLpj(id: number, dto?: ApproveLpjDTO): Promise<Lpj> 
 /**
  * Request revision on LPJ.
  */
-export async function reviseLpj(id: number, dto: ReviseLpjDTO): Promise<Lpj> {
+export async function reviseLpj(id: LpjId, dto: ReviseLpjDTO): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(`/lpj/${id}/revise`, dto);
     return data.data;
 }
@@ -102,7 +105,7 @@ export async function reviseLpj(id: number, dto: ReviseLpjDTO): Promise<Lpj> {
 /**
  * Reject LPJ.
  */
-export async function rejectLpj(id: number, dto: RejectLpjDTO): Promise<Lpj> {
+export async function rejectLpj(id: LpjId, dto: RejectLpjDTO): Promise<Lpj> {
     const { data } = await api.post<ApiResponse<Lpj>>(`/lpj/${id}/reject`, dto);
     return data.data;
 }
@@ -110,7 +113,7 @@ export async function rejectLpj(id: number, dto: RejectLpjDTO): Promise<Lpj> {
 /**
  * Get approval timeline for LPJ.
  */
-export async function getLpjTimeline(id: number): Promise<LpjExpectedStage[]> {
+export async function getLpjTimeline(id: LpjId): Promise<LpjExpectedStage[]> {
     const { data } = await api.get<{ data: LpjExpectedStage[] }>(`/lpj/${id}/timeline`);
     return data.data;
 }
@@ -119,7 +122,7 @@ export async function getLpjTimeline(id: number): Promise<LpjExpectedStage[]> {
 // LPJ Attachments
 // =============================================================================
 
-export async function uploadLpjAttachment(lpjId: number, file: File): Promise<void> {
+export async function uploadLpjAttachment(lpjId: LpjId, file: File): Promise<void> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -127,7 +130,7 @@ export async function uploadLpjAttachment(lpjId: number, file: File): Promise<vo
 }
 
 export async function deleteLpjAttachment(
-    lpjId: number,
+    lpjId: LpjId,
     attachmentId: number,
 ): Promise<void> {
     await api.delete(`/lpj/${lpjId}/attachments/${attachmentId}`);
@@ -137,14 +140,14 @@ export async function deleteLpjAttachment(
 // Laporan / Reports export
 // =============================================================================
 
-export async function exportLpj(id: number): Promise<Blob> {
+export async function exportLpj(id: LpjId): Promise<Blob> {
     const response = await api.get(`/lpj/${id}/export`, {
         responseType: 'blob',
     });
     return response.data;
 }
 
-export async function printLpj(id: number): Promise<Blob> {
+export async function printLpj(id: LpjId): Promise<Blob> {
     const response = await api.get(`/lpj/${id}/print`, {
         responseType: 'blob',
     });

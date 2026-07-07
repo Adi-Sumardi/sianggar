@@ -53,7 +53,7 @@ export default function EmailDetail() {
     const [replyFiles, setReplyFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const emailId = id ? parseInt(id, 10) : null;
+    const emailId = id ?? null;
     const { data: email, isLoading, isError } = useEmail(emailId);
     const archiveEmail = useArchiveEmail();
     const createReply = useCreateEmailReply();

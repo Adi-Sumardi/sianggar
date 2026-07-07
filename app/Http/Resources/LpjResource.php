@@ -24,6 +24,7 @@ class LpjResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'ulid' => $this->ulid,
             'pengajuan_anggaran_id' => $this->pengajuan_anggaran_id,
             'unit' => $this->unit,
             'no_surat' => $this->no_surat,

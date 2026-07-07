@@ -16,9 +16,9 @@ export const perubahanAnggaranKeys = {
     list: (params?: PerubahanAnggaranFilterParams) =>
         [...perubahanAnggaranKeys.lists(), params] as const,
     details: () => [...perubahanAnggaranKeys.all, 'detail'] as const,
-    detail: (id: number) => [...perubahanAnggaranKeys.details(), id] as const,
+    detail: (id: number | string) => [...perubahanAnggaranKeys.details(), id] as const,
     queue: () => [...perubahanAnggaranKeys.all, 'queue'] as const,
-    stages: (id: number) => [...perubahanAnggaranKeys.all, 'stages', id] as const,
+    stages: (id: number | string) => [...perubahanAnggaranKeys.all, 'stages', id] as const,
 };
 
 // =============================================================================
@@ -32,7 +32,7 @@ export function usePerubahanAnggarans(params?: PerubahanAnggaranFilterParams) {
     });
 }
 
-export function usePerubahanAnggaran(id: number | null) {
+export function usePerubahanAnggaran(id: number | string | null) {
     return useQuery({
         queryKey: perubahanAnggaranKeys.detail(id!),
         queryFn: () => perubahanAnggaranService.getPerubahanAnggaran(id!),
@@ -47,7 +47,7 @@ export function usePerubahanAnggaranApprovalQueue() {
     });
 }
 
-export function usePerubahanAnggaranExpectedStages(id: number | null) {
+export function usePerubahanAnggaranExpectedStages(id: number | string | null) {
     return useQuery({
         queryKey: perubahanAnggaranKeys.stages(id!),
         queryFn: () => perubahanAnggaranService.getExpectedStages(id!),
@@ -73,7 +73,7 @@ export function useCreatePerubahanAnggaran() {
 export function useUpdatePerubahanAnggaran() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto: UpdatePerubahanAnggaranDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto: UpdatePerubahanAnggaranDTO }) =>
             perubahanAnggaranService.updatePerubahanAnggaran(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.lists() });
@@ -87,7 +87,7 @@ export function useUpdatePerubahanAnggaran() {
 export function useDeletePerubahanAnggaran() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => perubahanAnggaranService.deletePerubahanAnggaran(id),
+        mutationFn: (id: number | string) => perubahanAnggaranService.deletePerubahanAnggaran(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.lists() });
         },
@@ -97,7 +97,7 @@ export function useDeletePerubahanAnggaran() {
 export function useSubmitPerubahanAnggaran() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => perubahanAnggaranService.submitPerubahanAnggaran(id),
+        mutationFn: (id: number | string) => perubahanAnggaranService.submitPerubahanAnggaran(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.lists() });
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.detail(id) });
@@ -109,7 +109,7 @@ export function useSubmitPerubahanAnggaran() {
 export function useResubmitPerubahanAnggaran() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => perubahanAnggaranService.resubmitPerubahanAnggaran(id),
+        mutationFn: (id: number | string) => perubahanAnggaranService.resubmitPerubahanAnggaran(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.lists() });
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.detail(id) });
@@ -121,7 +121,7 @@ export function useResubmitPerubahanAnggaran() {
 export function useApprovePerubahanAnggaran() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, notes }: { id: number; notes?: string }) =>
+        mutationFn: ({ id, notes }: { id: number | string; notes?: string }) =>
             perubahanAnggaranService.approvePerubahanAnggaran(id, notes),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.lists() });
@@ -138,7 +138,7 @@ export function useApprovePerubahanAnggaran() {
 export function useRevisePerubahanAnggaran() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, notes }: { id: number; notes: string }) =>
+        mutationFn: ({ id, notes }: { id: number | string; notes: string }) =>
             perubahanAnggaranService.revisePerubahanAnggaran(id, notes),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.lists() });
@@ -153,7 +153,7 @@ export function useRevisePerubahanAnggaran() {
 export function useRejectPerubahanAnggaran() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, notes }: { id: number; notes: string }) =>
+        mutationFn: ({ id, notes }: { id: number | string; notes: string }) =>
             perubahanAnggaranService.rejectPerubahanAnggaran(id, notes),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: perubahanAnggaranKeys.lists() });
@@ -172,7 +172,7 @@ export function useRejectPerubahanAnggaran() {
 export function useUploadPerubahanAnggaranAttachment() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ perubahanAnggaranId, file }: { perubahanAnggaranId: number; file: File }) =>
+        mutationFn: ({ perubahanAnggaranId, file }: { perubahanAnggaranId: number | string; file: File }) =>
             perubahanAnggaranService.uploadPerubahanAnggaranAttachment(perubahanAnggaranId, file),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
@@ -189,7 +189,7 @@ export function useDeletePerubahanAnggaranAttachment() {
             perubahanAnggaranId,
             attachmentId,
         }: {
-            perubahanAnggaranId: number;
+            perubahanAnggaranId: number | string;
             attachmentId: number;
         }) =>
             perubahanAnggaranService.deletePerubahanAnggaranAttachment(

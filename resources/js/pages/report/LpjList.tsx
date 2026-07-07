@@ -125,7 +125,7 @@ export default function LpjList() {
                             type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/lpj/${row.original.id}`);
+                                navigate(`/lpj/${row.original.ulid ?? row.original.id}`);
                             }}
                             className="rounded p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
                             title="Lihat detail"
@@ -138,7 +138,7 @@ export default function LpjList() {
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate(`/lpj/${row.original.id}/edit`);
+                                        navigate(`/lpj/${row.original.ulid ?? row.original.id}/edit`);
                                     }}
                                     className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
                                     title="Edit"
@@ -337,7 +337,7 @@ export default function LpjList() {
                         columns={columns}
                         data={lpjData}
                         searchValue={searchQuery}
-                        onRowClick={(row) => navigate(`/lpj/${row.id}`)}
+                        onRowClick={(row) => navigate(`/lpj/${row.ulid ?? row.id}`)}
                         emptyTitle="Belum ada LPJ"
                         emptyDescription="Klik 'Buat LPJ' untuk membuat laporan pertanggungjawaban baru."
                     />
