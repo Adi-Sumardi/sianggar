@@ -36,7 +36,7 @@ export function useLpjApprovalQueue(
 // Approval History hooks
 // =============================================================================
 
-export function usePengajuanApprovals(pengajuanId: number | null) {
+export function usePengajuanApprovals(pengajuanId: number | string | null) {
     return useQuery({
         queryKey: ['pengajuans', pengajuanId, 'approvals'],
         queryFn: () => approvalService.getPengajuanApprovals(pengajuanId!),
@@ -56,7 +56,7 @@ export function useLpjApprovals(lpjId: number | null) {
 // Pengajuan Workflow Action hooks
 // =============================================================================
 
-function invalidatePengajuan(queryClient: ReturnType<typeof useQueryClient>, pengajuanId?: number) {
+function invalidatePengajuan(queryClient: ReturnType<typeof useQueryClient>, pengajuanId?: number | string) {
     queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
     if (pengajuanId) {
         queryClient.invalidateQueries({ queryKey: ['pengajuans', pengajuanId] });
@@ -68,7 +68,7 @@ function invalidatePengajuan(queryClient: ReturnType<typeof useQueryClient>, pen
 export function useSubmitPengajuan() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (pengajuanId: number) => approvalService.submitPengajuan(pengajuanId),
+        mutationFn: (pengajuanId: number | string) => approvalService.submitPengajuan(pengajuanId),
         onSuccess: (_data, pengajuanId) => invalidatePengajuan(queryClient, pengajuanId),
     });
 }
@@ -76,7 +76,7 @@ export function useSubmitPengajuan() {
 export function useResubmitPengajuan() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (pengajuanId: number) => approvalService.resubmitPengajuan(pengajuanId),
+        mutationFn: (pengajuanId: number | string) => approvalService.resubmitPengajuan(pengajuanId),
         onSuccess: (_data, pengajuanId) => invalidatePengajuan(queryClient, pengajuanId),
     });
 }
@@ -88,7 +88,7 @@ export function useApprovePengajuan() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto?: ApproveDTO;
         }) => approvalService.approvePengajuan(pengajuanId, dto),
         onSuccess: (_data, variables) => invalidatePengajuan(queryClient, variables.pengajuanId),
@@ -102,7 +102,7 @@ export function useRevisePengajuan() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto: ReviseDTO;
         }) => approvalService.revisePengajuan(pengajuanId, dto),
         onSuccess: (_data, variables) => invalidatePengajuan(queryClient, variables.pengajuanId),
@@ -116,7 +116,7 @@ export function useRejectPengajuan() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto: RejectDTO;
         }) => approvalService.rejectPengajuan(pengajuanId, dto),
         onSuccess: (_data, variables) => invalidatePengajuan(queryClient, variables.pengajuanId),
@@ -130,7 +130,7 @@ export function useValidateFinance() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto: FinanceValidateDTO;
         }) => approvalService.validateFinance(pengajuanId, dto),
         onSuccess: (_data, variables) => invalidatePengajuan(queryClient, variables.pengajuanId),
@@ -144,7 +144,7 @@ export function useEditAmount() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto: EditAmountDTO;
         }) => approvalService.editAmount(pengajuanId, dto),
         onSuccess: (_data, variables) => invalidatePengajuan(queryClient, variables.pengajuanId),
@@ -154,7 +154,7 @@ export function useEditAmount() {
 export function usePrintVoucher() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (pengajuanId: number) => approvalService.printVoucher(pengajuanId),
+        mutationFn: (pengajuanId: number | string) => approvalService.printVoucher(pengajuanId),
         onSuccess: (_data, pengajuanId) => invalidatePengajuan(queryClient, pengajuanId),
     });
 }
@@ -166,7 +166,7 @@ export function useMarkAsPaid() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto: approvalService.MarkAsPaidDTO;
         }) => approvalService.markAsPaid(pengajuanId, dto),
         onSuccess: (_data, variables) => {
@@ -203,7 +203,7 @@ export function useActiveDiscussions(options?: { enabled?: boolean; refetchInter
     });
 }
 
-export function useDiscussion(pengajuanId: number | null, options?: { enabled?: boolean; refetchInterval?: number }) {
+export function useDiscussion(pengajuanId: number | string | null, options?: { enabled?: boolean; refetchInterval?: number }) {
     return useQuery({
         queryKey: ['pengajuans', pengajuanId, 'discussion'],
         queryFn: () => approvalService.getDiscussion(pengajuanId!),
@@ -215,7 +215,7 @@ export function useDiscussion(pengajuanId: number | null, options?: { enabled?: 
 export function useOpenDiscussion() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (pengajuanId: number) => approvalService.openDiscussion(pengajuanId),
+        mutationFn: (pengajuanId: number | string) => approvalService.openDiscussion(pengajuanId),
         onSuccess: (_data, pengajuanId) => {
             invalidatePengajuan(queryClient, pengajuanId);
             queryClient.invalidateQueries({ queryKey: ['pengajuans', pengajuanId, 'discussion'] });
@@ -226,7 +226,7 @@ export function useOpenDiscussion() {
 export function useCloseDiscussion() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (pengajuanId: number) => approvalService.closeDiscussion(pengajuanId),
+        mutationFn: (pengajuanId: number | string) => approvalService.closeDiscussion(pengajuanId),
         onSuccess: (_data, pengajuanId) => {
             invalidatePengajuan(queryClient, pengajuanId);
             queryClient.invalidateQueries({ queryKey: ['pengajuans', pengajuanId, 'discussion'] });
@@ -241,7 +241,7 @@ export function useAddDiscussionMessage() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto: DiscussionMessageDTO;
         }) => approvalService.addDiscussionMessage(pengajuanId, dto),
         onSuccess: (_data, variables) => {

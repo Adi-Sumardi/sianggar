@@ -37,6 +37,8 @@ type TabType = 'pengajuan' | 'lpj' | 'geser-anggaran' | 'rapbs';
 
 interface QueueItem {
     id: number;
+    /** Identifier publik (ULID) untuk URL — dipakai bila tersedia. */
+    ulid?: string;
     type: 'pengajuan' | 'lpj' | 'geser-anggaran' | 'rapbs';
     nomor: string;
     perihal: string;
@@ -53,6 +55,7 @@ interface QueueItem {
 function transformPengajuan(pengajuan: PengajuanAnggaran): QueueItem {
     return {
         id: pengajuan.id,
+        ulid: pengajuan.ulid,
         type: 'pengajuan',
         nomor: pengajuan.nomor_pengajuan || '-',
         perihal: pengajuan.perihal || pengajuan.nama_pengajuan || '-',
@@ -441,7 +444,7 @@ export default function ApprovalQueue() {
         } else if (item.type === 'rapbs') {
             navigate(`/planning/rapbs/${item.id}`);
         } else {
-            navigate(`/approvals/${item.id}?type=${item.type}`);
+            navigate(`/approvals/${item.ulid ?? item.id}?type=${item.type}`);
         }
     };
 

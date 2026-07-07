@@ -220,7 +220,7 @@ export default function ApprovalDetail() {
     const [referenceType, setReferenceType] = useState<string>('');
     const [needLpj, setNeedLpj] = useState(false);
 
-    const pengajuanId = id ? parseInt(id, 10) : null;
+    const pengajuanId = id ?? null;
 
     // Fetch pengajuan data from API
     const { data: pengajuan, isLoading, isError, error } = usePengajuan(pengajuanId);

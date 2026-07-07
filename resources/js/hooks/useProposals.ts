@@ -17,7 +17,7 @@ export function usePengajuanList(params?: PengajuanFilterParams) {
     });
 }
 
-export function usePengajuan(id: number | null) {
+export function usePengajuan(id: number | string | null) {
     return useQuery({
         queryKey: ['pengajuans', id],
         queryFn: () => proposalService.getPengajuan(id!),
@@ -39,7 +39,7 @@ export function useCreatePengajuan() {
 export function useUpdatePengajuan() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, dto }: { id: number; dto: UpdatePengajuanDTO }) =>
+        mutationFn: ({ id, dto }: { id: number | string; dto: UpdatePengajuanDTO }) =>
             proposalService.updatePengajuan(id, dto),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
@@ -52,7 +52,7 @@ export function useUpdatePengajuan() {
 export function useDeletePengajuan() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => proposalService.deletePengajuan(id),
+        mutationFn: (id: number | string) => proposalService.deletePengajuan(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -63,7 +63,7 @@ export function useDeletePengajuan() {
 export function useSubmitPengajuan() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => proposalService.submitPengajuan(id),
+        mutationFn: (id: number | string) => proposalService.submitPengajuan(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
             queryClient.invalidateQueries({ queryKey: ['pengajuans', id] });
@@ -77,7 +77,7 @@ export function useSubmitPengajuan() {
 export function useResubmitPengajuan() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => proposalService.resubmitPengajuan(id),
+        mutationFn: (id: number | string) => proposalService.resubmitPengajuan(id),
         onSuccess: (_data, id) => {
             queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
             queryClient.invalidateQueries({ queryKey: ['pengajuans', id] });
@@ -104,7 +104,7 @@ export function useAvailableForLpj(params?: { tahun?: string }) {
 // Detail Pengajuan hooks
 // =============================================================================
 
-export function useDetailPengajuans(pengajuanId: number | null) {
+export function useDetailPengajuans(pengajuanId: number | string | null) {
     return useQuery({
         queryKey: ['pengajuans', pengajuanId, 'details'],
         queryFn: () => proposalService.getDetailPengajuans(pengajuanId!),
@@ -131,7 +131,7 @@ export function useCreatePerubahan() {
             pengajuanId,
             dto,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             dto: UpdatePengajuanDTO;
         }) => proposalService.createPerubahan(pengajuanId, dto),
         onSuccess: (_data, variables) => {
@@ -150,7 +150,7 @@ export function useCreatePerubahan() {
 export function useUploadPengajuanAttachment() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ pengajuanId, file }: { pengajuanId: number; file: File }) =>
+        mutationFn: ({ pengajuanId, file }: { pengajuanId: number | string; file: File }) =>
             proposalService.uploadPengajuanAttachment(pengajuanId, file),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
@@ -167,7 +167,7 @@ export function useDeletePengajuanAttachment() {
             pengajuanId,
             attachmentId,
         }: {
-            pengajuanId: number;
+            pengajuanId: number | string;
             attachmentId: number;
         }) => proposalService.deletePengajuanAttachment(pengajuanId, attachmentId),
         onSuccess: (_data, variables) => {
@@ -184,12 +184,12 @@ export function useDeletePengajuanAttachment() {
 
 export function useExportPengajuan() {
     return useMutation({
-        mutationFn: (id: number) => proposalService.exportPengajuan(id),
+        mutationFn: (id: number | string) => proposalService.exportPengajuan(id),
     });
 }
 
 export function usePrintPengajuan() {
     return useMutation({
-        mutationFn: (id: number) => proposalService.printPengajuan(id),
+        mutationFn: (id: number | string) => proposalService.printPengajuan(id),
     });
 }

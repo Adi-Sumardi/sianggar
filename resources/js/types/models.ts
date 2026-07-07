@@ -320,6 +320,8 @@ export interface Pkt {
 
 export interface PengajuanAnggaran {
     id: number;
+    /** Identifier publik untuk URL (route binding backend pakai ulid). */
+    ulid?: string;
     user_id: number;
     tahun_anggaran: string;
     nomor_pengajuan: string;

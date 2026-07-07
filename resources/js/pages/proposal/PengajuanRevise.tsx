@@ -82,7 +82,7 @@ export default function PengajuanRevise() {
     const [currentStep, setCurrentStep] = useState(1);
 
     // Fetch pengajuan data
-    const { data: pengajuan, isLoading, isError, error, refetch } = usePengajuan(id ? parseInt(id) : null);
+    const { data: pengajuan, isLoading, isError, error, refetch } = usePengajuan(id ?? null);
     const updateMutation = useUpdatePengajuan();
     const resubmitMutation = useResubmitPengajuan();
     const uploadAttachment = useUploadPengajuanAttachment();

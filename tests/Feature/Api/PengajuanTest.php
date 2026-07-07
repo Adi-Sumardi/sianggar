@@ -183,6 +183,22 @@ describe('Pengajuan API', function () {
                 ->assertJsonPath('data.id', $pengajuan->id);
         });
 
+        it('returns pengajuan details by ulid (route binding utama)', function () {
+            $user = User::factory()->admin()->create();
+            $user->givePermissionTo('view-proposals');
+
+            $pengajuan = PengajuanAnggaran::factory()->create();
+
+            expect($pengajuan->ulid)->not->toBeNull();
+
+            $response = $this->actingAs($user)
+                ->getJson("/api/v1/pengajuan/{$pengajuan->ulid}");
+
+            $response->assertOk()
+                ->assertJsonPath('data.id', $pengajuan->id)
+                ->assertJsonPath('data.ulid', $pengajuan->ulid);
+        });
+
         it('returns 404 for non-existent pengajuan', function () {
             $user = User::factory()->admin()->create();
             $user->givePermissionTo('view-proposals');

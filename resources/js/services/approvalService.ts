@@ -40,7 +40,7 @@ export async function getLpjApprovalQueue(
 // Approval History
 // =============================================================================
 
-export async function getPengajuanApprovals(pengajuanId: number): Promise<Approval[]> {
+export async function getPengajuanApprovals(pengajuanId: number | string): Promise<Approval[]> {
     const { data } = await api.get<ApiResponse<Approval[]>>(
         `/pengajuan/${pengajuanId}/approvals`,
     );
@@ -58,14 +58,14 @@ export async function getLpjApprovals(lpjId: number): Promise<Approval[]> {
 // Pengajuan Workflow Actions
 // =============================================================================
 
-export async function submitPengajuan(pengajuanId: number): Promise<PengajuanAnggaran> {
+export async function submitPengajuan(pengajuanId: number | string): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
         `/pengajuan/${pengajuanId}/submit`,
     );
     return data.data;
 }
 
-export async function resubmitPengajuan(pengajuanId: number): Promise<PengajuanAnggaran> {
+export async function resubmitPengajuan(pengajuanId: number | string): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
         `/pengajuan/${pengajuanId}/resubmit`,
     );
@@ -73,7 +73,7 @@ export async function resubmitPengajuan(pengajuanId: number): Promise<PengajuanA
 }
 
 export async function approvePengajuan(
-    pengajuanId: number,
+    pengajuanId: number | string,
     dto?: ApproveDTO,
 ): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
@@ -84,7 +84,7 @@ export async function approvePengajuan(
 }
 
 export async function revisePengajuan(
-    pengajuanId: number,
+    pengajuanId: number | string,
     dto: ReviseDTO,
 ): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
@@ -95,7 +95,7 @@ export async function revisePengajuan(
 }
 
 export async function rejectPengajuan(
-    pengajuanId: number,
+    pengajuanId: number | string,
     dto: RejectDTO,
 ): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
@@ -106,7 +106,7 @@ export async function rejectPengajuan(
 }
 
 export async function validateFinance(
-    pengajuanId: number,
+    pengajuanId: number | string,
     dto: FinanceValidateDTO,
 ): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
@@ -117,7 +117,7 @@ export async function validateFinance(
 }
 
 export async function editAmount(
-    pengajuanId: number,
+    pengajuanId: number | string,
     dto: EditAmountDTO,
 ): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
@@ -127,7 +127,7 @@ export async function editAmount(
     return data.data;
 }
 
-export async function printVoucher(pengajuanId: number): Promise<PengajuanAnggaran> {
+export async function printVoucher(pengajuanId: number | string): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
         `/pengajuan/${pengajuanId}/print-voucher`,
     );
@@ -140,7 +140,7 @@ export interface MarkAsPaidDTO {
     notes?: string;
 }
 
-export async function markAsPaid(pengajuanId: number, dto: MarkAsPaidDTO): Promise<PengajuanAnggaran> {
+export async function markAsPaid(pengajuanId: number | string, dto: MarkAsPaidDTO): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
         `/pengajuan/${pengajuanId}/mark-paid`,
         dto,
@@ -185,21 +185,21 @@ export async function getActiveDiscussions(): Promise<ActiveDiscussion[]> {
     return data.data;
 }
 
-export async function getDiscussion(pengajuanId: number): Promise<Discussion[]> {
+export async function getDiscussion(pengajuanId: number | string): Promise<Discussion[]> {
     const { data } = await api.get<ApiResponse<Discussion[]>>(
         `/pengajuan/${pengajuanId}/discussion`,
     );
     return data.data;
 }
 
-export async function openDiscussion(pengajuanId: number): Promise<Discussion> {
+export async function openDiscussion(pengajuanId: number | string): Promise<Discussion> {
     const { data } = await api.post<ApiResponse<Discussion>>(
         `/pengajuan/${pengajuanId}/discussion/open`,
     );
     return data.data;
 }
 
-export async function closeDiscussion(pengajuanId: number): Promise<Discussion> {
+export async function closeDiscussion(pengajuanId: number | string): Promise<Discussion> {
     const { data } = await api.post<ApiResponse<Discussion>>(
         `/pengajuan/${pengajuanId}/discussion/close`,
     );
@@ -207,7 +207,7 @@ export async function closeDiscussion(pengajuanId: number): Promise<Discussion> 
 }
 
 export async function addDiscussionMessage(
-    pengajuanId: number,
+    pengajuanId: number | string,
     dto: DiscussionMessageDTO,
 ): Promise<DiscussionMessage> {
     const { data } = await api.post<ApiResponse<DiscussionMessage>>(

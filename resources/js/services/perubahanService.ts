@@ -6,6 +6,8 @@ import api from '@/lib/api';
 
 export interface Perubahan {
     id: number;
+    /** Identifier publik untuk URL (route binding backend pakai ulid). */
+    ulid?: string;
     user_id: number;
     nama_pengajuan: string;
     unit: string;

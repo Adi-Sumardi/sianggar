@@ -29,7 +29,7 @@ export default function VoucherHistory() {
     });
 
     const handleReprintVoucher = (pengajuan: PengajuanAnggaran) => {
-        navigate(`/approvals/${pengajuan.id}`);
+        navigate(`/approvals/${pengajuan.ulid ?? pengajuan.id}`);
     };
 
     // Loading state
@@ -160,7 +160,7 @@ export default function VoucherHistory() {
                                                 <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         type="button"
-                                                        onClick={() => navigate(`/approvals/${item.id}`)}
+                                                        onClick={() => navigate(`/approvals/${item.ulid ?? item.id}`)}
                                                         className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600"
                                                         title="Lihat Detail"
                                                     >

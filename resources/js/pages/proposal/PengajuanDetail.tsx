@@ -168,7 +168,7 @@ export default function PengajuanDetail() {
     const [previewFile, setPreviewFile] = useState<Attachment | null>(null);
 
     const { user } = useAuth();
-    const pengajuanId = id ? parseInt(id, 10) : null;
+    const pengajuanId = id ?? null;
     const { data: pengajuan, isLoading, isError, error } = usePengajuan(pengajuanId);
     const submitMutation = useSubmitPengajuan();
     const resubmitMutation = useResubmitPengajuan();

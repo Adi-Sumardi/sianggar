@@ -68,7 +68,7 @@ function generateId() {
 
 export default function PengajuanEdit() {
     const { id } = useParams();
-    const pengajuanId = id ? parseInt(id, 10) : null;
+    const pengajuanId = id ?? null;
     const navigate = useNavigate();
     const { user } = useAuthStore();
     const [currentStep, setCurrentStep] = useState(1);

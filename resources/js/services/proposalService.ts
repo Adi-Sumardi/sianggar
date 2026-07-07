@@ -12,6 +12,9 @@ import type {
 // Pengajuan Anggaran (Budget Proposals)
 // =============================================================================
 
+/** Identifier pengajuan untuk API: ULID (baru) atau id numerik (legacy). */
+export type PengajuanId = number | string;
+
 export async function getPengajuans(
     params?: PengajuanFilterParams,
 ): Promise<PaginatedResponse<PengajuanAnggaran>> {
@@ -19,7 +22,7 @@ export async function getPengajuans(
     return data;
 }
 
-export async function getPengajuan(id: number): Promise<PengajuanAnggaran> {
+export async function getPengajuan(id: PengajuanId): Promise<PengajuanAnggaran> {
     const { data } = await api.get<ApiResponse<PengajuanAnggaran>>(`/pengajuan/${id}`);
     return data.data;
 }
@@ -30,21 +33,21 @@ export async function createPengajuan(dto: CreatePengajuanDTO): Promise<Pengajua
 }
 
 export async function updatePengajuan(
-    id: number,
+    id: PengajuanId,
     dto: UpdatePengajuanDTO,
 ): Promise<PengajuanAnggaran> {
     const { data } = await api.put<ApiResponse<PengajuanAnggaran>>(`/pengajuan/${id}`, dto);
     return data.data;
 }
 
-export async function deletePengajuan(id: number): Promise<void> {
+export async function deletePengajuan(id: PengajuanId): Promise<void> {
     await api.delete(`/pengajuan/${id}`);
 }
 
 /**
  * Submit a draft proposal for approval.
  */
-export async function submitPengajuan(id: number): Promise<PengajuanAnggaran> {
+export async function submitPengajuan(id: PengajuanId): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(`/pengajuan/${id}/submit`);
     return data.data;
 }
@@ -53,7 +56,7 @@ export async function submitPengajuan(id: number): Promise<PengajuanAnggaran> {
  * Resubmit a revised proposal for approval.
  * After user revises their proposal, this sends it back to the approver who requested revision.
  */
-export async function resubmitPengajuan(id: number): Promise<PengajuanAnggaran> {
+export async function resubmitPengajuan(id: PengajuanId): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(`/pengajuan/${id}/resubmit`);
     return data.data;
 }
@@ -74,7 +77,7 @@ export async function getAvailableForLpj(params?: {
 // =============================================================================
 
 export async function getDetailPengajuans(
-    pengajuanId: number,
+    pengajuanId: PengajuanId,
 ): Promise<DetailPengajuan[]> {
     const { data } = await api.get<ApiResponse<DetailPengajuan[]>>(
         `/pengajuan/${pengajuanId}/details`,
@@ -92,7 +95,7 @@ export async function getDetailPengajuan(id: number): Promise<DetailPengajuan> {
 // =============================================================================
 
 export async function createPerubahan(
-    pengajuanId: number,
+    pengajuanId: PengajuanId,
     dto: UpdatePengajuanDTO,
 ): Promise<PengajuanAnggaran> {
     const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(
@@ -107,7 +110,7 @@ export async function createPerubahan(
 // =============================================================================
 
 export async function uploadPengajuanAttachment(
-    pengajuanId: number,
+    pengajuanId: PengajuanId,
     file: File,
 ): Promise<void> {
     const formData = new FormData();
@@ -117,7 +120,7 @@ export async function uploadPengajuanAttachment(
 }
 
 export async function deletePengajuanAttachment(
-    pengajuanId: number,
+    pengajuanId: PengajuanId,
     attachmentId: number,
 ): Promise<void> {
     await api.delete(`/pengajuan/${pengajuanId}/attachments/${attachmentId}`);
@@ -127,14 +130,14 @@ export async function deletePengajuanAttachment(
 // Export
 // =============================================================================
 
-export async function exportPengajuan(id: number): Promise<Blob> {
+export async function exportPengajuan(id: PengajuanId): Promise<Blob> {
     const response = await api.get(`/pengajuan/${id}/export`, {
         responseType: 'blob',
     });
     return response.data;
 }
 
-export async function printPengajuan(id: number): Promise<Blob> {
+export async function printPengajuan(id: PengajuanId): Promise<Blob> {
     const response = await api.get(`/pengajuan/${id}/print`, {
         responseType: 'blob',
     });

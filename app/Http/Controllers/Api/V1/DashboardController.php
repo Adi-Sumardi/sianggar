@@ -208,6 +208,7 @@ class DashboardController extends Controller
             'data' => $pengajuans->map(function (PengajuanAnggaran $p) use ($includeVoucher) {
                 $item = [
                     'id' => $p->id,
+                    'ulid' => $p->ulid,
                     'nomor' => $p->nomor_pengajuan ?? 'PA/' . $p->tahun . '/' . str_pad((string) $p->id, 3, '0', STR_PAD_LEFT),
                     'no_surat' => $p->no_surat,
                     // Samakan dengan halaman /pengajuan: tampilkan nama_pengajuan,

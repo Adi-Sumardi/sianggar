@@ -164,7 +164,7 @@ export default function PengajuanList() {
                             type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/pengajuan/${row.original.id}`);
+                                navigate(`/pengajuan/${row.original.ulid ?? row.original.id}`);
                             }}
                             className="rounded p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
                             title="Lihat detail"
@@ -178,7 +178,7 @@ export default function PengajuanList() {
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    navigate(`/pengajuan/${row.original.id}/revise`);
+                                    navigate(`/pengajuan/${row.original.ulid ?? row.original.id}/revise`);
                                 }}
                                 className="rounded p-1.5 text-orange-500 transition-colors hover:bg-orange-50 hover:text-orange-600"
                                 title="Revisi pengajuan"
@@ -194,7 +194,7 @@ export default function PengajuanList() {
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate(`/pengajuan/${row.original.id}/edit`);
+                                        navigate(`/pengajuan/${row.original.ulid ?? row.original.id}/edit`);
                                     }}
                                     className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
                                     title="Edit"
@@ -317,7 +317,7 @@ export default function PengajuanList() {
                         columns={columns}
                         data={pengajuanData}
                         searchValue={searchQuery}
-                        onRowClick={(row) => navigate(`/pengajuan/${row.id}`)}
+                        onRowClick={(row) => navigate(`/pengajuan/${row.ulid ?? row.id}`)}
                         emptyTitle="Belum ada pengajuan"
                         emptyDescription="Klik 'Buat Pengajuan' untuk membuat pengajuan anggaran baru."
                     />

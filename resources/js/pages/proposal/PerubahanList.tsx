@@ -119,7 +119,7 @@ export default function PerubahanList() {
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/pengajuan/${row.original.id}`);
+                            navigate(`/pengajuan/${row.original.ulid ?? row.original.id}`);
                         }}
                         className="rounded p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
                         title="Lihat detail pengajuan"
@@ -207,7 +207,7 @@ export default function PerubahanList() {
                         columns={columns}
                         data={filteredData}
                         searchValue={searchQuery}
-                        onRowClick={(row) => navigate(`/pengajuan/${row.id}`)}
+                        onRowClick={(row) => navigate(`/pengajuan/${row.ulid ?? row.id}`)}
                         emptyTitle="Belum ada perubahan anggaran"
                         emptyDescription="Belum ada pengajuan yang ditandai sebagai perubahan."
                         pagination={data?.meta ? {

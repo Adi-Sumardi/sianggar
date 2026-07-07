@@ -18,6 +18,7 @@ class PengajuanResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'ulid' => $this->ulid,
             'user_id' => $this->user_id,
             'unit_id' => $this->unit_id,
             'tahun_anggaran' => $this->tahun,
