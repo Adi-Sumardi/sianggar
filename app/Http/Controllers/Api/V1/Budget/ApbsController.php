@@ -66,12 +66,16 @@ class ApbsController extends Controller
         $unitIds = $apbsList->pluck('unit_id')->unique()->values();
         $tahuns = $apbsList->pluck('tahun')->unique()->values();
 
+        // Pakai anggaran_awal (bukan jumlah): anggaran_awal adalah kolom yang selalu
+        // disinkronkan ulang saat RAPBS disetujui (RapbsApprovalService::generateApbs),
+        // sedangkan jumlah/harga_satuan bisa basi jika detail dibuat sebelum RAPBS
+        // disetujui dengan nilai awal berbeda.
         $totals = DetailMataAnggaran::query()
             ->join('mata_anggarans', 'detail_mata_anggarans.mata_anggaran_id', '=', 'mata_anggarans.id')
             ->whereIn('mata_anggarans.unit_id', $unitIds)
             ->whereIn('mata_anggarans.tahun', $tahuns)
             ->groupBy('mata_anggarans.unit_id', 'mata_anggarans.tahun')
-            ->selectRaw('mata_anggarans.unit_id, mata_anggarans.tahun, SUM(detail_mata_anggarans.jumlah) as total')
+            ->selectRaw('mata_anggarans.unit_id, mata_anggarans.tahun, SUM(detail_mata_anggarans.anggaran_awal) as total')
             ->get()
             ->keyBy(fn ($row) => $row->unit_id.'|'.$row->tahun);
 

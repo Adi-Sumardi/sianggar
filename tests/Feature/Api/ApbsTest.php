@@ -137,6 +137,43 @@ describe('APBS API', function () {
 
             $response->assertNotFound();
         });
+
+        it('computes total_anggaran live from anggaran_awal, not stale jumlah (kasus PT YAPI Talent Academy)', function () {
+            // Reproduksi bug: detail_mata_anggarans.jumlah=0 (basi, blm disinkronkan
+            // ulang saat RAPBS disetujui), tapi anggaran_awal/balance sudah benar
+            // terisi (dipakai Saldo di form pengajuan). Total APBS harus ikut
+            // anggaran_awal, bukan jumlah — kalau tidak, tampil Rp 0 padahal salah.
+            $admin = User::factory()->admin()->create();
+            $admin->givePermissionTo('view-budget');
+
+            $unit = Unit::factory()->create();
+            $tahun = \App\Helpers\AcademicYear::current();
+
+            $apbs = Apbs::factory()->create([
+                'unit_id' => $unit->id,
+                'tahun' => $tahun,
+                'total_anggaran' => 0,
+                'total_realisasi' => 0,
+            ]);
+
+            $mataAnggaran = \App\Models\MataAnggaran::factory()->forUnit($unit)->forYear($tahun)->create();
+            \App\Models\DetailMataAnggaran::factory()
+                ->forMataAnggaran($mataAnggaran)
+                ->forYear($tahun)
+                ->create([
+                    'jumlah' => 0,
+                    'harga_satuan' => 0,
+                    'anggaran_awal' => 15_000_000,
+                    'balance' => 15_000_000,
+                ]);
+
+            $response = $this->actingAs($admin)
+                ->getJson("/api/v1/apbs/{$apbs->id}");
+
+            $response->assertOk();
+            expect((float) $response->json('data.total_anggaran'))->toBe(15000000.0)
+                ->and((float) $response->json('data.sisa_anggaran'))->toBe(15000000.0);
+        });
     });
 
     describe('POST /api/v1/apbs', function () {

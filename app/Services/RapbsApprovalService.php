@@ -248,11 +248,18 @@ class RapbsApprovalService
                 'sisa' => $rapbsItem->jumlah,
             ]);
 
-            // Update DetailMataAnggaran balance if linked
+            // Update DetailMataAnggaran balance if linked.
+            // Sinkronkan juga jumlah/harga_satuan/volume (bukan cuma anggaran_awal/
+            // balance) — halaman /budget/apbs & agregat mata anggaran membaca
+            // jumlah, sehingga kalau tidak disinkronkan, APBS bisa tampil Rp 0
+            // walau saldo (anggaran_awal) sebenarnya sudah terisi dari RAPBS.
             if ($rapbsItem->detail_mata_anggaran_id && $rapbsItem->detailMataAnggaran) {
                 $rapbsItem->detailMataAnggaran->update([
                     'anggaran_awal' => $rapbsItem->jumlah,
                     'balance' => $rapbsItem->jumlah,
+                    'jumlah' => $rapbsItem->jumlah,
+                    'harga_satuan' => $rapbsItem->harga_satuan,
+                    'volume' => $rapbsItem->volume,
                 ]);
             }
         }

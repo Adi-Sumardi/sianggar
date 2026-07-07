@@ -355,14 +355,15 @@ class DashboardController extends Controller
             ->first();
 
         // Total anggaran dihitung LIVE dari detail mata anggaran, konsisten dengan
-        // halaman /budget/apbs (ApbsController::applyLiveTotals). Nilai total_anggaran
-        // yang tersimpan di tabel apbs bisa basi/0 walau mata anggaran sudah diisi.
-        // Fallback ke nilai tersimpan hanya bila belum ada detail mata anggaran sama sekali.
+        // halaman /budget/apbs (ApbsController::applyLiveTotals). Pakai anggaran_awal
+        // (bukan jumlah) — kolom ini selalu disinkronkan ulang saat RAPBS disetujui,
+        // sedangkan jumlah bisa basi. Fallback ke nilai tersimpan hanya bila belum
+        // ada detail mata anggaran sama sekali.
         $liveTotal = (float) DetailMataAnggaran::query()
             ->join('mata_anggarans', 'detail_mata_anggarans.mata_anggaran_id', '=', 'mata_anggarans.id')
             ->where('mata_anggarans.unit_id', $unitId)
             ->where('mata_anggarans.tahun', $tahun)
-            ->sum('detail_mata_anggarans.jumlah');
+            ->sum('detail_mata_anggarans.anggaran_awal');
 
         $totalAnggaran = $liveTotal > 0 ? $liveTotal : (float) ($apbs?->total_anggaran ?? 0);
         $totalRealisasi = (float) ($apbs?->total_realisasi ?? 0);

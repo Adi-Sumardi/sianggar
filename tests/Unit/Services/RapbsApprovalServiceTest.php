@@ -267,6 +267,14 @@ describe('RapbsApprovalService', function () {
                 ->and((float) $dma1->balance)->toBe(30_000_000.00)
                 ->and((float) $dma2->anggaran_awal)->toBe(20_000_000.00)
                 ->and((float) $dma2->balance)->toBe(20_000_000.00);
+
+            // jumlah/harga_satuan HARUS ikut disinkronkan (bukan cuma anggaran_awal/
+            // balance) — kalau tidak, halaman /budget/apbs & dashboard unit yang
+            // membaca "jumlah" akan tampil Rp 0 walau saldo sebenarnya sudah terisi.
+            // dma1/dma2 dibuat dengan withBudget(0) (jumlah awal = 0) utk mereplikasi
+            // bug yang dilaporkan (PT YAPI Talent Academy).
+            expect((float) $dma1->jumlah)->toBe(30_000_000.00)
+                ->and((float) $dma2->jumlah)->toBe(20_000_000.00);
         });
 
         it('sets status to Approved then Active after final approval', function () {
