@@ -5,6 +5,7 @@ import { FileText, Printer, Eye, Search, Loader2 } from 'lucide-react';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { VoucherModal } from '@/components/common/VoucherModal';
 import { formatRupiah } from '@/lib/currency';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useVoucherHistory } from '@/hooks/useApprovals';
@@ -13,6 +14,7 @@ import type { PengajuanAnggaran } from '@/types/models';
 export default function VoucherHistory() {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
+    const [reprintTarget, setReprintTarget] = useState<PengajuanAnggaran | null>(null);
 
     const { data: vouchers = [], isLoading, isError, error } = useVoucherHistory();
 
@@ -29,7 +31,7 @@ export default function VoucherHistory() {
     });
 
     const handleReprintVoucher = (pengajuan: PengajuanAnggaran) => {
-        navigate(`/approvals/${pengajuan.ulid ?? pengajuan.id}`);
+        setReprintTarget(pengajuan);
     };
 
     // Loading state
@@ -184,6 +186,15 @@ export default function VoucherHistory() {
                     )}
                 </motion.div>
             </motion.div>
+
+            {reprintTarget && (
+                <VoucherModal
+                    pengajuan={reprintTarget}
+                    open={!!reprintTarget}
+                    onClose={() => setReprintTarget(null)}
+                    onPrint={() => setReprintTarget(null)}
+                />
+            )}
         </PageTransition>
     );
 }
