@@ -283,7 +283,7 @@ export default function ApprovalDetail() {
     // Get all messages from all discussions (including closed) for history
     const allDiscussionMessages = discussions.flatMap(d => d.messages || []);
 
-    const canApprove = pengajuan && ['submitted', 'approved-level-1', 'approved-level-2', 'final-approved', 'done'].includes(pengajuan.status_proses);
+    const canApprove = pengajuan && ['submitted', 'revised', 'approved-level-1', 'approved-level-2', 'final-approved', 'done'].includes(pengajuan.status_proses);
 
     // Check if user is Kasir at Kasir stage
     const isKasirStage = pengajuan?.current_approval_stage === ApprovalStage.Kasir;
