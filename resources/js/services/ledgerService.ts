@@ -33,6 +33,7 @@ export interface CreateAccountDTO {
     parent_id?: number | null;
     unit_id?: number | null;
     is_postable?: boolean;
+    aktif?: boolean;
     keterangan?: string | null;
 }
 

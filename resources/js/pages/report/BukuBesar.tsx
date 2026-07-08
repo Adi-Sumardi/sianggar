@@ -7,6 +7,7 @@ import {
     ScrollText,
     Plus,
     Trash2,
+    Pencil,
     Undo2,
     Wallet,
     Scale,
@@ -29,6 +30,7 @@ import { useUnitsList } from '@/hooks/useUnits';
 import {
     useAccounts,
     useCreateAccount,
+    useUpdateAccount,
     useDeleteAccount,
     useJournalEntries,
     useReverseJournalEntry,
@@ -125,26 +127,70 @@ export default function BukuBesar() {
 // Tab 1: Chart of Accounts
 // ---------------------------------------------------------------------------
 
+const EMPTY_ACCOUNT_FORM = { kode: '', nama: '', tipe: 'beban', saldo_normal: 'debit', is_postable: true, aktif: true };
+
 function ChartOfAccountsTab({ canManage }: { canManage: boolean }) {
     const { data, isLoading } = useAccounts();
     const createMutation = useCreateAccount();
+    const updateMutation = useUpdateAccount();
     const deleteMutation = useDeleteAccount();
     const [showForm, setShowForm] = useState(false);
+    const [editTarget, setEditTarget] = useState<Account | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
-    const [form, setForm] = useState({ kode: '', nama: '', tipe: 'beban', saldo_normal: 'debit' });
+    const [form, setForm] = useState(EMPTY_ACCOUNT_FORM);
 
     const accounts = data?.data ?? [];
+    const isEditing = editTarget !== null;
 
-    const handleCreate = () => {
+    const openCreateForm = () => {
+        setEditTarget(null);
+        setForm(EMPTY_ACCOUNT_FORM);
+        setShowForm((s) => !s);
+    };
+
+    const openEditForm = (account: Account) => {
+        setEditTarget(account);
+        setForm({
+            kode: account.kode,
+            nama: account.nama,
+            tipe: account.tipe,
+            saldo_normal: account.saldo_normal,
+            is_postable: account.is_postable,
+            aktif: account.aktif,
+        });
+        setShowForm(true);
+    };
+
+    const closeForm = () => {
+        setShowForm(false);
+        setEditTarget(null);
+        setForm(EMPTY_ACCOUNT_FORM);
+    };
+
+    const handleSave = () => {
         if (!form.kode || !form.nama) {
             toast.error('Kode dan nama akun wajib diisi');
             return;
         }
+
+        if (isEditing && editTarget) {
+            updateMutation.mutate(
+                { id: editTarget.id, dto: form },
+                {
+                    onSuccess: () => {
+                        toast.success('Akun berhasil diperbarui');
+                        closeForm();
+                    },
+                    onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal memperbarui akun'),
+                },
+            );
+            return;
+        }
+
         createMutation.mutate(form, {
             onSuccess: () => {
                 toast.success('Akun berhasil dibuat');
-                setShowForm(false);
-                setForm({ kode: '', nama: '', tipe: 'beban', saldo_normal: 'debit' });
+                closeForm();
             },
             onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal membuat akun'),
         });
@@ -194,13 +240,22 @@ function ChartOfAccountsTab({ canManage }: { canManage: boolean }) {
                           id: 'actions',
                           header: 'Aksi',
                           cell: ({ row }: { row: { original: Account } }) => (
-                              <button
-                                  onClick={() => setDeleteTarget(row.original)}
-                                  className="rounded p-1.5 text-red-500 hover:bg-red-50"
-                                  title="Hapus akun"
-                              >
-                                  <Trash2 className="h-4 w-4" />
-                              </button>
+                              <div className="flex items-center gap-1">
+                                  <button
+                                      onClick={() => openEditForm(row.original)}
+                                      className="rounded p-1.5 text-blue-500 hover:bg-blue-50"
+                                      title="Edit akun"
+                                  >
+                                      <Pencil className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                      onClick={() => setDeleteTarget(row.original)}
+                                      className="rounded p-1.5 text-red-500 hover:bg-red-50"
+                                      title="Hapus akun"
+                                  >
+                                      <Trash2 className="h-4 w-4" />
+                                  </button>
+                              </div>
                           ),
                       } as ColumnDef<Account>,
                   ]
@@ -214,7 +269,7 @@ function ChartOfAccountsTab({ canManage }: { canManage: boolean }) {
             {canManage && (
                 <div className="flex justify-end">
                     <button
-                        onClick={() => setShowForm((s) => !s)}
+                        onClick={openCreateForm}
                         className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
                         <Plus className="h-4 w-4" /> Tambah Akun
@@ -224,6 +279,14 @@ function ChartOfAccountsTab({ canManage }: { canManage: boolean }) {
 
             {showForm && (
                 <div className="rounded-lg border border-slate-200 bg-white p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h4 className="text-sm font-semibold text-slate-700">
+                            {isEditing ? `Edit Akun — ${editTarget?.kode}` : 'Tambah Akun'}
+                        </h4>
+                        <button onClick={closeForm} className="rounded p-1 text-slate-400 hover:bg-slate-100">
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-4">
                         <input
                             placeholder="Kode"
@@ -256,9 +319,27 @@ function ChartOfAccountsTab({ canManage }: { canManage: boolean }) {
                             <option value="debit">Debit</option>
                             <option value="kredit">Kredit</option>
                         </select>
+                        <label className="flex items-center gap-2 text-sm text-slate-600">
+                            <input
+                                type="checkbox"
+                                checked={form.is_postable}
+                                onChange={(e) => setForm((f) => ({ ...f, is_postable: e.target.checked }))}
+                            />
+                            Postable (bisa dipakai transaksi)
+                        </label>
+                        {isEditing && (
+                            <label className="flex items-center gap-2 text-sm text-slate-600">
+                                <input
+                                    type="checkbox"
+                                    checked={form.aktif}
+                                    onChange={(e) => setForm((f) => ({ ...f, aktif: e.target.checked }))}
+                                />
+                                Aktif
+                            </label>
+                        )}
                         <button
-                            onClick={handleCreate}
-                            disabled={createMutation.isPending}
+                            onClick={handleSave}
+                            disabled={createMutation.isPending || updateMutation.isPending}
                             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                         >
                             Simpan
