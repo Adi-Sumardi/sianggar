@@ -60,4 +60,14 @@ class Unit extends Model
     {
         return $this->hasMany(DetailMataAnggaran::class);
     }
+
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class);
+    }
+
+    public function journalEntries(): HasMany
+    {
+        return $this->hasMany(JournalEntry::class);
+    }
 }

@@ -7,15 +7,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Penerimaan extends Model
+class Account extends Model
 {
     use HasFactory;
-
-    /**
-     * The table associated with the model.
-     */
-    protected $table = 'penerimaans';
 
     /**
      * The attributes that are mass assignable.
@@ -23,11 +19,14 @@ class Penerimaan extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'kode',
+        'nama',
+        'tipe',
+        'saldo_normal',
+        'parent_id',
         'unit_id',
-        'tahun',
-        'bulan',
-        'sumber',
-        'jumlah',
+        'is_postable',
+        'aktif',
         'keterangan',
     ];
 
@@ -39,7 +38,8 @@ class Penerimaan extends Model
     protected function casts(): array
     {
         return [
-            'jumlah' => 'decimal:2',
+            'is_postable' => 'boolean',
+            'aktif' => 'boolean',
         ];
     }
 
@@ -47,21 +47,23 @@ class Penerimaan extends Model
     // Relationships
     // -------------------------------------------------------------------------
 
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Account::class, 'parent_id');
+    }
+
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
-    // -------------------------------------------------------------------------
-    // Sync hooks
-    // -------------------------------------------------------------------------
-
-    protected static function booted(): void
+    public function journalItems(): HasMany
     {
-        // Penerimaan tidak melalui alur approval, jadi langsung diposting ke
-        // buku besar saat dibuat (Debit Dana Unit / Kredit Pendapatan).
-        static::created(function (Penerimaan $penerimaan) {
-            app(\App\Services\LedgerService::class)->postFromPenerimaan($penerimaan);
-        });
+        return $this->hasMany(JournalItem::class);
     }
 }

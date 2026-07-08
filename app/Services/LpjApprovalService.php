@@ -9,6 +9,7 @@ use App\Enums\LpjApprovalStage;
 use App\Enums\LpjStatus;
 use App\Enums\ReferenceType;
 use App\Enums\UserRole;
+use App\Events\LpjApproved;
 use App\Models\ActivityLog;
 use App\Models\Approval;
 use App\Models\Lpj;
@@ -309,6 +310,9 @@ class LpjApprovalService
 
             // Notify the creator that LPJ is fully approved
             $this->notifyCreatorOfApproval($lpj, $approver, isFinal: true);
+
+            // Post realized expense to the general ledger (Debit Beban / Kredit Dana Unit)
+            LpjApproved::dispatch($lpj, $currentApproval);
         }
 
         return $currentApproval->fresh();

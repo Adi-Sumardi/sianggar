@@ -65,6 +65,7 @@ const LpjDetail = lazy(() => import('@/pages/report/LpjDetail'));
 const LaporanPengajuan = lazy(() => import('@/pages/report/LaporanPengajuan'));
 const LaporanSemester = lazy(() => import('@/pages/report/LaporanSemester'));
 const LaporanAccounting = lazy(() => import('@/pages/report/LaporanAccounting'));
+const BukuBesar = lazy(() => import('@/pages/report/BukuBesar'));
 
 // Planning
 const StrategyList = lazy(() => import('@/pages/planning/StrategyList'));
@@ -409,6 +410,14 @@ export function AppRouter() {
                         element={
                             <PermissionGuard permissions={[Permission.VIEW_REPORTS]}>
                                 <LaporanAccounting />
+                            </PermissionGuard>
+                        }
+                    />
+                    <Route
+                        path="laporan/buku-besar"
+                        element={
+                            <PermissionGuard permissions={[Permission.VIEW_REPORTS]}>
+                                <BukuBesar />
                             </PermissionGuard>
                         }
                     />

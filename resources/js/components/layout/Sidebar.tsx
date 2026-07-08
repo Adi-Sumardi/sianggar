@@ -15,6 +15,7 @@ import {
     BarChart3,
     Calendar,
     Calculator,
+    BookOpen,
     Target,
     Gauge,
     Briefcase,
@@ -99,6 +100,7 @@ const navigationGroups: NavGroup[] = [
             { label: 'Laporan Pengajuan', to: '/laporan/pengajuan', icon: BarChart3 },
             { label: 'Laporan Semester', to: '/laporan/semester', icon: Calendar },
             { label: 'Laporan Akuntansi', to: '/laporan/accounting', icon: Calculator },
+            { label: 'Buku Besar', to: '/laporan/buku-besar', icon: BookOpen },
         ],
     },
     {

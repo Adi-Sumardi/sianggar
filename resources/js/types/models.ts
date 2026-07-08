@@ -1042,3 +1042,85 @@ export interface RevisionThreadAllRoundsData {
     is_in_revision: boolean;
     can_comment: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// Buku Besar (General Ledger)
+// ---------------------------------------------------------------------------
+
+export type AccountTipe = 'aset' | 'kewajiban' | 'ekuitas' | 'pendapatan' | 'beban';
+export type SaldoNormal = 'debit' | 'kredit';
+export type JournalEntryStatusValue = 'draft' | 'posted' | 'reversed';
+
+export interface Account {
+    id: number;
+    kode: string;
+    nama: string;
+    tipe: AccountTipe;
+    saldo_normal: SaldoNormal;
+    parent_id: number | null;
+    unit_id: number | null;
+    unit?: Unit;
+    is_postable: boolean;
+    aktif: boolean;
+    keterangan: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Journal {
+    id: number;
+    kode: string;
+    nama: string;
+    tipe: string;
+}
+
+export interface JournalItem {
+    id: number;
+    journal_entry_id: number;
+    account_id: number;
+    account?: Account;
+    unit_id: number;
+    debit: number;
+    kredit: number;
+    keterangan: string | null;
+}
+
+export interface JournalEntry {
+    id: number;
+    ulid: string;
+    tanggal: string;
+    no_bukti: string | null;
+    journal_id: number;
+    journal?: Journal;
+    unit_id: number;
+    unit?: Unit;
+    sumber_type: string | null;
+    sumber_id: number | null;
+    status: JournalEntryStatusValue;
+    status_label: string;
+    keterangan: string | null;
+    reversal_of_id: number | null;
+    posted_at: string | null;
+    total_debit?: number;
+    total_kredit?: number;
+    items?: JournalItem[];
+    created_at: string;
+}
+
+export interface GeneralLedgerMutation {
+    tanggal: string;
+    no_bukti: string | null;
+    keterangan: string | null;
+    debit: number;
+    kredit: number;
+    saldo: number;
+}
+
+export interface GeneralLedgerReport {
+    account: Account;
+    unit: { id: number; nama: string } | null;
+    tahun: string;
+    saldo_awal: number;
+    mutasi: GeneralLedgerMutation[];
+    saldo_akhir: number;
+}

@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\Proposal\PerubahanController;
 use App\Http\Controllers\Api\V1\Proposal\RevisionCommentController;
 use App\Http\Controllers\Api\V1\Report\AccountingController;
 use App\Http\Controllers\Api\V1\Report\LaporanController;
+use App\Http\Controllers\Api\V1\Report\LedgerController;
 use App\Http\Controllers\Api\V1\Report\LpjController;
 use Illuminate\Support\Facades\Route;
 
@@ -157,6 +158,13 @@ Route::prefix('v1')->group(function () {
             // COA Export
             Route::get('coa/export/excel', [AccountingController::class, 'exportCoaExcel']);
             Route::get('coa/export/pdf', [AccountingController::class, 'exportCoaPdf']);
+
+            // Buku Besar (General Ledger) - read
+            Route::get('ledger/accounts', [LedgerController::class, 'accounts']);
+            Route::get('ledger/journals', [LedgerController::class, 'journals']);
+            Route::get('ledger/journal-entries', [LedgerController::class, 'journalEntries']);
+            Route::get('ledger/journal-entries/{journalEntry}', [LedgerController::class, 'showJournalEntry']);
+            Route::get('ledger/general-ledger', [LedgerController::class, 'generalLedger']);
         });
 
         Route::middleware('permission:manage-budget')->group(function () {
@@ -197,6 +205,12 @@ Route::prefix('v1')->group(function () {
             Route::post('coa/realisasi', [AccountingController::class, 'storeRealisasi']);
             Route::put('coa/realisasi/{realisasi}', [AccountingController::class, 'updateRealisasi']);
             Route::delete('coa/realisasi/{realisasi}', [AccountingController::class, 'destroyRealisasi']);
+
+            // Buku Besar (General Ledger) - manage Chart of Accounts & reversal
+            Route::post('ledger/accounts', [LedgerController::class, 'storeAccount']);
+            Route::put('ledger/accounts/{account}', [LedgerController::class, 'updateAccount']);
+            Route::delete('ledger/accounts/{account}', [LedgerController::class, 'destroyAccount']);
+            Route::post('ledger/journal-entries/{journalEntry}/reverse', [LedgerController::class, 'reverseJournalEntry']);
         });
 
         // ---------------------------------------------------------------------
