@@ -17,6 +17,7 @@ use App\Services\LedgerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class LedgerController extends Controller
@@ -134,7 +135,8 @@ class LedgerController extends Controller
         }
 
         if ($request->filled('tahun')) {
-            $query->whereYear('tanggal', $request->query('tahun'));
+            [$startDate, $endDate] = $this->ledgerService->tanggalRangeForTahun((string) $request->query('tahun'));
+            $query->whereBetween('tanggal', [$startDate, $endDate]);
         }
 
         $perPage = (int) $request->query('per_page', '20');
@@ -198,10 +200,12 @@ class LedgerController extends Controller
             'tahun' => ['required', 'string', 'max:10'],
         ]);
 
-        $account = Account::findOrFail($validated['account_id']);
-        $unit = isset($validated['unit_id']) ? Unit::find($validated['unit_id']) : $account->unit;
+        $unitId = isset($validated['unit_id']) ? (int) $validated['unit_id'] : null;
 
-        $result = $this->ledgerService->getAccountMutations($account, $validated['unit_id'] ?? null, $validated['tahun']);
+        $account = Account::findOrFail($validated['account_id']);
+        $unit = $unitId !== null ? Unit::find($unitId) : $account->unit;
+
+        $result = $this->ledgerService->getAccountMutations($account, $unitId, $validated['tahun']);
 
         return response()->json([
             'account' => new AccountResource($account),
@@ -248,7 +252,11 @@ class LedgerController extends Controller
             'tahun' => ['required', 'string', 'max:10'],
         ]);
 
-        $rows = $this->ledgerService->getTrialBalance($validated['unit_id'] ?? null, $validated['tahun']);
+        try {
+            $rows = $this->ledgerService->getTrialBalance(isset($validated['unit_id']) ? (int) $validated['unit_id'] : null, $validated['tahun']);
+        } catch (\Throwable $e) {
+            return $this->reportError('trial-balance', $validated, $e);
+        }
 
         return response()->json([
             'tahun' => $validated['tahun'],
@@ -272,7 +280,11 @@ class LedgerController extends Controller
             'tahun' => ['required', 'string', 'max:10'],
         ]);
 
-        $result = $this->ledgerService->getIncomeStatement($validated['unit_id'] ?? null, $validated['tahun']);
+        try {
+            $result = $this->ledgerService->getIncomeStatement(isset($validated['unit_id']) ? (int) $validated['unit_id'] : null, $validated['tahun']);
+        } catch (\Throwable $e) {
+            return $this->reportError('income-statement', $validated, $e);
+        }
 
         return response()->json([
             'tahun' => $result['tahun'],
@@ -294,7 +306,11 @@ class LedgerController extends Controller
             'tahun' => ['required', 'string', 'max:10'],
         ]);
 
-        $result = $this->ledgerService->getBalanceSheet($validated['unit_id'] ?? null, $validated['tahun']);
+        try {
+            $result = $this->ledgerService->getBalanceSheet(isset($validated['unit_id']) ? (int) $validated['unit_id'] : null, $validated['tahun']);
+        } catch (\Throwable $e) {
+            return $this->reportError('balance-sheet', $validated, $e);
+        }
 
         $mapRows = fn (array $rows) => array_map(fn ($row) => [
             'account' => new AccountResource($row['account']),
@@ -349,5 +365,25 @@ class LedgerController extends Controller
             'message' => 'Jurnal manual berhasil dibuat.',
             'data' => new JournalEntryResource($entry),
         ], 201);
+    }
+
+    /**
+     * Log laporan buku besar yang gagal dengan konteks lengkap (endpoint,
+     * parameter request, pesan & lokasi exception), lalu kembalikan 500
+     * dengan pesan singkat di response — supaya bisa didiagnosis langsung
+     * dari Network tab tanpa perlu akses ke storage/logs/laravel.log server.
+     */
+    private function reportError(string $endpoint, array $params, \Throwable $e): JsonResponse
+    {
+        Log::error("Ledger report [{$endpoint}] gagal", [
+            'params' => $params,
+            'exception' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+
+        return response()->json([
+            'message' => "Gagal memuat laporan {$endpoint}: " . $e->getMessage(),
+        ], 500);
     }
 }

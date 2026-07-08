@@ -149,5 +149,27 @@ describe('Ledger API', function () {
             $response->assertOk();
             expect($response->json('rows'))->not->toBeEmpty();
         });
+
+        it('accepts academic-year format with a unit filter, for a unit without a pre-seeded Dana account', function () {
+            // Regresi: sebelumnya whereYear('tanggal', '2026/2027') dipanggil
+            // langsung dengan string tahun akademik (bukan tahun kalender),
+            // dan unit yang belum punya baris akun Dana Unit tidak
+            // di-provision otomatis di trial-balance/income-statement/
+            // balance-sheet (beda dengan unit-ledger yang self-healing).
+            $user = User::factory()->admin()->create();
+            $user->givePermissionTo('view-budget');
+
+            $unit = Unit::factory()->create();
+            Account::create(['kode' => '5960', 'nama' => 'Beban Trial 2', 'tipe' => 'beban', 'saldo_normal' => 'debit']);
+
+            foreach (['trial-balance', 'income-statement', 'balance-sheet'] as $endpoint) {
+                $response = $this->actingAs($user)
+                    ->getJson("/api/v1/ledger/{$endpoint}?unit_id={$unit->id}&tahun=2026/2027");
+
+                $response->assertOk();
+            }
+
+            expect(Account::where('unit_id', $unit->id)->exists())->toBeTrue();
+        });
     });
 });

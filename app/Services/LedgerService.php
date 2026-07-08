@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\AccountType;
 use App\Enums\JournalEntryStatus;
 use App\Enums\NormalBalance;
+use App\Helpers\AcademicYear;
 use App\Models\Account;
 use App\Models\ActivityLog;
 use App\Models\DetailMataAnggaran;
@@ -336,12 +337,14 @@ class LedgerService
             $saldoAwal = $this->getUnitDanaOpeningBalance($account->unit, $tahun);
         }
 
+        [$startDate, $endDate] = $this->tanggalRangeForTahun($tahun);
+
         $itemsQuery = JournalItem::query()
             ->with(['journalEntry'])
             ->where('account_id', $account->id)
-            ->whereHas('journalEntry', function ($q) use ($tahun) {
+            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
                 $q->where('status', JournalEntryStatus::Posted->value)
-                    ->whereYear('tanggal', $tahun);
+                    ->whereBetween('tanggal', [$startDate, $endDate]);
             });
 
         if ($unitId !== null) {
@@ -391,6 +394,8 @@ class LedgerService
      */
     public function getTrialBalance(?int $unitId, string $tahun): array
     {
+        $this->ensureUnitDanaAccountExists($unitId);
+
         $query = Account::where('is_postable', true)->where('aktif', true);
 
         if ($unitId !== null) {
@@ -423,6 +428,8 @@ class LedgerService
      */
     public function getIncomeStatement(?int $unitId, string $tahun): array
     {
+        $this->ensureUnitDanaAccountExists($unitId);
+
         $mapAccount = function (Account $account) use ($unitId, $tahun) {
             $result = $this->getAccountMutations($account, $unitId, $tahun);
             $totalDebit = array_sum(array_column($result['mutasi'], 'debit'));
@@ -466,6 +473,8 @@ class LedgerService
      */
     public function getBalanceSheet(?int $unitId, string $tahun): array
     {
+        $this->ensureUnitDanaAccountExists($unitId);
+
         $mapAccount = function (Account $account) use ($unitId, $tahun) {
             $result = $this->getAccountMutations($account, $unitId, $tahun);
 
@@ -501,6 +510,46 @@ class LedgerService
             'total_ekuitas' => $totalEkuitas,
             'total_kewajiban_dan_ekuitas' => $totalKewajiban + $totalEkuitas,
         ];
+    }
+
+    /**
+     * Konversi `$tahun` jadi rentang tanggal untuk filter kolom `tanggal`
+     * (bukan `whereYear`, karena `$tahun` bisa berupa tahun akademik
+     * "2025/2026" yang membentang Juli–Juni dua tahun kalender berbeda —
+     * meneruskan string itu langsung ke whereYear() tidak valid).
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function tanggalRangeForTahun(string $tahun): array
+    {
+        if (AcademicYear::isValid($tahun)) {
+            $start = AcademicYear::startYear($tahun);
+            $end = AcademicYear::endYear($tahun);
+
+            return ["{$start}-07-01", "{$end}-06-30"];
+        }
+
+        $year = (int) $tahun;
+
+        return ["{$year}-01-01", "{$year}-12-31"];
+    }
+
+    /**
+     * Pastikan akun Dana Unit untuk $unitId sudah ada sebelum query
+     * Neraca Saldo/Laba Rugi/Neraca — unit yang dibuat setelah
+     * AccountSeeder dijalankan belum tentu punya baris akun ini.
+     */
+    private function ensureUnitDanaAccountExists(?int $unitId): void
+    {
+        if ($unitId === null) {
+            return;
+        }
+
+        $unit = Unit::find($unitId);
+
+        if ($unit) {
+            $this->getOrCreateUnitDanaAccount($unit);
+        }
     }
 
     private function getAccountForJenis(?string $jenis): ?Account
