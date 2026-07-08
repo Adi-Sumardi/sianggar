@@ -73,7 +73,7 @@ const navigationGroups: NavGroup[] = [
             { label: 'Mata Anggaran', to: '/budget/mata-anggaran', icon: Wallet },
             { label: 'APBS', to: '/budget/apbs', icon: FileSpreadsheet },
             { label: 'RAPBS', to: '/budget/rapbs', icon: FileBarChart },
-            { label: 'COA', to: '/budget/coa', icon: ListTree },
+            { label: 'Perencanaan Anggaran', to: '/budget/coa', icon: ListTree },
         ],
     },
     {

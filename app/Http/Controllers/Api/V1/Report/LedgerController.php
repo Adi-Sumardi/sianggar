@@ -201,55 +201,153 @@ class LedgerController extends Controller
         $account = Account::findOrFail($validated['account_id']);
         $unit = isset($validated['unit_id']) ? Unit::find($validated['unit_id']) : $account->unit;
 
-        $saldoAwal = 0.0;
-        if ($account->unit_id !== null && $unit) {
-            $saldoAwal = $this->ledgerService->getUnitDanaOpeningBalance($unit, $validated['tahun']);
-        }
-
-        $itemsQuery = JournalItem::query()
-            ->with(['journalEntry'])
-            ->where('account_id', $account->id)
-            ->whereHas('journalEntry', function ($q) use ($validated) {
-                $q->where('status', \App\Enums\JournalEntryStatus::Posted->value)
-                    ->whereYear('tanggal', $validated['tahun']);
-            });
-
-        if (isset($validated['unit_id'])) {
-            $itemsQuery->where('unit_id', $validated['unit_id']);
-        }
-
-        $items = $itemsQuery->get()->sortBy(fn ($item) => $item->journalEntry->tanggal)->values();
-
-        $runningBalance = $saldoAwal;
-        $normalBalance = $account->saldo_normal;
-
-        $mutations = $items->map(function (JournalItem $item) use (&$runningBalance, $normalBalance) {
-            $delta = $normalBalance === 'debit'
-                ? ((float) $item->debit - (float) $item->kredit)
-                : ((float) $item->kredit - (float) $item->debit);
-
-            $runningBalance += $delta;
-
-            return [
-                'tanggal' => $item->journalEntry->tanggal->toDateString(),
-                'no_bukti' => $item->journalEntry->no_bukti,
-                'keterangan' => $item->keterangan ?? $item->journalEntry->keterangan,
-                'debit' => (float) $item->debit,
-                'kredit' => (float) $item->kredit,
-                'saldo' => $runningBalance,
-            ];
-        });
+        $result = $this->ledgerService->getAccountMutations($account, $validated['unit_id'] ?? null, $validated['tahun']);
 
         return response()->json([
             'account' => new AccountResource($account),
-            'unit' => $unit ? [
-                'id' => $unit->id,
-                'nama' => $unit->nama,
-            ] : null,
+            'unit' => $unit ? ['id' => $unit->id, 'nama' => $unit->nama] : null,
             'tahun' => $validated['tahun'],
-            'saldo_awal' => $saldoAwal,
-            'mutasi' => $mutations,
-            'saldo_akhir' => $runningBalance,
+            'saldo_awal' => $result['saldo_awal'],
+            'mutasi' => $result['mutasi'],
+            'saldo_akhir' => $result['saldo_akhir'],
         ]);
+    }
+
+    /**
+     * Rekening Unit: ringkasan saldo Dana Unit sebuah unit (saldo awal dari
+     * APBS, mutasi kronologis, saldo akhir) — dashboard per unit.
+     */
+    public function unitLedger(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'unit_id' => ['required', 'integer', Rule::exists('units', 'id')],
+            'tahun' => ['required', 'string', 'max:10'],
+        ]);
+
+        $unit = Unit::findOrFail($validated['unit_id']);
+        $account = $this->ledgerService->getOrCreateUnitDanaAccount($unit);
+        $result = $this->ledgerService->getAccountMutations($account, $unit->id, $validated['tahun']);
+
+        return response()->json([
+            'unit' => ['id' => $unit->id, 'nama' => $unit->nama],
+            'account' => new AccountResource($account),
+            'tahun' => $validated['tahun'],
+            'saldo_awal' => $result['saldo_awal'],
+            'mutasi' => $result['mutasi'],
+            'saldo_akhir' => $result['saldo_akhir'],
+        ]);
+    }
+
+    /**
+     * Neraca Saldo (Trial Balance).
+     */
+    public function trialBalance(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'unit_id' => ['nullable', 'integer', Rule::exists('units', 'id')],
+            'tahun' => ['required', 'string', 'max:10'],
+        ]);
+
+        $rows = $this->ledgerService->getTrialBalance($validated['unit_id'] ?? null, $validated['tahun']);
+
+        return response()->json([
+            'tahun' => $validated['tahun'],
+            'rows' => array_map(fn ($row) => [
+                'account' => new AccountResource($row['account']),
+                'saldo_awal' => $row['saldo_awal'],
+                'total_debit' => $row['total_debit'],
+                'total_kredit' => $row['total_kredit'],
+                'saldo_akhir' => $row['saldo_akhir'],
+            ], $rows),
+        ]);
+    }
+
+    /**
+     * Laporan Laba Rugi (Income Statement).
+     */
+    public function incomeStatement(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'unit_id' => ['nullable', 'integer', Rule::exists('units', 'id')],
+            'tahun' => ['required', 'string', 'max:10'],
+        ]);
+
+        $result = $this->ledgerService->getIncomeStatement($validated['unit_id'] ?? null, $validated['tahun']);
+
+        return response()->json([
+            'tahun' => $result['tahun'],
+            'pendapatan' => array_map(fn ($row) => ['account' => new AccountResource($row['account']), 'jumlah' => $row['jumlah']], $result['pendapatan']),
+            'beban' => array_map(fn ($row) => ['account' => new AccountResource($row['account']), 'jumlah' => $row['jumlah']], $result['beban']),
+            'total_pendapatan' => $result['total_pendapatan'],
+            'total_beban' => $result['total_beban'],
+            'laba_rugi' => $result['laba_rugi'],
+        ]);
+    }
+
+    /**
+     * Neraca (Balance Sheet).
+     */
+    public function balanceSheet(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'unit_id' => ['nullable', 'integer', Rule::exists('units', 'id')],
+            'tahun' => ['required', 'string', 'max:10'],
+        ]);
+
+        $result = $this->ledgerService->getBalanceSheet($validated['unit_id'] ?? null, $validated['tahun']);
+
+        $mapRows = fn (array $rows) => array_map(fn ($row) => [
+            'account' => new AccountResource($row['account']),
+            'saldo' => $row['saldo'],
+        ], $rows);
+
+        return response()->json([
+            'tahun' => $result['tahun'],
+            'aset' => $mapRows($result['aset']),
+            'kewajiban' => $mapRows($result['kewajiban']),
+            'ekuitas' => $mapRows($result['ekuitas']),
+            'laba_rugi_tahun_berjalan' => $result['laba_rugi_tahun_berjalan'],
+            'total_aset' => $result['total_aset'],
+            'total_kewajiban' => $result['total_kewajiban'],
+            'total_ekuitas' => $result['total_ekuitas'],
+            'total_kewajiban_dan_ekuitas' => $result['total_kewajiban_dan_ekuitas'],
+        ]);
+    }
+
+    /**
+     * Buat jurnal manual (penyesuaian) — minimal 2 baris, harus balance.
+     */
+    public function storeManualEntry(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'tanggal' => ['required', 'date'],
+            'unit_id' => ['required', 'integer', Rule::exists('units', 'id')],
+            'keterangan' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:2'],
+            'items.*.account_id' => ['required', 'integer', Rule::exists('accounts', 'id')],
+            'items.*.unit_id' => ['required', 'integer', Rule::exists('units', 'id')],
+            'items.*.debit' => ['required', 'numeric', 'min:0'],
+            'items.*.kredit' => ['required', 'numeric', 'min:0'],
+            'items.*.keterangan' => ['nullable', 'string'],
+        ]);
+
+        try {
+            $entry = $this->ledgerService->createManualEntry(
+                $validated['tanggal'],
+                $validated['unit_id'],
+                $validated['items'],
+                $validated['keterangan'] ?? null,
+                $request->user(),
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        $entry->load(['journal', 'unit', 'items.account']);
+
+        return response()->json([
+            'message' => 'Jurnal manual berhasil dibuat.',
+            'data' => new JournalEntryResource($entry),
+        ], 201);
     }
 }

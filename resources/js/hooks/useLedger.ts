@@ -6,6 +6,9 @@ import type {
     UpdateAccountDTO,
     JournalEntryFilterParams,
     GeneralLedgerParams,
+    UnitLedgerParams,
+    TrialBalanceParams,
+    CreateManualEntryDTO,
 } from '@/services/ledgerService';
 
 // =============================================================================
@@ -91,6 +94,19 @@ export function useReverseJournalEntry() {
     });
 }
 
+export function useCreateManualEntry() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (dto: CreateManualEntryDTO) => ledgerService.createManualEntry(dto),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+            queryClient.invalidateQueries({ queryKey: ['general-ledger'] });
+            queryClient.invalidateQueries({ queryKey: ['unit-ledger'] });
+            queryClient.invalidateQueries({ queryKey: ['trial-balance'] });
+        },
+    });
+}
+
 // =============================================================================
 // General Ledger (Buku Besar) report hook
 // =============================================================================
@@ -99,6 +115,46 @@ export function useGeneralLedger(params: GeneralLedgerParams | null) {
     return useQuery({
         queryKey: ['general-ledger', params],
         queryFn: () => ledgerService.getGeneralLedger(params!),
+        enabled: params !== null,
+    });
+}
+
+// =============================================================================
+// Rekening Unit hook
+// =============================================================================
+
+export function useUnitLedger(params: UnitLedgerParams | null) {
+    return useQuery({
+        queryKey: ['unit-ledger', params],
+        queryFn: () => ledgerService.getUnitLedger(params!),
+        enabled: params !== null,
+    });
+}
+
+// =============================================================================
+// Neraca Saldo / Laba Rugi / Neraca hooks
+// =============================================================================
+
+export function useTrialBalance(params: TrialBalanceParams | null) {
+    return useQuery({
+        queryKey: ['trial-balance', params],
+        queryFn: () => ledgerService.getTrialBalance(params!),
+        enabled: params !== null,
+    });
+}
+
+export function useIncomeStatement(params: TrialBalanceParams | null) {
+    return useQuery({
+        queryKey: ['income-statement', params],
+        queryFn: () => ledgerService.getIncomeStatement(params!),
+        enabled: params !== null,
+    });
+}
+
+export function useBalanceSheet(params: TrialBalanceParams | null) {
+    return useQuery({
+        queryKey: ['balance-sheet', params],
+        queryFn: () => ledgerService.getBalanceSheet(params!),
         enabled: params !== null,
     });
 }

@@ -82,8 +82,8 @@ export default function CoaList() {
                 {/* Header */}
                 <motion.div variants={staggerItem}>
                     <PageHeader
-                        title="Chart of Accounts"
-                        description="Kelola kode akun, penerimaan, realisasi, dan perubahan anggaran."
+                        title="Perencanaan Anggaran"
+                        description="Kelola Mata Anggaran per unit, penerimaan, realisasi, dan perubahan anggaran. Untuk akun akuntansi (debit/kredit) & jurnal, lihat menu Buku Besar."
                     />
                 </motion.div>
 
@@ -464,7 +464,7 @@ function PerUnitTab({ onDelete, onAdd }: { onDelete?: (item: { id: number; label
                             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
                         >
                             <Plus className="h-4 w-4" />
-                            Tambah COA
+                            Tambah Mata Anggaran
                         </button>
                     )}
                 </div>

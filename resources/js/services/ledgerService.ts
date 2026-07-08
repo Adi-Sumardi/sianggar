@@ -4,6 +4,10 @@ import type {
     Journal,
     JournalEntry,
     GeneralLedgerReport,
+    UnitLedgerReport,
+    TrialBalanceReport,
+    IncomeStatementReport,
+    BalanceSheetReport,
 } from '@/types/models';
 import type { ApiResponse, PaginatedResponse } from '@/types/api';
 
@@ -87,6 +91,26 @@ export async function reverseJournalEntry(id: number | string, notes?: string): 
     return data.data;
 }
 
+export interface ManualEntryItemDTO {
+    account_id: number;
+    unit_id: number;
+    debit: number;
+    kredit: number;
+    keterangan?: string;
+}
+
+export interface CreateManualEntryDTO {
+    tanggal: string;
+    unit_id: number;
+    keterangan?: string;
+    items: ManualEntryItemDTO[];
+}
+
+export async function createManualEntry(dto: CreateManualEntryDTO): Promise<JournalEntry> {
+    const { data } = await api.post<ApiResponse<JournalEntry>>('/ledger/journal-entries', dto);
+    return data.data;
+}
+
 // =============================================================================
 // General Ledger (Buku Besar) Report
 // =============================================================================
@@ -99,5 +123,51 @@ export interface GeneralLedgerParams {
 
 export async function getGeneralLedger(params: GeneralLedgerParams): Promise<GeneralLedgerReport> {
     const { data } = await api.get<GeneralLedgerReport>('/ledger/general-ledger', { params });
+    return data;
+}
+
+// =============================================================================
+// Rekening Unit
+// =============================================================================
+
+export interface UnitLedgerParams {
+    unit_id: number;
+    tahun: string;
+}
+
+export async function getUnitLedger(params: UnitLedgerParams): Promise<UnitLedgerReport> {
+    const { data } = await api.get<UnitLedgerReport>('/ledger/unit-ledger', { params });
+    return data;
+}
+
+// =============================================================================
+// Neraca Saldo (Trial Balance)
+// =============================================================================
+
+export interface TrialBalanceParams {
+    unit_id?: number;
+    tahun: string;
+}
+
+export async function getTrialBalance(params: TrialBalanceParams): Promise<TrialBalanceReport> {
+    const { data } = await api.get<TrialBalanceReport>('/ledger/trial-balance', { params });
+    return data;
+}
+
+// =============================================================================
+// Laba Rugi (Income Statement)
+// =============================================================================
+
+export async function getIncomeStatement(params: TrialBalanceParams): Promise<IncomeStatementReport> {
+    const { data } = await api.get<IncomeStatementReport>('/ledger/income-statement', { params });
+    return data;
+}
+
+// =============================================================================
+// Neraca (Balance Sheet)
+// =============================================================================
+
+export async function getBalanceSheet(params: TrialBalanceParams): Promise<BalanceSheetReport> {
+    const { data } = await api.get<BalanceSheetReport>('/ledger/balance-sheet', { params });
     return data;
 }

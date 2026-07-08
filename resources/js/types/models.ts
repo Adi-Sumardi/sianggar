@@ -1124,3 +1124,56 @@ export interface GeneralLedgerReport {
     mutasi: GeneralLedgerMutation[];
     saldo_akhir: number;
 }
+
+export interface UnitLedgerReport {
+    unit: { id: number; nama: string };
+    account: Account;
+    tahun: string;
+    saldo_awal: number;
+    mutasi: GeneralLedgerMutation[];
+    saldo_akhir: number;
+}
+
+export interface TrialBalanceRow {
+    account: Account;
+    saldo_awal: number;
+    total_debit: number;
+    total_kredit: number;
+    saldo_akhir: number;
+}
+
+export interface TrialBalanceReport {
+    tahun: string;
+    rows: TrialBalanceRow[];
+}
+
+export interface IncomeStatementRow {
+    account: Account;
+    jumlah: number;
+}
+
+export interface IncomeStatementReport {
+    tahun: string;
+    pendapatan: IncomeStatementRow[];
+    beban: IncomeStatementRow[];
+    total_pendapatan: number;
+    total_beban: number;
+    laba_rugi: number;
+}
+
+export interface BalanceSheetRow {
+    account: Account;
+    saldo: number;
+}
+
+export interface BalanceSheetReport {
+    tahun: string;
+    aset: BalanceSheetRow[];
+    kewajiban: BalanceSheetRow[];
+    ekuitas: BalanceSheetRow[];
+    laba_rugi_tahun_berjalan: number;
+    total_aset: number;
+    total_kewajiban: number;
+    total_ekuitas: number;
+    total_kewajiban_dan_ekuitas: number;
+}

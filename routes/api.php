@@ -165,6 +165,10 @@ Route::prefix('v1')->group(function () {
             Route::get('ledger/journal-entries', [LedgerController::class, 'journalEntries']);
             Route::get('ledger/journal-entries/{journalEntry}', [LedgerController::class, 'showJournalEntry']);
             Route::get('ledger/general-ledger', [LedgerController::class, 'generalLedger']);
+            Route::get('ledger/unit-ledger', [LedgerController::class, 'unitLedger']);
+            Route::get('ledger/trial-balance', [LedgerController::class, 'trialBalance']);
+            Route::get('ledger/income-statement', [LedgerController::class, 'incomeStatement']);
+            Route::get('ledger/balance-sheet', [LedgerController::class, 'balanceSheet']);
         });
 
         Route::middleware('permission:manage-budget')->group(function () {
@@ -211,6 +215,7 @@ Route::prefix('v1')->group(function () {
             Route::put('ledger/accounts/{account}', [LedgerController::class, 'updateAccount']);
             Route::delete('ledger/accounts/{account}', [LedgerController::class, 'destroyAccount']);
             Route::post('ledger/journal-entries/{journalEntry}/reverse', [LedgerController::class, 'reverseJournalEntry']);
+            Route::post('ledger/journal-entries', [LedgerController::class, 'storeManualEntry']);
         });
 
         // ---------------------------------------------------------------------

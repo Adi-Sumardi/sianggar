@@ -320,7 +320,7 @@ export default function CoaCreate() {
                 {/* Header */}
                 <motion.div variants={staggerItem}>
                     <PageHeader
-                        title="Tambah Chart of Account"
+                        title="Tambah Mata Anggaran"
                         description="Buat mata anggaran baru dengan sub dan detail"
                         actions={
                             <button
