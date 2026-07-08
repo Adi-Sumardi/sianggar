@@ -53,13 +53,13 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
         // Generate table rows HTML
         const tableRowsHtml = detailRows.map((row) => `
             <tr>
-                <td style="border: 1px dashed #000; padding: 4px 6px;">
+                <td style="border: 1.5px solid #000; padding: 5px 6px;">
                     ${row.kode}
                 </td>
-                <td style="border: 1px dashed #000; padding: 4px 6px;">
+                <td style="border: 1.5px solid #000; padding: 5px 6px;">
                     ${row.nama}
                 </td>
-                <td style="border: 1px dashed #000; padding: 4px 6px; text-align: right;">
+                <td style="border: 1.5px solid #000; padding: 5px 6px; text-align: right;">
                     ${formatRupiah(row.jumlah)}
                 </td>
             </tr>
@@ -73,7 +73,7 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                 <style>
                     @page {
                         size: A5 landscape;
-                        margin: 5mm;
+                        margin: 12mm 6mm 6mm 6mm;
                     }
                     * {
                         margin: 0;
@@ -82,16 +82,19 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                     }
                     body {
                         font-family: 'Courier New', Courier, monospace;
-                        font-size: 10pt;
-                        line-height: 1.4;
+                        font-weight: bold;
+                        font-size: 12pt;
+                        line-height: 1.5;
                         padding: 10px;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
                     }
                 </style>
             </head>
             <body>
-                <div style="border: 1px dashed #000; padding: 10px; max-width: 100%; font-family: 'Courier New', Courier, monospace; font-size: 10pt;">
+                <div style="border: 2px dashed #000; padding: 10px; max-width: 100%; font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 12pt; margin-top: 8px;">
                     <!-- Header -->
-                    <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 15px; text-transform: uppercase;">
+                    <div style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 15px; text-transform: uppercase;">
                         BUKTI PENGELUARAN KAS YAYASAN ASRAMA PELAJAR ISLAM
                     </div>
 
@@ -144,13 +147,13 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
                         <thead>
                             <tr>
-                                <th style="border: 1px dashed #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #f0f0f0;">
+                                <th style="border: 1.5px solid #000; padding: 5px 6px; text-align: left; font-weight: bold; background: #f0f0f0;">
                                     Kode Anggaran
                                 </th>
-                                <th style="border: 1px dashed #000; padding: 4px 6px; text-align: left; font-weight: bold; background: #f0f0f0;">
+                                <th style="border: 1.5px solid #000; padding: 5px 6px; text-align: left; font-weight: bold; background: #f0f0f0;">
                                     Sub Mata Anggaran
                                 </th>
-                                <th style="border: 1px dashed #000; padding: 4px 6px; text-align: right; font-weight: bold; background: #f0f0f0;">
+                                <th style="border: 1.5px solid #000; padding: 5px 6px; text-align: right; font-weight: bold; background: #f0f0f0;">
                                     Jumlah (Rp)
                                 </th>
                             </tr>
@@ -164,23 +167,23 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                     <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: center;">
                         <div style="width: 18%;">
                             <div style="font-weight: bold; margin-bottom: 40px;">Disetujui</div>
-                            <div style="font-size: 9pt;">Tgl.</div>
+                            <div style="font-weight: bold; font-size: 10pt;">Tgl.</div>
                         </div>
                         <div style="width: 18%;">
                             <div style="font-weight: bold; margin-bottom: 40px;">Diketahui</div>
-                            <div style="font-size: 9pt;">Tgl.</div>
+                            <div style="font-weight: bold; font-size: 10pt;">Tgl.</div>
                         </div>
                         <div style="width: 18%;">
                             <div style="font-weight: bold; margin-bottom: 40px;">Diperiksa</div>
-                            <div style="font-size: 9pt;">Tgl.</div>
+                            <div style="font-weight: bold; font-size: 10pt;">Tgl.</div>
                         </div>
                         <div style="width: 18%;">
                             <div style="font-weight: bold; margin-bottom: 40px;">Diterima</div>
-                            <div style="font-size: 9pt;">Tgl.</div>
+                            <div style="font-weight: bold; font-size: 10pt;">Tgl.</div>
                         </div>
                         <div style="width: 18%;">
                             <div style="font-weight: bold; margin-bottom: 40px;">Dibukukan</div>
-                            <div style="font-size: 9pt;">Tgl.</div>
+                            <div style="font-weight: bold; font-size: 10pt;">Tgl.</div>
                         </div>
                     </div>
                 </div>
@@ -239,11 +242,11 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                         <div className="max-h-[60vh] overflow-auto p-6 bg-slate-50">
                             <div
                                 ref={printRef}
-                                className="bg-white p-6 border border-dashed border-slate-400"
-                                style={{ fontFamily: "'Courier New', Courier, monospace", fontSize: '10pt', lineHeight: '1.4' }}
+                                className="bg-white p-6 border-2 border-dashed border-slate-400 mt-2"
+                                style={{ fontFamily: "'Courier New', Courier, monospace", fontWeight: 'bold', fontSize: '12pt', lineHeight: '1.5' }}
                             >
                                 {/* Header */}
-                                <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', marginBottom: '15px', textTransform: 'uppercase' }}>
+                                <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14pt', marginBottom: '15px', textTransform: 'uppercase' }}>
                                     BUKTI PENGELUARAN KAS YAYASAN ASRAMA PELAJAR ISLAM
                                 </div>
 
@@ -296,13 +299,13 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '12px' }}>
                                     <thead>
                                         <tr>
-                                            <th style={{ border: '1px dashed #64748b', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', background: '#f1f5f9' }}>
+                                            <th style={{ border: '1.5px solid #334155', padding: '5px 6px', textAlign: 'left', fontWeight: 'bold', background: '#f1f5f9' }}>
                                                 Kode Anggaran
                                             </th>
-                                            <th style={{ border: '1px dashed #64748b', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', background: '#f1f5f9' }}>
+                                            <th style={{ border: '1.5px solid #334155', padding: '5px 6px', textAlign: 'left', fontWeight: 'bold', background: '#f1f5f9' }}>
                                                 Sub Mata Anggaran
                                             </th>
-                                            <th style={{ border: '1px dashed #64748b', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', background: '#f1f5f9' }}>
+                                            <th style={{ border: '1.5px solid #334155', padding: '5px 6px', textAlign: 'right', fontWeight: 'bold', background: '#f1f5f9' }}>
                                                 Jumlah (Rp)
                                             </th>
                                         </tr>
@@ -310,13 +313,13 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                                     <tbody>
                                         {detailRows.map((row, index) => (
                                             <tr key={index}>
-                                                <td style={{ border: '1px dashed #64748b', padding: '4px 6px' }}>
+                                                <td style={{ border: '1.5px solid #334155', padding: '5px 6px' }}>
                                                     {row.kode}
                                                 </td>
-                                                <td style={{ border: '1px dashed #64748b', padding: '4px 6px' }}>
+                                                <td style={{ border: '1.5px solid #334155', padding: '5px 6px' }}>
                                                     {row.nama}
                                                 </td>
-                                                <td style={{ border: '1px dashed #64748b', padding: '4px 6px', textAlign: 'right' }}>
+                                                <td style={{ border: '1.5px solid #334155', padding: '5px 6px', textAlign: 'right' }}>
                                                     {formatRupiah(row.jumlah)}
                                                 </td>
                                             </tr>
@@ -328,23 +331,23 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', textAlign: 'center' }}>
                                     <div style={{ width: '18%' }}>
                                         <div style={{ fontWeight: 'bold', marginBottom: '40px' }}>Disetujui</div>
-                                        <div style={{ fontSize: '9pt' }}>Tgl.</div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '10pt' }}>Tgl.</div>
                                     </div>
                                     <div style={{ width: '18%' }}>
                                         <div style={{ fontWeight: 'bold', marginBottom: '40px' }}>Diketahui</div>
-                                        <div style={{ fontSize: '9pt' }}>Tgl.</div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '10pt' }}>Tgl.</div>
                                     </div>
                                     <div style={{ width: '18%' }}>
                                         <div style={{ fontWeight: 'bold', marginBottom: '40px' }}>Diperiksa</div>
-                                        <div style={{ fontSize: '9pt' }}>Tgl.</div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '10pt' }}>Tgl.</div>
                                     </div>
                                     <div style={{ width: '18%' }}>
                                         <div style={{ fontWeight: 'bold', marginBottom: '40px' }}>Diterima</div>
-                                        <div style={{ fontSize: '9pt' }}>Tgl.</div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '10pt' }}>Tgl.</div>
                                     </div>
                                     <div style={{ width: '18%' }}>
                                         <div style={{ fontWeight: 'bold', marginBottom: '40px' }}>Dibukukan</div>
-                                        <div style={{ fontSize: '9pt' }}>Tgl.</div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '10pt' }}>Tgl.</div>
                                     </div>
                                 </div>
                             </div>
