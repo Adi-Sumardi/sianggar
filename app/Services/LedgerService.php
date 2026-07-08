@@ -332,7 +332,7 @@ class LedgerService
     public function getAccountMutations(Account $account, ?int $unitId, string $tahun): array
     {
         $saldoAwal = 0.0;
-        if ($account->unit_id !== null) {
+        if ($account->unit_id !== null && $account->unit !== null) {
             $saldoAwal = $this->getUnitDanaOpeningBalance($account->unit, $tahun);
         }
 
@@ -348,7 +348,12 @@ class LedgerService
             $itemsQuery->where('unit_id', $unitId);
         }
 
-        $items = $itemsQuery->get()->sortBy(fn ($item) => $item->journalEntry->tanggal)->values();
+        // Baris tanpa journalEntry (mis. data yatim) dibuang lebih dulu supaya
+        // tidak memicu error saat mengakses properti null di bawah.
+        $items = $itemsQuery->get()
+            ->filter(fn ($item) => $item->journalEntry !== null)
+            ->sortBy(fn ($item) => $item->journalEntry->tanggal)
+            ->values();
 
         $runningBalance = $saldoAwal;
         $normalBalance = $account->saldo_normal;

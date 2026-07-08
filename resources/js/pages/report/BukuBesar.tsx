@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { formatRupiah } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/stores/authStore';
 import { useUnitsList } from '@/hooks/useUnits';
 import {
     useAccounts,
@@ -633,7 +634,7 @@ function ManualEntryForm({ onClose }: { onClose: () => void }) {
 function BukuBesarReportTab() {
     const { data: accountsData } = useAccounts();
     const { data: unitsList } = useUnitsList();
-    const currentYear = new Date().getFullYear().toString();
+    const currentYear = useAuthStore((s) => s.fiscalYear);
     const [accountId, setAccountId] = useState<number | undefined>();
     const [unitId, setUnitId] = useState<number | undefined>();
     const [tahun, setTahun] = useState(currentYear);
@@ -747,7 +748,7 @@ function BukuBesarReportTab() {
 
 function RekeningUnitTab() {
     const { data: unitsList } = useUnitsList();
-    const currentYear = new Date().getFullYear().toString();
+    const currentYear = useAuthStore((s) => s.fiscalYear);
     const [unitId, setUnitId] = useState<number | undefined>();
     const [tahun, setTahun] = useState(currentYear);
 
@@ -857,7 +858,7 @@ function RekeningUnitTab() {
 
 function NeracaSaldoTab() {
     const { data: unitsList } = useUnitsList();
-    const currentYear = new Date().getFullYear().toString();
+    const currentYear = useAuthStore((s) => s.fiscalYear);
     const [unitId, setUnitId] = useState<number | undefined>();
     const [tahun, setTahun] = useState(currentYear);
 
@@ -946,7 +947,7 @@ function NeracaSaldoTab() {
 
 function LaporanKeuanganTab() {
     const { data: unitsList } = useUnitsList();
-    const currentYear = new Date().getFullYear().toString();
+    const currentYear = useAuthStore((s) => s.fiscalYear);
     const [unitId, setUnitId] = useState<number | undefined>();
     const [tahun, setTahun] = useState(currentYear);
 
