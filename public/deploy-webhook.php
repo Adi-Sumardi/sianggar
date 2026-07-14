@@ -148,6 +148,8 @@ if (!is_link($storageLink)) {
 $secretEnv = [
     'WATZAP_API_KEY'    => $_SERVER['HTTP_X_WATZAP_API_KEY'] ?? '',
     'WATZAP_NUMBER_KEY' => $_SERVER['HTTP_X_WATZAP_NUMBER_KEY'] ?? '',
+    'SAUNGWA_APPKEY'    => $_SERVER['HTTP_X_SAUNGWA_APPKEY'] ?? '',
+    'SAUNGWA_AUTHKEY'   => $_SERVER['HTTP_X_SAUNGWA_AUTHKEY'] ?? '',
 ];
 $secretEnv = array_filter($secretEnv, static fn ($v) => trim((string) $v) !== '');
 

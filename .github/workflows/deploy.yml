@@ -96,6 +96,8 @@ jobs:
             -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             -H "X-Watzap-Api-Key: ${{ secrets.WATZAP_API_KEY }}" \
             -H "X-Watzap-Number-Key: ${{ secrets.WATZAP_NUMBER_KEY }}" \
+            -H "X-Saungwa-Appkey: ${{ secrets.SAUNGWA_APPKEY }}" \
+            -H "X-Saungwa-Authkey: ${{ secrets.SAUNGWA_AUTHKEY }}" \
             -H "Content-Type: application/json" \
             --max-time 300)
           http_code=$(echo "$response" | tail -1)
