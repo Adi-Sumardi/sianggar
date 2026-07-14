@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Proposal;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Proposal\StorePengajuanRequest;
+use App\Http\Requests\Proposal\WithdrawRequest;
 use App\Http\Resources\PengajuanResource;
 use App\Models\Attachment;
 use App\Models\DetailPengajuan;
@@ -346,6 +347,37 @@ class PengajuanController extends Controller
         $pengajuan->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Withdraw a pengajuan from the approval process (admin-only).
+     * Reserved budget is released and the item drops off the approval queue.
+     */
+    public function withdraw(WithdrawRequest $request, PengajuanAnggaran $pengajuan): JsonResponse
+    {
+        $this->authorize('withdraw', $pengajuan);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        try {
+            $pengajuan = $this->approvalService->withdraw(
+                $pengajuan,
+                $user,
+                $request->validated()['notes'] ?? null,
+            );
+
+            $pengajuan->load(['user', 'detailPengajuans', 'approvals.approver']);
+
+            return response()->json([
+                'message' => 'Pengajuan berhasil ditarik.',
+                'data' => new PengajuanResource($pengajuan),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 403);
+        }
     }
 
     /**

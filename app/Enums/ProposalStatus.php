@@ -11,6 +11,7 @@ enum ProposalStatus: string
     case RevisionRequired = 'revision-required';
     case Revised = 'revised';
     case Rejected = 'rejected';
+    case Withdrawn = 'withdrawn';
     case ApprovedLevel1 = 'approved-level-1';
     case ApprovedLevel2 = 'approved-level-2';
     case ApprovedLevel3 = 'approved-level-3';
@@ -35,6 +36,7 @@ enum ProposalStatus: string
             self::RevisionRequired => 'Perlu Revisi',
             self::Revised => 'Sudah Direvisi',
             self::Rejected => 'Ditolak',
+            self::Withdrawn => 'Ditarik',
             self::ApprovedLevel1 => 'Disetujui Level 1',
             self::ApprovedLevel2 => 'Disetujui Level 2',
             self::ApprovedLevel3 => 'Disetujui Level 3',
@@ -52,6 +54,7 @@ enum ProposalStatus: string
             self::RevisionRequired => 'warning',
             self::Revised => 'info',
             self::Rejected => 'danger',
+            self::Withdrawn => 'secondary',
             self::ApprovedLevel1, self::ApprovedLevel2, self::ApprovedLevel3 => 'info',
             self::FinalApproved => 'success',
             self::Done => 'success',

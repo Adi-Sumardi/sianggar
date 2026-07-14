@@ -265,6 +265,60 @@ describe('ApprovalService', function () {
         });
     });
 
+    describe('withdraw', function () {
+        it('sets proposal status to Withdrawn and drops it from the approval process', function () {
+            $unitUser = User::factory()->unit()->create();
+            $admin = User::factory()->admin()->create();
+
+            $pengajuan = PengajuanAnggaran::factory()->create(['user_id' => $unitUser->id]);
+            $this->service->submit($pengajuan, $unitUser);
+
+            $result = $this->service->withdraw($pengajuan->fresh(), $admin, 'Ditarik oleh admin');
+
+            expect($result->status_proses)->toBe(ProposalStatus::Withdrawn)
+                ->and($result->current_approval_stage)->toBeNull();
+
+            $approval = $result->approvals()->latest()->first();
+            expect($approval->status)->toBe(ApprovalStatus::Withdrawn);
+        });
+
+        it('releases reserved budget back to the detail mata anggaran', function () {
+            $unitUser = User::factory()->unit()->create();
+            $admin = User::factory()->admin()->create();
+
+            $dma = \App\Models\DetailMataAnggaran::factory()->withBudget(10_000_000)->create();
+
+            $pengajuan = PengajuanAnggaran::factory()->create(['user_id' => $unitUser->id]);
+            \App\Models\DetailPengajuan::create([
+                'pengajuan_anggaran_id' => $pengajuan->id,
+                'detail_mata_anggaran_id' => $dma->id,
+                'mata_anggaran_id' => $dma->mata_anggaran_id,
+                'sub_mata_anggaran_id' => $dma->sub_mata_anggaran_id,
+                'uraian' => 'Test item',
+                'volume' => 1,
+                'satuan' => 'unit',
+                'harga_satuan' => 3_000_000,
+                'jumlah' => 3_000_000,
+            ]);
+
+            $this->service->submit($pengajuan->fresh(), $unitUser);
+            expect($dma->fresh()->saldo_dipakai)->toEqual(3_000_000);
+
+            $this->service->withdraw($pengajuan->fresh(), $admin, null);
+
+            expect((float) $dma->fresh()->saldo_dipakai)->toBe(0.0)
+                ->and((float) $dma->fresh()->balance)->toBe(10_000_000.0);
+        });
+
+        it('throws when the proposal is not in an active approval process', function () {
+            $admin = User::factory()->admin()->create();
+            $pengajuan = PengajuanAnggaran::factory()->draft()->create();
+
+            expect(fn () => $this->service->withdraw($pengajuan, $admin, null))
+                ->toThrow(RuntimeException::class);
+        });
+    });
+
     describe('editAmount', function () {
         it('allows amount editing at Keuangan stage', function () {
             $pengajuan = createPengajuanAtStage(ApprovalStage::Keuangan);

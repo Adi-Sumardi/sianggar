@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Notifications\NewProposalNotification;
 use App\Notifications\PengajuanCreatedNotification;
 use App\Notifications\ProposalRejectedNotification;
+use App\Notifications\ProposalWithdrawnNotification;
 use App\Notifications\ProposalRevisedNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -395,6 +396,50 @@ class ApprovalService
         $this->notifyCreatorOfRejection($pengajuan, $approver, $notes);
 
         return $currentApproval->fresh();
+    }
+
+    /**
+     * Withdraw a pengajuan while it is still in the approval process — admin-only.
+     * Workflow ends permanently, same as reject, but triggered by an admin
+     * instead of the approver at the current stage.
+     */
+    public function withdraw(PengajuanAnggaran $pengajuan, User $admin, ?string $notes = null): PengajuanAnggaran
+    {
+        if (! $pengajuan->current_approval_stage) {
+            throw new \RuntimeException('Pengajuan ini tidak sedang dalam proses approval.');
+        }
+
+        $currentApproval = $this->getCurrentStageApproval($pengajuan);
+
+        if ($currentApproval) {
+            $currentApproval->update([
+                'status' => ApprovalStatus::Withdrawn->value,
+                'approved_by' => $admin->id,
+                'notes' => $notes,
+                'approved_at' => now(),
+            ]);
+        }
+
+        $pengajuan->update([
+            'status_proses' => ProposalStatus::Withdrawn->value,
+            'current_approval_stage' => null,
+        ]);
+
+        // Return reserved budget (bank-like credit)
+        $this->releaseBudget($pengajuan);
+
+        ActivityLog::log(
+            $pengajuan,
+            'withdrawn',
+            null,
+            ['stage' => $currentApproval?->stage->value, 'notes' => $notes, 'no_surat' => $pengajuan->no_surat],
+            $admin->id,
+        );
+
+        // Notify the creator that proposal has been withdrawn
+        $this->notifyCreatorOfWithdrawal($pengajuan, $admin, $notes ?? '');
+
+        return $pengajuan->fresh();
     }
 
     // =========================================================================
@@ -774,7 +819,7 @@ class ApprovalService
                 // Sum ALL active pengajuan amounts for this budget line
                 $totalReserved = (float) DetailPengajuan::where('detail_mata_anggaran_id', $dmaId)
                     ->whereHas('pengajuanAnggaran', function ($q) {
-                        $q->whereNotIn('status_proses', ['draft', 'rejected']);
+                        $q->whereNotIn('status_proses', ['draft', 'rejected', 'withdrawn']);
                     })
                     ->sum('jumlah');
 
@@ -979,6 +1024,22 @@ class ApprovalService
             $creator->notify(new ProposalRejectedNotification(
                 pengajuan: $pengajuan,
                 approver: $approver,
+                catatan: $notes,
+            ));
+        }
+    }
+
+    /**
+     * Notify the proposal creator that it has been withdrawn by an admin.
+     */
+    private function notifyCreatorOfWithdrawal(PengajuanAnggaran $pengajuan, User $admin, string $notes): void
+    {
+        $creator = $pengajuan->user;
+
+        if ($creator) {
+            $creator->notify(new ProposalWithdrawnNotification(
+                pengajuan: $pengajuan,
+                withdrawnBy: $admin,
                 catatan: $notes,
             ));
         }

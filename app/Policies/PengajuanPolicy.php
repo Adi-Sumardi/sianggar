@@ -166,4 +166,18 @@ class PengajuanPolicy
             ProposalStatus::RevisionRequired,
         ], true);
     }
+
+    /**
+     * Determine whether the user can withdraw the proposal from the approval process.
+     *
+     * Allowed for: admin only, while the proposal is still in an active approval stage.
+     */
+    public function withdraw(User $user, PengajuanAnggaran $pengajuan): bool
+    {
+        if (! $user->hasEnumRole(UserRole::Admin)) {
+            return false;
+        }
+
+        return $pengajuan->current_approval_stage !== null;
+    }
 }

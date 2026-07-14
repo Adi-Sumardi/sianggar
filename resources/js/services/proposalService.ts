@@ -62,6 +62,18 @@ export async function resubmitPengajuan(id: PengajuanId): Promise<PengajuanAngga
 }
 
 /**
+ * Withdraw a pengajuan from the approval process (admin-only).
+ * Reserved budget is released and the item drops off the approval queue.
+ */
+export async function withdrawPengajuan(
+    id: PengajuanId,
+    notes?: string,
+): Promise<PengajuanAnggaran> {
+    const { data } = await api.post<ApiResponse<PengajuanAnggaran>>(`/pengajuan/${id}/withdraw`, { notes });
+    return data.data;
+}
+
+/**
  * Get pengajuan available for LPJ creation.
  * Returns pengajuan that are paid with need_lpj=true and don't have an active LPJ.
  */

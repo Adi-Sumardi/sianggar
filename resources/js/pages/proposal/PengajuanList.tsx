@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type ColumnDef } from '@tanstack/react-table';
 import { motion } from 'motion/react';
-import { Plus, Eye, Pencil, Trash2, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Loader2, RefreshCw, AlertCircle, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -14,10 +14,10 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatRupiah } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
-import { usePengajuanList, useDeletePengajuan } from '@/hooks/useProposals';
+import { usePengajuanList, useDeletePengajuan, useWithdrawPengajuan } from '@/hooks/useProposals';
 import { useAuth } from '@/hooks/useAuth';
 import type { PengajuanAnggaran } from '@/types/models';
-import { ProposalStatus, getStageLabel } from '@/types/enums';
+import { ProposalStatus, UserRole, getStageLabel } from '@/types/enums';
 import { getAcademicYearOptions } from '@/stores/authStore';
 
 // ---------------------------------------------------------------------------
@@ -33,6 +33,13 @@ export default function PengajuanList() {
         open: false,
         item: null,
     });
+    const [withdrawDialog, setWithdrawDialog] = useState<{ open: boolean; item: PengajuanAnggaran | null }>({
+        open: false,
+        item: null,
+    });
+    const [withdrawNotes, setWithdrawNotes] = useState('');
+
+    const isAdmin = user?.role === UserRole.Admin;
 
     // Fetch data from API - backend automatically filters by user's unit_id
     const { data: pengajuanResponse, isLoading, isError, error } = usePengajuanList({
@@ -42,6 +49,7 @@ export default function PengajuanList() {
     });
 
     const deleteMutation = useDeletePengajuan();
+    const withdrawMutation = useWithdrawPengajuan();
 
     // Extract and sort data - revision-required items first
     const pengajuanData = useMemo(() => {
@@ -93,6 +101,7 @@ export default function PengajuanList() {
                 { value: 'done', label: 'Done' },
                 { value: 'paid', label: 'Paid' },
                 { value: 'rejected', label: 'Rejected' },
+                { value: 'withdrawn', label: 'Ditarik' },
             ],
         },
     ];
@@ -157,6 +166,7 @@ export default function PengajuanList() {
                     : row.original.status_proses;
                 const isRevisionRequired = status === 'revision-required';
                 const isDraft = status === 'draft';
+                const isInApprovalProcess = !!row.original.current_approval_stage;
 
                 return (
                     <div className="flex items-center gap-1">
@@ -214,6 +224,22 @@ export default function PengajuanList() {
                                 </button>
                             </>
                         )}
+
+                        {/* Tarik Pengajuan - admin only, while still in approval process */}
+                        {isAdmin && isInApprovalProcess && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setWithdrawNotes('');
+                                    setWithdrawDialog({ open: true, item: row.original });
+                                }}
+                                className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                                title="Tarik pengajuan"
+                            >
+                                <Undo2 className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
                 );
             },
@@ -229,6 +255,22 @@ export default function PengajuanList() {
             setDeleteDialog({ open: false, item: null });
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Gagal menghapus pengajuan');
+        }
+    };
+
+    const handleWithdraw = async () => {
+        if (!withdrawDialog.item) return;
+
+        try {
+            await withdrawMutation.mutateAsync({
+                id: withdrawDialog.item.ulid ?? withdrawDialog.item.id,
+                notes: withdrawNotes.trim() || undefined,
+            });
+            toast.success(`Pengajuan "${withdrawDialog.item.nama_pengajuan || withdrawDialog.item.perihal}" berhasil ditarik`);
+            setWithdrawDialog({ open: false, item: null });
+            setWithdrawNotes('');
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Gagal menarik pengajuan');
         }
     };
 
@@ -336,6 +378,35 @@ export default function PengajuanList() {
                 variant="destructive"
                 onConfirm={handleDelete}
             />
+
+            <ConfirmDialog
+                open={withdrawDialog.open}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setWithdrawDialog({ open: false, item: null });
+                        setWithdrawNotes('');
+                    }
+                }}
+                title="Tarik Pengajuan"
+                description={`Pengajuan "${withdrawDialog.item?.nama_pengajuan || withdrawDialog.item?.perihal || ''}" akan ditarik dari proses approval dan saldo anggaran yang dipakai akan dikembalikan. Tindakan ini tidak dapat dibatalkan.`}
+                confirmLabel={withdrawMutation.isPending ? 'Menarik...' : 'Tarik Pengajuan'}
+                cancelLabel="Batal"
+                variant="destructive"
+                isLoading={withdrawMutation.isPending}
+                onConfirm={handleWithdraw}
+            >
+                <label htmlFor="withdraw-notes" className="mb-1.5 block text-xs font-medium text-slate-600">
+                    Catatan (opsional)
+                </label>
+                <textarea
+                    id="withdraw-notes"
+                    value={withdrawNotes}
+                    onChange={(e) => setWithdrawNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Alasan penarikan pengajuan..."
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+            </ConfirmDialog>
         </PageTransition>
     );
 }

@@ -10,6 +10,7 @@ enum ApprovalStatus: string
     case Approved = 'approved';
     case Revised = 'revised';
     case Rejected = 'rejected';
+    case Withdrawn = 'withdrawn';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum ApprovalStatus: string
             self::Approved => 'Disetujui',
             self::Revised => 'Direvisi',
             self::Rejected => 'Ditolak',
+            self::Withdrawn => 'Ditarik',
         };
     }
 
@@ -28,6 +30,7 @@ enum ApprovalStatus: string
             self::Approved => 'success',
             self::Revised => 'info',
             self::Rejected => 'danger',
+            self::Withdrawn => 'secondary',
         };
     }
 }

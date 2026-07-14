@@ -20,7 +20,7 @@ class BudgetService
         // Sum all active pengajuan amounts (bank-like: reserved on submit)
         $totalUsed = DetailPengajuan::where('detail_mata_anggaran_id', $detail->id)
             ->whereHas('pengajuanAnggaran', function ($q) {
-                $q->whereNotIn('status_proses', ['draft', 'rejected']);
+                $q->whereNotIn('status_proses', ['draft', 'rejected', 'withdrawn']);
             })
             ->sum('jumlah');
 

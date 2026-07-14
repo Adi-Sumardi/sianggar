@@ -235,6 +235,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('pengajuan/{pengajuan}', [PengajuanController::class, 'destroy']);
             Route::post('pengajuan/{pengajuan}/submit', [PengajuanController::class, 'submit']);
             Route::post('pengajuan/{pengajuan}/resubmit', [PengajuanController::class, 'resubmit']);
+            Route::post('pengajuan/{pengajuan}/withdraw', [PengajuanController::class, 'withdraw']);
 
             // Attachments
             Route::post('pengajuan/{pengajuan}/attachments', [PengajuanController::class, 'uploadAttachment']);

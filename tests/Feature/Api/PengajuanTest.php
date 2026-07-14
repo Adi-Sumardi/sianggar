@@ -308,6 +308,62 @@ describe('Pengajuan API', function () {
             $response->assertForbidden();
         });
     });
+
+    describe('POST /api/v1/pengajuan/{id}/withdraw', function () {
+        it('allows admin to withdraw a pengajuan in the approval process and releases budget', function () {
+            $unitUser = User::factory()->unit()->create();
+            $admin = User::factory()->admin()->create();
+            $admin->givePermissionTo('create-proposal');
+
+            $dma = DetailMataAnggaran::factory()->withBudget(10_000_000)->create();
+
+            $pengajuan = PengajuanAnggaran::factory()->create([
+                'user_id' => $unitUser->id,
+                'submitter_type' => 'unit',
+            ]);
+            \App\Models\DetailPengajuan::create([
+                'pengajuan_anggaran_id' => $pengajuan->id,
+                'detail_mata_anggaran_id' => $dma->id,
+                'mata_anggaran_id' => $dma->mata_anggaran_id,
+                'sub_mata_anggaran_id' => $dma->sub_mata_anggaran_id,
+                'uraian' => 'Test item',
+                'volume' => 1,
+                'satuan' => 'unit',
+                'harga_satuan' => 3_000_000,
+                'jumlah' => 3_000_000,
+            ]);
+
+            app(\App\Services\ApprovalService::class)->submit($pengajuan->fresh(), $unitUser);
+
+            $response = $this->actingAs($admin)
+                ->postJson("/api/v1/pengajuan/{$pengajuan->id}/withdraw", [
+                    'notes' => 'Ditarik untuk pengecekan ulang',
+                ]);
+
+            $response->assertOk();
+
+            $pengajuan->refresh();
+            expect($pengajuan->status_proses)->toBe(ProposalStatus::Withdrawn)
+                ->and($pengajuan->current_approval_stage)->toBeNull()
+                ->and((float) $dma->fresh()->saldo_dipakai)->toBe(0.0);
+        });
+
+        it('forbids non-admin from withdrawing a pengajuan', function () {
+            $unitUser = User::factory()->unit()->create();
+            $unitUser->givePermissionTo('create-proposal');
+
+            $pengajuan = PengajuanAnggaran::factory()->create([
+                'user_id' => $unitUser->id,
+                'submitter_type' => 'unit',
+            ]);
+            app(\App\Services\ApprovalService::class)->submit($pengajuan->fresh(), $unitUser);
+
+            $response = $this->actingAs($unitUser)
+                ->postJson("/api/v1/pengajuan/{$pengajuan->id}/withdraw");
+
+            $response->assertForbidden();
+        });
+    });
 });
 
 describe('Approval API', function () {

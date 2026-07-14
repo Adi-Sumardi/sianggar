@@ -60,6 +60,21 @@ export function useDeletePengajuan() {
     });
 }
 
+export function useWithdrawPengajuan() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, notes }: { id: number | string; notes?: string }) =>
+            proposalService.withdrawPengajuan(id, notes),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['pengajuans'] });
+            queryClient.invalidateQueries({ queryKey: ['pengajuans', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['detail-mata-anggarans'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        },
+    });
+}
+
 export function useSubmitPengajuan() {
     const queryClient = useQueryClient();
     return useMutation({
