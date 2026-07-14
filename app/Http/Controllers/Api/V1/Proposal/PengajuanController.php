@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Proposal;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Proposal\StorePengajuanRequest;
 use App\Http\Requests\Proposal\WithdrawRequest;
@@ -334,13 +335,21 @@ class PengajuanController extends Controller
     {
         $this->authorize('delete', $pengajuan);
 
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
         $status = $pengajuan->status_proses instanceof \App\Enums\ProposalStatus
             ? $pengajuan->status_proses->value
             : $pengajuan->status_proses;
 
-        if ($status !== 'draft') {
+        // Admin may also delete a withdrawn pengajuan (dead-end status, no active budget/approval left).
+        $deletableStatuses = $user->hasEnumRole(UserRole::Admin) ? ['draft', 'withdrawn'] : ['draft'];
+
+        if (! in_array($status, $deletableStatuses, true)) {
             return response()->json([
-                'message' => 'Hanya pengajuan berstatus draft yang dapat dihapus.',
+                'message' => $user->hasEnumRole(UserRole::Admin)
+                    ? 'Hanya pengajuan berstatus draft atau ditarik yang dapat dihapus.'
+                    : 'Hanya pengajuan berstatus draft yang dapat dihapus.',
             ], 403);
         }
 

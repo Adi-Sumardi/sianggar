@@ -166,7 +166,9 @@ export default function PengajuanList() {
                     : row.original.status_proses;
                 const isRevisionRequired = status === 'revision-required';
                 const isDraft = status === 'draft';
+                const isWithdrawn = status === 'withdrawn';
                 const isInApprovalProcess = !!row.original.current_approval_stage;
+                const canDelete = isDraft || (isAdmin && isWithdrawn);
 
                 return (
                     <div className="flex items-center gap-1">
@@ -197,32 +199,34 @@ export default function PengajuanList() {
                             </button>
                         )}
 
-                        {/* Edit & Delete - only for draft status */}
+                        {/* Edit - only for draft status */}
                         {isDraft && (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/pengajuan/${row.original.ulid ?? row.original.id}/edit`);
-                                    }}
-                                    className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
-                                    title="Edit"
-                                >
-                                    <Pencil className="h-4 w-4" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeleteDialog({ open: true, item: row.original });
-                                    }}
-                                    className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                                    title="Hapus"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/pengajuan/${row.original.ulid ?? row.original.id}/edit`);
+                                }}
+                                className="rounded p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+                                title="Edit"
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </button>
+                        )}
+
+                        {/* Delete - draft (owner/admin), or withdrawn (admin only) */}
+                        {canDelete && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteDialog({ open: true, item: row.original });
+                                }}
+                                className="rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                title="Hapus"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
                         )}
 
                         {/* Tarik Pengajuan - admin only, while still in approval process */}

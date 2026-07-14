@@ -307,6 +307,44 @@ describe('Pengajuan API', function () {
 
             $response->assertForbidden();
         });
+
+        it('allows admin to delete a withdrawn pengajuan', function () {
+            $unitUser = User::factory()->unit()->create();
+            $admin = User::factory()->admin()->create();
+            $admin->givePermissionTo('create-proposal');
+
+            $pengajuan = PengajuanAnggaran::factory()->create([
+                'user_id' => $unitUser->id,
+                'submitter_type' => 'unit',
+            ]);
+            app(\App\Services\ApprovalService::class)->submit($pengajuan->fresh(), $unitUser);
+            app(\App\Services\ApprovalService::class)->withdraw($pengajuan->fresh(), $admin, null);
+
+            $response = $this->actingAs($admin)
+                ->deleteJson("/api/v1/pengajuan/{$pengajuan->id}");
+
+            $response->assertNoContent();
+            expect(PengajuanAnggaran::find($pengajuan->id))->toBeNull();
+        });
+
+        it('forbids non-admin from deleting a withdrawn pengajuan', function () {
+            $unitUser = User::factory()->unit()->create();
+            $admin = User::factory()->admin()->create();
+            $unitUser->givePermissionTo('create-proposal');
+
+            $pengajuan = PengajuanAnggaran::factory()->create([
+                'user_id' => $unitUser->id,
+                'submitter_type' => 'unit',
+            ]);
+            app(\App\Services\ApprovalService::class)->submit($pengajuan->fresh(), $unitUser);
+            app(\App\Services\ApprovalService::class)->withdraw($pengajuan->fresh(), $admin, null);
+
+            $response = $this->actingAs($unitUser)
+                ->deleteJson("/api/v1/pengajuan/{$pengajuan->id}");
+
+            $response->assertForbidden();
+            expect(PengajuanAnggaran::find($pengajuan->id))->not->toBeNull();
+        });
     });
 
     describe('POST /api/v1/pengajuan/{id}/withdraw', function () {
