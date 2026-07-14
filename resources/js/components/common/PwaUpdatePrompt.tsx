@@ -9,60 +9,63 @@ import { toast } from 'sonner';
  * reload prompt so the user can pick up the latest assets.
  */
 export function PwaUpdatePrompt() {
-    const handleUpdate = useCallback(() => {
+    const promptReload = useCallback((waitingWorker: ServiceWorker) => {
         toast.info('Update tersedia! Klik untuk memperbarui.', {
             duration: Infinity,
             action: {
                 label: 'Perbarui',
                 onClick: () => {
-                    window.location.reload();
+                    // Tell the waiting SW to activate; the resulting
+                    // `controllerchange` event below triggers the reload.
+                    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
                 },
             },
         });
     }, []);
 
     useEffect(() => {
-        // Detect when a new service worker takes over
-        if ('serviceWorker' in navigator) {
-            const handleControllerChange = () => {
-                handleUpdate();
-            };
+        if (!('serviceWorker' in navigator)) return;
 
-            navigator.serviceWorker.addEventListener(
+        let reloaded = false;
+        const handleControllerChange = () => {
+            // Guard against the browser firing this more than once.
+            if (reloaded) return;
+            reloaded = true;
+            window.location.reload();
+        };
+
+        navigator.serviceWorker.addEventListener(
+            'controllerchange',
+            handleControllerChange,
+        );
+
+        navigator.serviceWorker.ready.then((registration) => {
+            if (registration.waiting) {
+                promptReload(registration.waiting);
+            }
+
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (!newWorker) return;
+
+                newWorker.addEventListener('statechange', () => {
+                    if (
+                        newWorker.state === 'installed' &&
+                        navigator.serviceWorker.controller
+                    ) {
+                        promptReload(newWorker);
+                    }
+                });
+            });
+        });
+
+        return () => {
+            navigator.serviceWorker.removeEventListener(
                 'controllerchange',
                 handleControllerChange,
             );
-
-            // Also check on first load if an update is already waiting
-            navigator.serviceWorker.ready.then((registration) => {
-                if (registration.waiting) {
-                    handleUpdate();
-                }
-
-                // Listen for future updates
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    if (!newWorker) return;
-
-                    newWorker.addEventListener('statechange', () => {
-                        if (
-                            newWorker.state === 'installed' &&
-                            navigator.serviceWorker.controller
-                        ) {
-                            handleUpdate();
-                        }
-                    });
-                });
-            });
-
-            return () => {
-                navigator.serviceWorker.removeEventListener(
-                    'controllerchange',
-                    handleControllerChange,
-                );
-            };
-        }
-    }, [handleUpdate]);
+        };
+    }, [promptReload]);
 
     // This component renders nothing -- it only triggers toasts.
     return null;

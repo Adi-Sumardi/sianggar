@@ -11,6 +11,14 @@ interface ErrorBoundaryState {
     error: Error | null;
 }
 
+const CHUNK_LOAD_ERROR_PATTERN = /failed to fetch dynamically imported module|loading chunk|error loading dynamically imported module|importing a module script failed/i;
+const CHUNK_RETRY_STORAGE_KEY = 'chunk-load-retry-at';
+const CHUNK_RETRY_WINDOW_MS = 10_000;
+
+function isChunkLoadError(error: Error): boolean {
+    return CHUNK_LOAD_ERROR_PATTERN.test(error.message);
+}
+
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     constructor(props: ErrorBoundaryProps) {
         super(props);
@@ -23,12 +31,35 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('[ErrorBoundary]', error, errorInfo);
+
+        if (isChunkLoadError(error)) {
+            const lastRetryAt = Number(sessionStorage.getItem(CHUNK_RETRY_STORAGE_KEY) || 0);
+            const withinRetryWindow = Date.now() - lastRetryAt < CHUNK_RETRY_WINDOW_MS;
+
+            if (!withinRetryWindow) {
+                sessionStorage.setItem(CHUNK_RETRY_STORAGE_KEY, String(Date.now()));
+                window.location.reload();
+            }
+        }
     }
 
     render() {
         if (this.state.hasError) {
             if (this.props.fallback) {
                 return this.props.fallback;
+            }
+
+            const error = this.state.error;
+            const isAutoRetrying = error && isChunkLoadError(error) &&
+                Date.now() - Number(sessionStorage.getItem(CHUNK_RETRY_STORAGE_KEY) || 0) < CHUNK_RETRY_WINDOW_MS;
+
+            if (isAutoRetrying) {
+                return (
+                    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 p-8 text-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+                        <p className="text-sm text-slate-500">Memuat ulang halaman...</p>
+                    </div>
+                );
             }
 
             return (

@@ -4,7 +4,14 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { PermissionGuard } from './PermissionGuard';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Permission } from '@/types/permissions';
+
+const RouteFallback = () => (
+    <div className="flex min-h-[50vh] items-center justify-center">
+        <LoadingSpinner size="lg" />
+    </div>
+);
 
 // =============================================================================
 // Lazy-loaded pages
@@ -93,7 +100,7 @@ const Settings = lazy(() => import('@/pages/settings/Settings'));
 export function AppRouter() {
     return (
         <ErrorBoundary>
-        <Suspense fallback={null}>
+        <Suspense fallback={<RouteFallback />}>
             <Routes>
                 {/* ---- Public routes ---- */}
                 <Route path="/login" element={<Login />} />
