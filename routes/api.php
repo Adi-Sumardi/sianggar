@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\V1\Report\AccountingController;
 use App\Http\Controllers\Api\V1\Report\LaporanController;
 use App\Http\Controllers\Api\V1\Report\LedgerController;
 use App\Http\Controllers\Api\V1\Report\LpjController;
+use App\Http\Controllers\Api\YapinetSummaryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -404,3 +405,15 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| External Integrations
+|--------------------------------------------------------------------------
+|
+| Routes consumed by external systems, authenticated with a static API
+| key instead of Sanctum. Deliberately outside the /v1 group.
+|
+*/
+
+Route::middleware('yapinet.auth')->get('integrations/yapinet/summary', [YapinetSummaryController::class, 'summary']);
