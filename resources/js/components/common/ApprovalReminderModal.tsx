@@ -122,7 +122,7 @@ export function ApprovalReminderModal({
                                             type="button"
                                             onClick={() => {
                                                 onOpenChange(false);
-                                                navigate('/pengajuan/approval');
+                                                navigate('/approvals', { state: { tab: 'pengajuan' } });
                                             }}
                                             className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700"
                                         >
@@ -154,7 +154,7 @@ export function ApprovalReminderModal({
                                             type="button"
                                             onClick={() => {
                                                 onOpenChange(false);
-                                                navigate('/lpj/approval');
+                                                navigate('/approvals', { state: { tab: 'lpj' } });
                                             }}
                                             className="inline-flex items-center gap-1 rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-700"
                                         >
@@ -186,7 +186,7 @@ export function ApprovalReminderModal({
                                             type="button"
                                             onClick={() => {
                                                 onOpenChange(false);
-                                                navigate('/planning/rapbs/approval');
+                                                navigate('/planning/rapbs-approvals');
                                             }}
                                             className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
                                         >

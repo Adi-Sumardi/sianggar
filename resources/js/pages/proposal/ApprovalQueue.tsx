@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
     FileText,
@@ -346,8 +346,10 @@ const RAPBS_APPROVAL_ROLES = [
 
 export default function ApprovalQueue() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuthStore();
-    const [activeTab, setActiveTab] = useState<TabType>('pengajuan');
+    const initialTab = (location.state as { tab?: TabType } | null)?.tab ?? 'pengajuan';
+    const [activeTab, setActiveTab] = useState<TabType>(initialTab);
     const [currentPage, setCurrentPage] = useState(1);
 
     // Get approval stages that current user can approve
