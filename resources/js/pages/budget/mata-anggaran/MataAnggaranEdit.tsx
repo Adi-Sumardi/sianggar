@@ -14,6 +14,7 @@ import {
     Pencil,
     Check,
     XCircle,
+    AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -1293,6 +1294,14 @@ function DetailMataAnggaranRow({
         return (
             <div className="rounded-lg border border-blue-200 bg-white p-3">
                 <div className="space-y-3">
+                    {detail.pkt_id && (
+                        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                            <p className="text-xs text-amber-800">
+                                Item ini berasal dari PKT. Mengubah nominal di sini <strong>tidak</strong> mengubah dokumen PKT/RAPBS aslinya — pastikan koreksi ini memang disengaja.
+                            </p>
+                        </div>
+                    )}
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-1">
                             <label className="text-xs font-medium text-slate-500">Kode</label>
