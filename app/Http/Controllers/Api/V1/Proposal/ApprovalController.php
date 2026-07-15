@@ -282,7 +282,7 @@ class ApprovalController extends Controller
     {
         $pengajuans = PengajuanAnggaran::whereNotNull('no_voucher')
             ->where('print_status', 'printed')
-            ->with(['user', 'unitRelation'])
+            ->with(['user', 'unitRelation', 'approvals'])
             ->orderByDesc('updated_at')
             ->get();
 

@@ -17,7 +17,13 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
     const printRef = useRef<HTMLDivElement>(null);
 
     const amount = pengajuan.approved_amount || pengajuan.jumlah_pengajuan_total;
-    const today = new Date();
+
+    // Voucher date must be frozen at the moment Kasir verified/approved it,
+    // not the current date — otherwise reprinting changes the printed date.
+    const kasirApproval = pengajuan.approvals?.find((a) => a.stage === 'kasir' && a.approved_at);
+    const voucherDate = kasirApproval?.approved_at
+        ? new Date(kasirApproval.approved_at)
+        : new Date();
 
     // Build budget code from details
     const getDetailRows = () => {
@@ -114,7 +120,7 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                         <!-- Right Column -->
                         <div style="text-align: right; width: 220px; white-space: nowrap;">
                             <div style="margin-bottom: 3px;">
-                                <span>Tanggal : ${formatDateIndonesian(today)}</span>
+                                <span>Tanggal : ${formatDateIndonesian(voucherDate)}</span>
                             </div>
                             <div>
                                 <span>Nomor : </span>
@@ -266,7 +272,7 @@ export function VoucherModal({ pengajuan, open, onClose, onPrint, isPrinting }: 
                                     {/* Right Column */}
                                     <div style={{ textAlign: 'right', width: '220px', whiteSpace: 'nowrap' }}>
                                         <div style={{ marginBottom: '3px' }}>
-                                            <span>Tanggal : {formatDateIndonesian(today)}</span>
+                                            <span>Tanggal : {formatDateIndonesian(voucherDate)}</span>
                                         </div>
                                         <div>
                                             <span>Nomor : </span>
