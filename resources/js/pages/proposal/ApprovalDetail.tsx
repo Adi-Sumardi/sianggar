@@ -694,10 +694,12 @@ export default function ApprovalDetail() {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {(pengajuan.detail_pengajuans || []).map((detail, index) => {
-                                            const pagu = detail.detail_mata_anggaran?.anggaran_awal ?? 0;
-                                            const terpakai = detail.detail_mata_anggaran?.saldo_dipakai ?? 0;
-                                            const saldo = detail.detail_mata_anggaran?.saldo_tersedia ?? (pagu - terpakai);
-                                            const isSaldoKurang = detail.jumlah > saldo;
+                                            const pagu = Number(detail.detail_mata_anggaran?.anggaran_awal ?? 0);
+                                            const terpakai = Number(detail.detail_mata_anggaran?.saldo_dipakai ?? 0);
+                                            const saldo = detail.detail_mata_anggaran?.saldo_tersedia != null
+                                                ? Number(detail.detail_mata_anggaran.saldo_tersedia)
+                                                : (pagu - terpakai);
+                                            const isSaldoKurang = Number(detail.jumlah) > saldo;
                                             const pct = detail.detail_mata_anggaran && pagu > 0
                                                 ? (terpakai / pagu) * 100
                                                 : null;
