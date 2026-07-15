@@ -116,6 +116,7 @@ enum UserRole: string
             self::Sekretaris,
             self::Bendahara,
             self::Keuangan,
+            self::Akuntansi,
             self::Kasir,
             self::Payment,
             self::StaffKeuangan,
@@ -131,7 +132,7 @@ enum UserRole: string
 
     public function canCreateLpj(): bool
     {
-        return $this === self::Admin || $this->isUnit() || $this->isSubstansi();
+        return $this === self::Admin || $this->isUnit();
     }
 
     public function dashboardType(): string

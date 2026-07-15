@@ -157,6 +157,74 @@ describe('Pengajuan API', function () {
 
             $response->assertForbidden();
         });
+
+        it('blocks creation when unit has 15 or more unresolved LPJ', function () {
+            $unit = Unit::factory()->create();
+            $user = User::factory()->unit('sd')->create(['unit_id' => $unit->id]);
+            $user->givePermissionTo('create-proposal');
+
+            // 15 pengajuan Paid, need_lpj, tanpa LPJ sama sekali -> dihitung "menunggak".
+            PengajuanAnggaran::factory()->count(15)->create([
+                'unit_id' => $unit->id,
+                'status_proses' => ProposalStatus::Paid->value,
+                'need_lpj' => true,
+            ]);
+
+            $detailMataAnggaran = DetailMataAnggaran::factory()->create();
+
+            $data = [
+                'no_surat' => 'NSR/2025/999',
+                'nama_pengajuan' => 'Test Event',
+                'tahun' => '2025',
+                'details' => [
+                    [
+                        'detail_mata_anggaran_id' => $detailMataAnggaran->id,
+                        'jumlah' => 1000000,
+                    ],
+                ],
+            ];
+
+            $response = $this->actingAs($user)
+                ->postJson('/api/v1/pengajuan', $data);
+
+            $response->assertUnprocessable()
+                ->assertJsonPath('message', fn ($message) => str_contains($message, '15') && str_contains($message, 'LPJ'));
+
+            expect(PengajuanAnggaran::where('no_surat', 'NSR/2025/999')->exists())->toBeFalse();
+        });
+
+        it('allows creation when unit has fewer than 15 unresolved LPJ', function () {
+            $unit = Unit::factory()->create();
+            $user = User::factory()->unit('sd')->create(['unit_id' => $unit->id]);
+            $user->givePermissionTo('create-proposal');
+
+            PengajuanAnggaran::factory()->count(14)->create([
+                'unit_id' => $unit->id,
+                'status_proses' => ProposalStatus::Paid->value,
+                'need_lpj' => true,
+            ]);
+
+            $detailMataAnggaran = DetailMataAnggaran::factory()->create();
+
+            $data = [
+                'no_surat' => 'NSR/2025/998',
+                'nama_pengajuan' => 'Test Event',
+                'tahun' => '2025',
+                'details' => [
+                    [
+                        'detail_mata_anggaran_id' => $detailMataAnggaran->id,
+                        'mata_anggaran_id' => $detailMataAnggaran->mata_anggaran_id,
+                        'sub_mata_anggaran_id' => $detailMataAnggaran->sub_mata_anggaran_id,
+                        'jumlah' => 1000000,
+                    ],
+                ],
+            ];
+
+            $response = $this->actingAs($user)
+                ->postJson('/api/v1/pengajuan', $data);
+
+            $response->assertCreated();
+        });
     });
 
     describe('GET /api/v1/pengajuan/{id}', function () {
@@ -197,6 +265,20 @@ describe('Pengajuan API', function () {
             $response->assertOk()
                 ->assertJsonPath('data.id', $pengajuan->id)
                 ->assertJsonPath('data.ulid', $pengajuan->ulid);
+        });
+
+        it('allows Akuntansi role to view a pengajuan it does not own', function () {
+            $akuntansi = User::factory()->withRole(UserRole::Akuntansi)->create();
+            $akuntansi->givePermissionTo('view-proposals');
+
+            $unitUser = User::factory()->unit('sd')->create();
+            $pengajuan = PengajuanAnggaran::factory()->create(['user_id' => $unitUser->id]);
+
+            $response = $this->actingAs($akuntansi)
+                ->getJson("/api/v1/pengajuan/{$pengajuan->id}");
+
+            $response->assertOk()
+                ->assertJsonPath('data.id', $pengajuan->id);
         });
 
         it('returns 404 for non-existent pengajuan', function () {

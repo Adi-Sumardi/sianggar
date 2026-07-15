@@ -4,11 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Proposal;
 
+use App\Enums\LpjStatus;
+use App\Models\PengajuanAnggaran;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
 class StorePengajuanRequest extends FormRequest
 {
+    /**
+     * Maximum allowed pending LPJ before blocking new pengajuan creation.
+     * Keep in sync with LpjController::stats().
+     */
+    private const MAX_PENDING_LPJ = 15;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -41,6 +51,58 @@ class StorePengajuanRequest extends FormRequest
             'details.*.jumlah' => ['required', 'numeric', 'min:0'],
             'details.*.keterangan' => ['nullable', 'string'],
         ];
+    }
+
+    /**
+     * Block new pengajuan creation if the user's unit has too many
+     * unresolved LPJ (paid pengajuan needing LPJ that has none, or only
+     * rejected ones). Mirrors the count in LpjController::stats().
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            /** @var \App\Models\User $user */
+            $user = $this->user();
+
+            if ($user->unit_id === null) {
+                return;
+            }
+
+            $pendingLpjCount = PengajuanAnggaran::where('status_proses', 'paid')
+                ->where('need_lpj', true)
+                ->where('unit_id', $user->unit_id)
+                ->where(function ($q) {
+                    $q->whereDoesntHave('lpj')
+                        ->orWhereHas('lpj', function ($lpjQuery) {
+                            $lpjQuery->where('proses', LpjStatus::Rejected->value);
+                        });
+                })
+                ->count();
+
+            if ($pendingLpjCount >= self::MAX_PENDING_LPJ) {
+                $validator->errors()->add(
+                    'lpj',
+                    "Pengajuan tidak dapat dibuat karena ada data LPJ sebanyak {$pendingLpjCount} yang belum diselesaikan (batas maksimal " . self::MAX_PENDING_LPJ . '). Silahkan LPJ kan dulu.',
+                );
+            }
+        });
+    }
+
+    /**
+     * Override the default 422 response so the LPJ-limit message reaches
+     * the frontend toast, yang cuma membaca `response.data.message`
+     * (bukan `errors.*`) — lihat PengajuanCreate.tsx.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        if ($validator->errors()->has('lpj')) {
+            throw new HttpResponseException(response()->json([
+                'message' => $validator->errors()->first('lpj'),
+                'errors' => $validator->errors()->toArray(),
+            ], 422));
+        }
+
+        parent::failedValidation($validator);
     }
 
     /**
