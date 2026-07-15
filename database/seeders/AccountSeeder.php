@@ -57,6 +57,16 @@ class AccountSeeder extends Seeder
             ],
         );
 
+        $uangMukaGroup = Account::firstOrCreate(
+            ['kode' => '1500'],
+            [
+                'nama' => 'Uang Muka Kegiatan',
+                'tipe' => AccountType::Aset->value,
+                'saldo_normal' => NormalBalance::Debit->value,
+                'is_postable' => false,
+            ],
+        );
+
         $pendapatanAccount = Account::firstOrCreate(
             ['kode' => '4100'],
             [
@@ -96,12 +106,22 @@ class AccountSeeder extends Seeder
             ['account_id' => $pendapatanAccount->id],
         );
 
-        Unit::all()->each(function (Unit $unit) use ($danaUnitGroup) {
+        Unit::all()->each(function (Unit $unit) use ($danaUnitGroup, $uangMukaGroup) {
             Account::firstOrCreate(
                 ['unit_id' => $unit->id, 'parent_id' => $danaUnitGroup->id],
                 [
                     'kode' => '1' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT),
                     'nama' => "Dana Unit — {$unit->nama}",
+                    'tipe' => AccountType::Aset->value,
+                    'saldo_normal' => NormalBalance::Debit->value,
+                ],
+            );
+
+            Account::firstOrCreate(
+                ['unit_id' => $unit->id, 'parent_id' => $uangMukaGroup->id],
+                [
+                    'kode' => '15' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT),
+                    'nama' => "Uang Muka Kegiatan — {$unit->nama}",
                     'tipe' => AccountType::Aset->value,
                     'saldo_normal' => NormalBalance::Debit->value,
                 ],

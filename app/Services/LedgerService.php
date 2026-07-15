@@ -17,6 +17,7 @@ use App\Models\JournalItem;
 use App\Models\Lpj;
 use App\Models\MataAnggaranJenisAccountMap;
 use App\Models\Penerimaan;
+use App\Models\PengajuanAnggaran;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,10 @@ class LedgerService
 {
     /**
      * Posting jurnal buku besar saat LPJ disetujui final (realisasi riil):
-     * Debit akun Beban (dipetakan dari jenis Mata Anggaran) / Kredit Dana Unit.
+     * Debit akun Beban (dipetakan dari jenis Mata Anggaran) / Kredit Uang
+     * Muka Kegiatan — melunasi uang muka yang sudah dicatat saat pengajuan
+     * Paid (lihat postFromPengajuanPaid). Dana Unit TIDAK dikredit lagi di
+     * sini supaya tidak terpotong dua kali untuk pencairan yang sama.
      *
      * Diposting sekali per LPJ — memanggil ulang untuk LPJ yang sudah
      * pernah diposting akan dilewati (idempotent).
@@ -57,7 +61,7 @@ class LedgerService
         $jenis = $firstDetail?->mataAnggaran?->jenis;
 
         $bebanAccount = $this->getAccountForJenis($jenis) ?? $this->getAccountForJenis('belanja_lainnya');
-        $danaAccount = $this->getOrCreateUnitDanaAccount($unit);
+        $uangMukaAccount = $this->getOrCreateUnitUangMukaAccount($unit);
 
         if (! $bebanAccount) {
             return null;
@@ -65,7 +69,7 @@ class LedgerService
 
         $postedById = $postedBy?->id ?? $lpj->validated_by;
 
-        return DB::transaction(function () use ($lpj, $unit, $jumlah, $bebanAccount, $danaAccount, $postedById) {
+        return DB::transaction(function () use ($lpj, $unit, $jumlah, $bebanAccount, $uangMukaAccount, $postedById) {
             $journal = Journal::where('kode', 'JP')->first();
 
             $entry = JournalEntry::create([
@@ -90,7 +94,7 @@ class LedgerService
                     'keterangan' => $lpj->perihal,
                 ],
                 [
-                    'account_id' => $danaAccount->id,
+                    'account_id' => $uangMukaAccount->id,
                     'unit_id' => $unit->id,
                     'debit' => 0,
                     'kredit' => $jumlah,
@@ -103,6 +107,85 @@ class LedgerService
                 'journal_entry_posted',
                 null,
                 ['sumber' => 'lpj', 'lpj_id' => $lpj->id, 'jumlah' => $jumlah],
+                $postedById,
+            );
+
+            return $entry;
+        });
+    }
+
+    /**
+     * Posting jurnal saat pengajuan berubah status jadi Paid (dana dicairkan
+     * ke penerima): Debit Uang Muka Kegiatan / Kredit Dana Unit. Uang muka
+     * ini dilunasi belakangan saat LPJ-nya disetujui (lihat postFromLpj).
+     *
+     * Diposting sekali per pengajuan — memanggil ulang untuk pengajuan yang
+     * sudah pernah diposting akan dilewati (idempotent).
+     */
+    public function postFromPengajuanPaid(PengajuanAnggaran $pengajuan, ?User $postedBy = null): ?JournalEntry
+    {
+        $existing = JournalEntry::where('sumber_type', PengajuanAnggaran::class)
+            ->where('sumber_id', $pengajuan->id)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $jumlah = (float) $pengajuan->jumlah_pengajuan_total;
+
+        if ($jumlah <= 0) {
+            return null;
+        }
+
+        $unit = $pengajuan->unitRelation;
+
+        if (! $unit) {
+            return null;
+        }
+
+        $uangMukaAccount = $this->getOrCreateUnitUangMukaAccount($unit);
+        $danaAccount = $this->getOrCreateUnitDanaAccount($unit);
+        $postedById = $postedBy?->id ?? $pengajuan->paid_by;
+
+        return DB::transaction(function () use ($pengajuan, $unit, $jumlah, $uangMukaAccount, $danaAccount, $postedById) {
+            $journal = Journal::where('kode', 'JP')->first();
+
+            $entry = JournalEntry::create([
+                'tanggal' => now()->toDateString(),
+                'journal_id' => $journal?->id,
+                'unit_id' => $unit->id,
+                'sumber_type' => PengajuanAnggaran::class,
+                'sumber_id' => $pengajuan->id,
+                'status' => JournalEntryStatus::Posted->value,
+                'keterangan' => "Pencairan Pengajuan {$pengajuan->no_surat}",
+                'created_by' => $postedById,
+                'posted_by' => $postedById,
+                'posted_at' => now(),
+            ]);
+
+            $entry->items()->createMany([
+                [
+                    'account_id' => $uangMukaAccount->id,
+                    'unit_id' => $unit->id,
+                    'debit' => $jumlah,
+                    'kredit' => 0,
+                    'keterangan' => $pengajuan->nama_pengajuan,
+                ],
+                [
+                    'account_id' => $danaAccount->id,
+                    'unit_id' => $unit->id,
+                    'debit' => 0,
+                    'kredit' => $jumlah,
+                    'keterangan' => $pengajuan->nama_pengajuan,
+                ],
+            ]);
+
+            ActivityLog::log(
+                $entry,
+                'journal_entry_posted',
+                null,
+                ['sumber' => 'pengajuan_paid', 'pengajuan_id' => $pengajuan->id, 'jumlah' => $jumlah],
                 $postedById,
             );
 
@@ -236,17 +319,21 @@ class LedgerService
 
     /**
      * Ambil akun "Dana Unit" milik sebuah unit, atau buat jika belum ada
-     * (unit baru yang dibuat setelah AccountSeeder dijalankan).
+     * (unit baru yang dibuat setelah AccountSeeder dijalankan). Difilter
+     * lewat parent_id grup "1000" supaya tidak tertukar dengan akun
+     * "Uang Muka Kegiatan" milik unit yang sama (grup "1500").
      */
     public function getOrCreateUnitDanaAccount(Unit $unit): Account
     {
-        $account = Account::where('unit_id', $unit->id)->first();
+        $danaGroup = Account::where('kode', '1000')->first();
+
+        $account = Account::where('unit_id', $unit->id)
+            ->where('parent_id', $danaGroup?->id)
+            ->first();
 
         if ($account) {
             return $account;
         }
-
-        $danaGroup = Account::where('kode', '1000')->first();
 
         return Account::create([
             'kode' => '1' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT),
@@ -254,6 +341,34 @@ class LedgerService
             'tipe' => AccountType::Aset->value,
             'saldo_normal' => NormalBalance::Debit->value,
             'parent_id' => $danaGroup?->id,
+            'unit_id' => $unit->id,
+        ]);
+    }
+
+    /**
+     * Ambil akun "Uang Muka Kegiatan" milik sebuah unit, atau buat jika
+     * belum ada. Akun ini didebit saat pengajuan dicairkan (status Paid)
+     * dan dikredit saat LPJ-nya disetujui final (postFromLpj), merepresentasikan
+     * dana yang sudah keluar tapi belum dipertanggungjawabkan.
+     */
+    public function getOrCreateUnitUangMukaAccount(Unit $unit): Account
+    {
+        $uangMukaGroup = Account::where('kode', '1500')->first();
+
+        $account = Account::where('unit_id', $unit->id)
+            ->where('parent_id', $uangMukaGroup?->id)
+            ->first();
+
+        if ($account) {
+            return $account;
+        }
+
+        return Account::create([
+            'kode' => '15' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT),
+            'nama' => "Uang Muka Kegiatan — {$unit->nama}",
+            'tipe' => AccountType::Aset->value,
+            'saldo_normal' => NormalBalance::Debit->value,
+            'parent_id' => $uangMukaGroup?->id,
             'unit_id' => $unit->id,
         ]);
     }
