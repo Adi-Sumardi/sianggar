@@ -37,7 +37,7 @@ class ProposalApprovedNotification extends Notification
     public function toSaungWa(object $notifiable): string
     {
         if ($this->isFullyApproved) {
-            return "✅ *Notification*\n*#Pengajuan Disetujui Sepenuhnya* — siap diproses\n\n"
+            return "✅ *Notification*\n*#Pengajuan Selesai dan Sudah Dibayarkan*\n\n"
                 . $this->waPengajuanDetail($this->pengajuan);
         }
 
@@ -60,7 +60,7 @@ class ProposalApprovedNotification extends Notification
                 'type' => 'proposal_fully_approved',
                 'pengajuan_id' => $this->pengajuan->id,
                 'nomor' => $this->pengajuan->nomor_pengajuan,
-                'message' => "Pengajuan {$this->pengajuan->no_surat} telah disetujui sepenuhnya dan siap diproses",
+                'message' => "Pengajuan {$this->pengajuan->no_surat} telah selesai dan sudah dibayarkan",
                 'icon' => 'check-circle',
                 'color' => 'success',
             ];
