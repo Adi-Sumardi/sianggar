@@ -253,3 +253,31 @@ export async function rejectLpj(
     );
     return data.data;
 }
+
+// =============================================================================
+// LPJ Print Queue (Kasir)
+// =============================================================================
+
+export async function getLpjPrintQueue(): Promise<Lpj[]> {
+    const { data } = await api.get<ApiResponse<Lpj[]>>(
+        '/lpj/print-queue',
+    );
+    return data.data;
+}
+
+export async function getLpjPrintHistory(
+    params?: ApprovalFilterParams,
+): Promise<PaginatedResponse<Lpj>> {
+    const { data } = await api.get<PaginatedResponse<Lpj>>(
+        '/lpj/print-history',
+        { params },
+    );
+    return data;
+}
+
+export async function printLpj(lpjId: number | string): Promise<Lpj> {
+    const { data } = await api.post<ApiResponse<Lpj>>(
+        `/lpj/${lpjId}/print`,
+    );
+    return data.data;
+}

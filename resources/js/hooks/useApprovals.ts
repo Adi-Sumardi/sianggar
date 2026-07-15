@@ -191,6 +191,34 @@ export function usePaymentHistory() {
 }
 
 // =============================================================================
+// LPJ Print Queue hooks (Kasir)
+// =============================================================================
+
+export function useLpjPrintQueue() {
+    return useQuery({
+        queryKey: ['lpj', 'print-queue'],
+        queryFn: () => approvalService.getLpjPrintQueue(),
+    });
+}
+
+export function useLpjPrintHistory(params?: ApprovalFilterParams) {
+    return useQuery({
+        queryKey: ['lpj', 'print-history', params],
+        queryFn: () => approvalService.getLpjPrintHistory(params),
+    });
+}
+
+export function usePrintLpj() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (lpjId: number | string) => approvalService.printLpj(lpjId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['lpj'] });
+        },
+    });
+}
+
+// =============================================================================
 // Discussion hooks
 // =============================================================================
 

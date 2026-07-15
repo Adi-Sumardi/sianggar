@@ -299,6 +299,15 @@ Route::prefix('v1')->group(function () {
         // ---------------------------------------------------------------------
         // LPJ (Laporan Pertanggungjawaban)
         // ---------------------------------------------------------------------
+        // LPJ Print Queue (Kasir) — literal routes must be registered before
+        // the parameterized `lpj/{lpj}` route below, otherwise "print-queue"
+        // would be matched as the {lpj} route parameter.
+        Route::middleware('permission:approve-proposals')->group(function () {
+            Route::get('lpj/print-queue', [LpjController::class, 'printQueue']);
+            Route::get('lpj/print-history', [LpjController::class, 'printHistory']);
+            Route::post('lpj/{lpj}/print', [LpjController::class, 'printLpj']);
+        });
+
         Route::middleware('permission:view-reports')->group(function () {
             Route::get('lpj', [LpjController::class, 'index']);
             Route::get('lpj/stats', [LpjController::class, 'stats']);

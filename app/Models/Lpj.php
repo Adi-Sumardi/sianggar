@@ -86,6 +86,9 @@ class Lpj extends Model
         'validated_at',
         'validated_by',
         'validation_notes',
+        // Kasir print tracking
+        'printed_at',
+        'printed_by',
     ];
 
     /**
@@ -103,6 +106,7 @@ class Lpj extends Model
             'current_approval_stage' => LpjApprovalStage::class,
             'reference_type' => ReferenceType::class,
             'validated_at' => 'datetime',
+            'printed_at' => 'datetime',
         ];
     }
 
@@ -139,6 +143,14 @@ class Lpj extends Model
     public function validatedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'validated_by');
+    }
+
+    /**
+     * Get the user (Kasir/Admin) who printed this LPJ.
+     */
+    public function printedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'printed_by');
     }
 
     public function revisionComments(): MorphMany

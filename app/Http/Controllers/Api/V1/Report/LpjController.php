@@ -390,7 +390,7 @@ class LpjController extends Controller
         $revisedPengajuanCount = $revisedPengajuanQuery->count();
 
         // Maximum allowed pending LPJ before blocking new pengajuan creation
-        $maxPendingLpj = 20;
+        $maxPendingLpj = 15;
         $canCreatePengajuan = $pendingLpjCount < $maxPendingLpj;
 
         return response()->json([
@@ -401,6 +401,79 @@ class LpjController extends Controller
                 'can_create_pengajuan' => $canCreatePengajuan,
                 'max_pending_lpj' => $maxPendingLpj,
             ],
+        ]);
+    }
+
+    // =========================================================================
+    // Kasir Print Methods
+    // =========================================================================
+
+    /**
+     * Get LPJ queue awaiting print by Kasir (approved but not yet printed).
+     * Not filtered by unit — Kasir sees all units, same as voucher queue.
+     */
+    public function printQueue(): JsonResponse
+    {
+        $lpjs = Lpj::where('proses', LpjStatus::Approved->value)
+            ->whereNull('printed_at')
+            ->with(['pengajuanAnggaran.unitRelation', 'pengajuanAnggaran.user'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'data' => LpjResource::collection($lpjs),
+        ]);
+    }
+
+    /**
+     * Get history of LPJ that have been printed by Kasir.
+     */
+    public function printHistory(Request $request): JsonResponse
+    {
+        $query = Lpj::where('proses', LpjStatus::Approved->value)
+            ->whereNotNull('printed_at')
+            ->with(['pengajuanAnggaran.unitRelation', 'pengajuanAnggaran.user', 'printedByUser']);
+
+        $perPage = (int) $request->query('per_page', '15');
+        $lpjs = $query->orderByDesc('printed_at')->paginate($perPage);
+
+        return response()->json(LpjResource::collection($lpjs)->response()->getData(true));
+    }
+
+    /**
+     * Print (mark as printed) an LPJ. Idempotent — the printed date is
+     * frozen on the first print and never overwritten on reprints,
+     * mirroring the pengajuan voucher print behaviour.
+     */
+    public function printLpj(Request $request, Lpj $lpj): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        if ($user->role !== \App\Enums\UserRole::Kasir && ! $user->hasEnumRole(\App\Enums\UserRole::Admin)) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki wewenang untuk mencetak LPJ.',
+            ], 403);
+        }
+
+        if ($lpj->proses !== LpjStatus::Approved) {
+            return response()->json([
+                'message' => 'Hanya LPJ yang sudah disetujui yang dapat dicetak.',
+            ], 422);
+        }
+
+        if ($lpj->printed_at === null) {
+            $lpj->update([
+                'printed_at' => now(),
+                'printed_by' => $user->id,
+            ]);
+        }
+
+        $lpj->load(['pengajuanAnggaran.unitRelation', 'pengajuanAnggaran.user', 'printedByUser']);
+
+        return response()->json([
+            'message' => 'LPJ berhasil dicetak.',
+            'data' => new LpjResource($lpj),
         ]);
     }
 

@@ -145,8 +145,8 @@ const kasirNavigationGroups: NavGroup[] = [
         title: 'CETAK VOUCHER',
         permission: Permission.APPROVE_PROPOSALS,
         items: [
-            { label: 'Antrian Voucher', to: '/approvals', icon: PrinterIcon },
-            { label: 'Riwayat Cetak', to: '/voucher-history', icon: History },
+            { label: 'Antrian Cetak', to: '/print-queue', icon: PrinterIcon },
+            { label: 'Riwayat Cetak', to: '/print-queue/history', icon: History },
         ],
     },
 ];

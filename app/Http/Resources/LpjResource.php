@@ -58,6 +58,11 @@ class LpjResource extends JsonResource
             'validation_notes' => $this->validation_notes,
             'validated_by_user' => new UserResource($this->whenLoaded('validatedByUser')),
 
+            // Kasir print info
+            'printed_at' => $this->printed_at?->toISOString(),
+            'printed_by' => $this->printed_by,
+            'printed_by_user' => new UserResource($this->whenLoaded('printedByUser')),
+
             'tahun' => $this->tahun,
             'ditujukan' => $this->ditujukan,
 

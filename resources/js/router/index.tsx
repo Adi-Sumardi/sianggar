@@ -58,6 +58,8 @@ const ApprovalQueue = lazy(() => import('@/pages/proposal/ApprovalQueue'));
 const ApprovalDetail = lazy(() => import('@/pages/proposal/ApprovalDetail'));
 const VoucherHistory = lazy(() => import('@/pages/proposal/VoucherHistory'));
 const PaymentHistory = lazy(() => import('@/pages/proposal/PaymentHistory'));
+const AntrianCetak = lazy(() => import('@/pages/proposal/AntrianCetak'));
+const RiwayatCetak = lazy(() => import('@/pages/proposal/RiwayatCetak'));
 const PerubahanList = lazy(() => import('@/pages/proposal/PerubahanList'));
 
 // Perubahan Anggaran (Budget Transfer)
@@ -333,6 +335,22 @@ export function AppRouter() {
                         element={
                             <PermissionGuard permissions={[Permission.APPROVE_PROPOSALS]}>
                                 <PaymentHistory />
+                            </PermissionGuard>
+                        }
+                    />
+                    <Route
+                        path="print-queue"
+                        element={
+                            <PermissionGuard permissions={[Permission.APPROVE_PROPOSALS]}>
+                                <AntrianCetak />
+                            </PermissionGuard>
+                        }
+                    />
+                    <Route
+                        path="print-queue/history"
+                        element={
+                            <PermissionGuard permissions={[Permission.APPROVE_PROPOSALS]}>
+                                <RiwayatCetak />
                             </PermissionGuard>
                         }
                     />

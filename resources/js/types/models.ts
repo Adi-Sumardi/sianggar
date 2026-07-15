@@ -433,6 +433,11 @@ export interface Lpj {
     validated_by: number | null;
     validation_notes: string | null;
 
+    // Kasir print info
+    printed_at?: string | null;
+    printed_by?: number | null;
+    printed_by_user?: User | null;
+
     tahun: string;
     ditujukan: string | null;
     created_at: string;
