@@ -91,6 +91,7 @@ describe('Ledger API', function () {
         it('posts a balanced manual entry', function () {
             $user = User::factory()->admin()->create();
             $user->givePermissionTo('manage-budget');
+            $user->givePermissionTo('view-budget');
 
             $unit = Unit::factory()->create();
             $kas = Account::create(['kode' => '1901', 'nama' => 'Kas Test', 'tipe' => 'aset', 'saldo_normal' => 'debit']);
@@ -107,76 +108,14 @@ describe('Ledger API', function () {
             ]);
 
             $response->assertCreated()
-                ->assertJsonPath('data.status', 'draft');
+                ->assertJsonPath('data.status', 'posted');
 
             expect($response->json('data.items'))->toHaveCount(2);
-        });
-    });
 
-    describe('POST /api/v1/ledger/journal-entries/{id}/post', function () {
-        it('posts a draft entry and makes it appear in reports', function () {
-            $user = User::factory()->admin()->create();
-            $user->givePermissionTo('manage-budget');
-            $user->givePermissionTo('view-budget');
-
-            $unit = Unit::factory()->create();
-            $kas = Account::create(['kode' => '1902', 'nama' => 'Kas Test', 'tipe' => 'aset', 'saldo_normal' => 'debit']);
-            $beban = Account::create(['kode' => '5902', 'nama' => 'Beban Test', 'tipe' => 'beban', 'saldo_normal' => 'debit']);
-
-            $createResponse = $this->actingAs($user)->postJson('/api/v1/ledger/journal-entries', [
-                'tanggal' => now()->toDateString(),
-                'unit_id' => $unit->id,
-                'keterangan' => 'Penyesuaian test',
-                'items' => [
-                    ['account_id' => $beban->id, 'unit_id' => $unit->id, 'debit' => 100000, 'kredit' => 0],
-                    ['account_id' => $kas->id, 'unit_id' => $unit->id, 'debit' => 0, 'kredit' => 100000],
-                ],
-            ]);
-            $createResponse->assertCreated()->assertJsonPath('data.status', 'draft');
-            $entryId = $createResponse->json('data.id');
-
-            // Entry masih draft -> belum muncul di trial-balance.
-            $tbBefore = $this->actingAs($user)->getJson("/api/v1/ledger/trial-balance?tahun={$unit->created_at->format('Y')}&unit_id={$unit->id}");
-            $tbBefore->assertOk();
-            $bebanRowBefore = collect($tbBefore->json('rows'))->firstWhere('account.id', $beban->id);
-            expect((float) ($bebanRowBefore['total_debit'] ?? 0))->toBe(0.0);
-
-            $glBefore = $this->actingAs($user)->getJson("/api/v1/ledger/general-ledger?account_id={$beban->id}&unit_id={$unit->id}&tahun=" . now()->format('Y'));
-            $glBefore->assertOk();
-            expect($glBefore->json('mutasi'))->toHaveCount(0);
-
-            $postResponse = $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/post");
-            $postResponse->assertOk()->assertJsonPath('data.status', 'posted');
-
-            // Setelah diposting, entry muncul di general-ledger untuk tahun sekarang.
+            // Manual entry langsung posted -> langsung muncul di general-ledger.
             $glAfter = $this->actingAs($user)->getJson("/api/v1/ledger/general-ledger?account_id={$beban->id}&unit_id={$unit->id}&tahun=" . now()->format('Y'));
             $glAfter->assertOk();
             expect($glAfter->json('mutasi'))->toHaveCount(1);
-        });
-
-        it('returns 422 when posting an already-posted entry', function () {
-            $user = User::factory()->admin()->create();
-            $user->givePermissionTo('manage-budget');
-
-            $unit = Unit::factory()->create();
-            $kas = Account::create(['kode' => '1903', 'nama' => 'Kas Test', 'tipe' => 'aset', 'saldo_normal' => 'debit']);
-            $beban = Account::create(['kode' => '5903', 'nama' => 'Beban Test', 'tipe' => 'beban', 'saldo_normal' => 'debit']);
-
-            $createResponse = $this->actingAs($user)->postJson('/api/v1/ledger/journal-entries', [
-                'tanggal' => now()->toDateString(),
-                'unit_id' => $unit->id,
-                'items' => [
-                    ['account_id' => $beban->id, 'unit_id' => $unit->id, 'debit' => 50000, 'kredit' => 0],
-                    ['account_id' => $kas->id, 'unit_id' => $unit->id, 'debit' => 0, 'kredit' => 50000],
-                ],
-            ]);
-            $entryId = $createResponse->json('data.id');
-
-            $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/post")->assertOk();
-
-            $secondPost = $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/post");
-            $secondPost->assertUnprocessable()
-                ->assertJsonPath('message', 'Hanya jurnal berstatus draft yang dapat diposting.');
         });
     });
 
@@ -199,8 +138,6 @@ describe('Ledger API', function () {
                 ],
             ]);
             $entryId = $createResponse->json('data.id');
-
-            $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/post")->assertOk();
 
             $reverseResponse = $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/reverse");
             $reverseResponse->assertCreated();
@@ -235,7 +172,6 @@ describe('Ledger API', function () {
                 ],
             ]);
             $entryId = $createResponse->json('data.id');
-            $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/post")->assertOk();
 
             $cancelResponse = $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/cancel-reversal");
             $cancelResponse->assertUnprocessable()

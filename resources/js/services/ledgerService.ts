@@ -92,11 +92,6 @@ export async function reverseJournalEntry(id: number | string, notes?: string): 
     return data.data;
 }
 
-export async function postJournalEntry(id: number | string): Promise<JournalEntry> {
-    const { data } = await api.post<ApiResponse<JournalEntry>>(`/ledger/journal-entries/${id}/post`);
-    return data.data;
-}
-
 export async function cancelReversal(id: number | string): Promise<JournalEntry> {
     const { data } = await api.post<ApiResponse<JournalEntry>>(`/ledger/journal-entries/${id}/cancel-reversal`);
     return data.data;

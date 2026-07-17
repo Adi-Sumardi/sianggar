@@ -78,9 +78,11 @@ class LedgerService
                 'unit_id' => $unit->id,
                 'sumber_type' => Lpj::class,
                 'sumber_id' => $lpj->id,
-                'status' => JournalEntryStatus::Draft->value,
+                'status' => JournalEntryStatus::Posted->value,
                 'keterangan' => "Realisasi LPJ {$lpj->no_surat}",
                 'created_by' => $postedById,
+                'posted_by' => $postedById,
+                'posted_at' => now(),
             ]);
 
             $entry->items()->createMany([
@@ -102,7 +104,7 @@ class LedgerService
 
             ActivityLog::log(
                 $entry,
-                'journal_entry_created',
+                'journal_entry_posted',
                 null,
                 ['sumber' => 'lpj', 'lpj_id' => $lpj->id, 'jumlah' => $jumlah],
                 $postedById,
@@ -155,9 +157,12 @@ class LedgerService
                 'unit_id' => $unit->id,
                 'sumber_type' => PengajuanAnggaran::class,
                 'sumber_id' => $pengajuan->id,
-                'status' => JournalEntryStatus::Draft->value,
+                'status' => JournalEntryStatus::Posted->value,
+                'no_bukti' => $pengajuan->no_voucher,
                 'keterangan' => "Pencairan Pengajuan {$pengajuan->no_surat}",
                 'created_by' => $postedById,
+                'posted_by' => $postedById,
+                'posted_at' => now(),
             ]);
 
             $entry->items()->createMany([
@@ -179,7 +184,7 @@ class LedgerService
 
             ActivityLog::log(
                 $entry,
-                'journal_entry_created',
+                'journal_entry_posted',
                 null,
                 ['sumber' => 'pengajuan_paid', 'pengajuan_id' => $pengajuan->id, 'jumlah' => $jumlah],
                 $postedById,
@@ -232,8 +237,9 @@ class LedgerService
                 'unit_id' => $unit->id,
                 'sumber_type' => Penerimaan::class,
                 'sumber_id' => $penerimaan->id,
-                'status' => JournalEntryStatus::Draft->value,
+                'status' => JournalEntryStatus::Posted->value,
                 'keterangan' => "Penerimaan {$penerimaan->nama_penerimaan}",
+                'posted_at' => now(),
             ]);
 
             $entry->items()->createMany([
@@ -440,9 +446,11 @@ class LedgerService
                 'tanggal' => $tanggal,
                 'journal_id' => $journal?->id,
                 'unit_id' => $unitId,
-                'status' => JournalEntryStatus::Draft->value,
+                'status' => JournalEntryStatus::Posted->value,
                 'keterangan' => $keterangan,
                 'created_by' => $user->id,
+                'posted_by' => $user->id,
+                'posted_at' => now(),
             ]);
 
             foreach ($items as $item) {
@@ -457,7 +465,7 @@ class LedgerService
 
             ActivityLog::log(
                 $entry,
-                'journal_entry_created',
+                'journal_entry_posted',
                 null,
                 ['sumber' => 'manual', 'jumlah' => array_sum(array_column($items, 'debit'))],
                 $user->id,
@@ -465,38 +473,6 @@ class LedgerService
 
             return $entry;
         });
-    }
-
-    /**
-     * Posting jurnal berstatus draft menjadi posted — aksi manual oleh user
-     * berwenang, dilakukan setelah entry dibuat (postFromLpj/postFromPengajuanPaid/
-     * postFromPenerimaan/createManualEntry semuanya membuat entry berstatus
-     * draft dulu). Hanya setelah diposting entry ikut terhitung di laporan
-     * (lihat filter status di getAccountMutations).
-     */
-    public function postEntry(JournalEntry $entry, User $user): JournalEntry
-    {
-        if ($entry->status !== JournalEntryStatus::Draft) {
-            throw new \RuntimeException('Hanya jurnal berstatus draft yang dapat diposting.');
-        }
-
-        DB::transaction(function () use ($entry, $user) {
-            $entry->update([
-                'status' => JournalEntryStatus::Posted->value,
-                'posted_by' => $user->id,
-                'posted_at' => now(),
-            ]);
-
-            ActivityLog::log(
-                $entry,
-                'journal_entry_posted',
-                null,
-                ['posted_by' => $user->id],
-                $user->id,
-            );
-        });
-
-        return $entry->fresh();
     }
 
     /**

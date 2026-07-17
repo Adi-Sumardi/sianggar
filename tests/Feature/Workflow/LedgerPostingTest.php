@@ -82,15 +82,8 @@ it('posts a journal entry (Debit Beban / Kredit Uang Muka Kegiatan) when LPJ is 
     $entry = JournalEntry::where('sumber_type', Lpj::class)->where('sumber_id', $lpj->id)->first();
 
     expect($entry)->not->toBeNull()
-        ->and($entry->status->value)->toBe('draft')
+        ->and($entry->status->value)->toBe('posted')
         ->and($entry->unit_id)->toBe($unit->id);
-
-    // Entry masih draft -> belum ikut terhitung di laporan (getAccountMutations
-    // hanya menghitung entry Posted). Posting secara eksplisit sebelum
-    // assertion-assertion di bawah yang mengecek saldo/mutasi akun.
-    $this->ledgerService->postEntry($entry, $keuangan);
-    $entry->refresh();
-    expect($entry->status->value)->toBe('posted');
 
     $items = $entry->items()->get();
     expect($items)->toHaveCount(2);
@@ -163,12 +156,7 @@ it('does not double-count Dana Unit when a proposal goes Paid then its LPJ is fu
         ->first();
 
     expect($paidEntry)->not->toBeNull()
-        ->and($paidEntry->status->value)->toBe('draft');
-
-    // Posting eksplisit sebelum assertion saldo/mutasi lain.
-    $this->ledgerService->postEntry($paidEntry, $keuangan);
-    $paidEntry->refresh();
-    expect($paidEntry->status->value)->toBe('posted');
+        ->and($paidEntry->status->value)->toBe('posted');
 
     $paidItems = $paidEntry->items()->get();
     $paidDebit = $paidItems->firstWhere('debit', '>', 0);
@@ -203,12 +191,7 @@ it('does not double-count Dana Unit when a proposal goes Paid then its LPJ is fu
 
     $lpjEntry = JournalEntry::where('sumber_type', Lpj::class)->where('sumber_id', $lpj->id)->first();
     expect($lpjEntry)->not->toBeNull()
-        ->and($lpjEntry->status->value)->toBe('draft');
-
-    // Posting eksplisit sebelum assertion saldo/mutasi lain.
-    $this->ledgerService->postEntry($lpjEntry, $keuangan);
-    $lpjEntry->refresh();
-    expect($lpjEntry->status->value)->toBe('posted');
+        ->and($lpjEntry->status->value)->toBe('posted');
 
     $lpjItems = $lpjEntry->items()->get();
     $lpjKredit = $lpjItems->firstWhere('kredit', '>', 0);

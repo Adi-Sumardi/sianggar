@@ -10,7 +10,6 @@ import {
     Pencil,
     Undo2,
     Redo2,
-    CheckCircle2,
     Wallet,
     Scale,
     FileBarChart,
@@ -36,7 +35,6 @@ import {
     useDeleteAccount,
     useJournalEntries,
     useReverseJournalEntry,
-    usePostJournalEntry,
     useCancelReversal,
     useCreateManualEntry,
     useGeneralLedger,
@@ -377,7 +375,6 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
     const [selected, setSelected] = useState<JournalEntry | null>(null);
     const [showManualForm, setShowManualForm] = useState(false);
     const reverseMutation = useReverseJournalEntry();
-    const postMutation = usePostJournalEntry();
     const cancelReversalMutation = useCancelReversal();
 
     const { data, isLoading } = useJournalEntries({ unit_id: unitId, status });
@@ -391,13 +388,6 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
                 onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal membalik jurnal'),
             },
         );
-    };
-
-    const handlePost = (entry: JournalEntry) => {
-        postMutation.mutate(entry.id, {
-            onSuccess: () => toast.success('Jurnal berhasil diposting'),
-            onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal memposting jurnal'),
-        });
     };
 
     const handleCancelReversal = (entry: JournalEntry) => {
@@ -440,18 +430,6 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
                           header: 'Aksi',
                           cell: ({ row }: { row: { original: JournalEntry } }) => (
                               <div className="flex items-center gap-1">
-                                  {row.original.status === 'draft' && (
-                                      <button
-                                          onClick={(e) => {
-                                              e.stopPropagation();
-                                              handlePost(row.original);
-                                          }}
-                                          className="flex items-center gap-1 rounded p-1.5 text-blue-600 hover:bg-blue-50"
-                                          title="Posting jurnal"
-                                      >
-                                          <CheckCircle2 className="h-4 w-4" />
-                                      </button>
-                                  )}
                                   {row.original.status === 'posted' && (
                                       <button
                                           onClick={(e) => {

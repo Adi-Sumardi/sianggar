@@ -94,21 +94,6 @@ export function useReverseJournalEntry() {
     });
 }
 
-export function usePostJournalEntry() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (id: number | string) => ledgerService.postJournalEntry(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
-            queryClient.invalidateQueries({ queryKey: ['general-ledger'] });
-            queryClient.invalidateQueries({ queryKey: ['unit-ledger'] });
-            queryClient.invalidateQueries({ queryKey: ['trial-balance'] });
-            queryClient.invalidateQueries({ queryKey: ['income-statement'] });
-            queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
-        },
-    });
-}
-
 export function useCancelReversal() {
     const queryClient = useQueryClient();
     return useMutation({
