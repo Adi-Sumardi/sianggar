@@ -12,7 +12,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useMataAnggarans, useDeleteMataAnggaran, useSubMataAnggarans } from '@/hooks/useBudget';
 import { useUnitsList } from '@/hooks/useUnits';
 import { useAuth } from '@/hooks/useAuth';
-import { canUnitEditBudget, UNIT_EDIT_DISABLED_MESSAGE } from '@/lib/unitEditPolicy';
+import { UNIT_EDIT_DISABLED_MESSAGE } from '@/lib/unitEditPolicy';
 import { getAcademicYearOptions } from '@/stores/authStore';
 import { UserRole, isApproverRole } from '@/types/enums';
 import type { MataAnggaran, SubMataAnggaran } from '@/types/models';
@@ -146,7 +146,9 @@ export default function MataAnggaranList() {
                             <button
                                 type="button"
                                 onClick={() => navigate('/budget/mata-anggaran/create')}
-                                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                disabled
+                                title="Fitur ini sedang dinonaktifkan sementara"
+                                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Plus className="h-4 w-4" />
                                 Tambah Mata Anggaran
@@ -269,9 +271,10 @@ interface MataAnggaranRowProps {
 
 function MataAnggaranRow({ item, isExpanded, isAdmin, onToggle, onView, onEdit, onDelete }: MataAnggaranRowProps) {
     const subCount = item.sub_mata_anggarans_count ?? item.sub_mata_anggarans?.length ?? 0;
-    // Superadmin bisa edit/hapus mata anggaran unit mana pun, tanpa dibatasi
-    // whitelist unit (Bagian Umum/STEBANK/YAPI Sekertariat).
-    const unitEditable = isAdmin || canUnitEditBudget(item.unit?.nama, item.unit?.kode);
+    // Edit & Hapus Mata Anggaran dinonaktifkan sementara (permintaan user,
+    // 2026-07-17) - tombol tetap tampil (abu-abu) tapi tidak bisa diklik,
+    // terlepas dari role/unit.
+    const unitEditable = false;
 
     // Fetch sub mata anggarans when expanded
     const {

@@ -13,7 +13,6 @@ import { DataTable } from '@/components/common/DataTable';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatRupiah } from '@/lib/currency';
 import { staggerContainer, staggerItem } from '@/lib/animations';
-import { canUnitEditBudget, UNIT_EDIT_DISABLED_MESSAGE } from '@/lib/unitEditPolicy';
 
 import {
     usePkts,
@@ -251,14 +250,11 @@ export default function PktList() {
             header: '',
             enableSorting: false,
             cell: ({ row }) => {
-                // Superadmin bisa edit PKT unit mana pun, tanpa dibatasi whitelist unit.
-                const unitEditable = isAdmin || canUnitEditBudget(
-                    row.original.unit_relation?.nama,
-                    row.original.unit_relation?.kode,
-                    row.original.unit || user?.unit?.nama,
-                );
-                const disabled = rapbsLocked || !unitEditable;
-                const disabledTitle = !unitEditable ? UNIT_EDIT_DISABLED_MESSAGE : 'RAPBS sedang diajukan';
+                // Edit & Hapus PKT dinonaktifkan sementara (permintaan user,
+                // 2026-07-17) - tombol tetap tampil (abu-abu) tapi tidak bisa
+                // diklik, terlepas dari role/status RAPBS.
+                const disabled = true;
+                const disabledTitle = 'Fitur ini sedang dinonaktifkan sementara';
 
                 return (
                     <div className="flex items-center gap-1">
@@ -315,7 +311,8 @@ export default function PktList() {
                                 <button
                                     type="button"
                                     onClick={() => navigate('/planning/pkt/create')}
-                                    disabled={rapbsLocked}
+                                    disabled
+                                    title="Fitur ini sedang dinonaktifkan sementara"
                                     className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <Plus className="h-4 w-4" />
