@@ -201,6 +201,37 @@ describe('Ledger API', function () {
                 ->assertJsonPath('saldo_awal', 5000000)
                 ->assertJsonPath('saldo_akhir', 5000000);
         });
+
+        it('adopts a legacy Dana Unit account (parent_id null) instead of colliding on unique kode', function () {
+            // Regresi produksi: unit yang akun Dana Unit-nya dibuat lazy
+            // SEBELUM grup akun "1000" ada (parent_id masih null) bikin
+            // getOrCreateUnitDanaAccount() gagal menemukannya via filter
+            // parent_id, lalu coba create() baris baru dengan kode yang
+            // SAMA -> UniqueConstraintViolationException -> 500 di semua
+            // laporan yang difilter per unit (unit-ledger, trial-balance,
+            // income-statement, balance-sheet).
+            $user = User::factory()->admin()->create();
+            $user->givePermissionTo('view-budget');
+
+            $unit = Unit::factory()->create();
+            $legacyKode = '1' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT);
+            $legacyAccount = Account::create([
+                'kode' => $legacyKode, 'nama' => "Dana Unit - {$unit->nama}",
+                'tipe' => AccountType::Aset->value, 'saldo_normal' => NormalBalance::Debit->value,
+                'unit_id' => $unit->id, 'parent_id' => null,
+            ]);
+            Account::create([
+                'kode' => '1000', 'nama' => 'Dana Internal Unit', 'tipe' => AccountType::Aset->value,
+                'saldo_normal' => NormalBalance::Debit->value, 'is_postable' => false,
+            ]);
+
+            $response = $this->actingAs($user)->getJson("/api/v1/ledger/unit-ledger?unit_id={$unit->id}&tahun=2025");
+
+            $response->assertOk();
+            expect($response->json('account.id'))->toBe($legacyAccount->id);
+            expect(Account::where('kode', $legacyKode)->count())->toBe(1);
+            expect($legacyAccount->fresh()->parent_id)->not->toBeNull();
+        });
     });
 
     describe('GET /api/v1/ledger/trial-balance', function () {

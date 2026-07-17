@@ -371,8 +371,23 @@ class LedgerService
             return $account;
         }
 
+        $kode = '1' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT);
+
+        // Bisa jadi akun ini sudah ada tapi parent_id-nya belum benar
+        // (dibuat lazy sebelum grup "1000" ada) - adopsi baris itu
+        // (perbaiki parent_id-nya) daripada create() baru & bentrok
+        // unique constraint kode.
+        $legacy = Account::where('kode', $kode)->first();
+        if ($legacy) {
+            if ($legacy->parent_id !== $danaGroup?->id) {
+                $legacy->update(['parent_id' => $danaGroup?->id]);
+            }
+
+            return $legacy;
+        }
+
         return Account::create([
-            'kode' => '1' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT),
+            'kode' => $kode,
             'nama' => "Dana Unit — {$unit->nama}",
             'tipe' => AccountType::Aset->value,
             'saldo_normal' => NormalBalance::Debit->value,
@@ -399,8 +414,19 @@ class LedgerService
             return $account;
         }
 
+        $kode = '15' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT);
+
+        $legacy = Account::where('kode', $kode)->first();
+        if ($legacy) {
+            if ($legacy->parent_id !== $uangMukaGroup?->id) {
+                $legacy->update(['parent_id' => $uangMukaGroup?->id]);
+            }
+
+            return $legacy;
+        }
+
         return Account::create([
-            'kode' => '15' . str_pad((string) $unit->id, 3, '0', STR_PAD_LEFT),
+            'kode' => $kode,
             'nama' => "Uang Muka Kegiatan — {$unit->nama}",
             'tipe' => AccountType::Aset->value,
             'saldo_normal' => NormalBalance::Debit->value,

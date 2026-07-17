@@ -248,9 +248,13 @@ class LedgerController extends Controller
             'tahun' => ['required', 'string', 'max:10'],
         ]);
 
-        $unit = Unit::findOrFail($validated['unit_id']);
-        $account = $this->ledgerService->getOrCreateUnitDanaAccount($unit);
-        $result = $this->ledgerService->getAccountMutations($account, $unit->id, $validated['tahun']);
+        try {
+            $unit = Unit::findOrFail($validated['unit_id']);
+            $account = $this->ledgerService->getOrCreateUnitDanaAccount($unit);
+            $result = $this->ledgerService->getAccountMutations($account, $unit->id, $validated['tahun']);
+        } catch (\Throwable $e) {
+            return $this->reportError('unit-ledger', $validated, $e);
+        }
 
         return response()->json([
             'unit' => ['id' => $unit->id, 'nama' => $unit->nama],
