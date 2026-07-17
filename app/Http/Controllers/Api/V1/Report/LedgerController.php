@@ -181,6 +181,25 @@ class LedgerController extends Controller
         ], 201);
     }
 
+    /**
+     * Posting jurnal yang masih berstatus draft.
+     */
+    public function postJournalEntry(Request $request, JournalEntry $journalEntry): JsonResponse
+    {
+        try {
+            $entry = $this->ledgerService->postEntry($journalEntry, $request->user());
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        $entry->load(['journal', 'unit', 'items.account']);
+
+        return response()->json([
+            'message' => 'Jurnal berhasil diposting.',
+            'data' => new JournalEntryResource($entry),
+        ]);
+    }
+
     // =========================================================================
     // General Ledger (Buku Besar) Report
     // =========================================================================

@@ -9,6 +9,7 @@ import {
     Trash2,
     Pencil,
     Undo2,
+    CheckCircle2,
     Wallet,
     Scale,
     FileBarChart,
@@ -34,6 +35,7 @@ import {
     useDeleteAccount,
     useJournalEntries,
     useReverseJournalEntry,
+    usePostJournalEntry,
     useCreateManualEntry,
     useGeneralLedger,
     useUnitLedger,
@@ -373,6 +375,7 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
     const [selected, setSelected] = useState<JournalEntry | null>(null);
     const [showManualForm, setShowManualForm] = useState(false);
     const reverseMutation = useReverseJournalEntry();
+    const postMutation = usePostJournalEntry();
 
     const { data, isLoading } = useJournalEntries({ unit_id: unitId, status });
     const entries = data?.data ?? [];
@@ -385,6 +388,13 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
                 onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal membalik jurnal'),
             },
         );
+    };
+
+    const handlePost = (entry: JournalEntry) => {
+        postMutation.mutate(entry.id, {
+            onSuccess: () => toast.success('Jurnal berhasil diposting'),
+            onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal memposting jurnal'),
+        });
     };
 
     const columns = useMemo<ColumnDef<JournalEntry>[]>(
@@ -418,19 +428,34 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
                       {
                           id: 'actions',
                           header: 'Aksi',
-                          cell: ({ row }: { row: { original: JournalEntry } }) =>
-                              row.original.status === 'posted' ? (
-                                  <button
-                                      onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleReverse(row.original);
-                                      }}
-                                      className="flex items-center gap-1 rounded p-1.5 text-amber-600 hover:bg-amber-50"
-                                      title="Balik jurnal"
-                                  >
-                                      <Undo2 className="h-4 w-4" />
-                                  </button>
-                              ) : null,
+                          cell: ({ row }: { row: { original: JournalEntry } }) => (
+                              <div className="flex items-center gap-1">
+                                  {row.original.status === 'draft' && (
+                                      <button
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              handlePost(row.original);
+                                          }}
+                                          className="flex items-center gap-1 rounded p-1.5 text-blue-600 hover:bg-blue-50"
+                                          title="Posting jurnal"
+                                      >
+                                          <CheckCircle2 className="h-4 w-4" />
+                                      </button>
+                                  )}
+                                  {row.original.status === 'posted' && (
+                                      <button
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleReverse(row.original);
+                                          }}
+                                          className="flex items-center gap-1 rounded p-1.5 text-amber-600 hover:bg-amber-50"
+                                          title="Balik jurnal"
+                                      >
+                                          <Undo2 className="h-4 w-4" />
+                                      </button>
+                                  )}
+                              </div>
+                          ),
                       } as ColumnDef<JournalEntry>,
                   ]
                 : []),
@@ -460,6 +485,7 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
                         className={selectClass}
                     >
                         <option value="">Semua Status</option>
+                        <option value="draft">Draft</option>
                         <option value="posted">Terposting</option>
                         <option value="reversed">Dibalik</option>
                     </select>

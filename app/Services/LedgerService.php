@@ -78,11 +78,9 @@ class LedgerService
                 'unit_id' => $unit->id,
                 'sumber_type' => Lpj::class,
                 'sumber_id' => $lpj->id,
-                'status' => JournalEntryStatus::Posted->value,
+                'status' => JournalEntryStatus::Draft->value,
                 'keterangan' => "Realisasi LPJ {$lpj->no_surat}",
                 'created_by' => $postedById,
-                'posted_by' => $postedById,
-                'posted_at' => now(),
             ]);
 
             $entry->items()->createMany([
@@ -104,7 +102,7 @@ class LedgerService
 
             ActivityLog::log(
                 $entry,
-                'journal_entry_posted',
+                'journal_entry_created',
                 null,
                 ['sumber' => 'lpj', 'lpj_id' => $lpj->id, 'jumlah' => $jumlah],
                 $postedById,
@@ -157,11 +155,9 @@ class LedgerService
                 'unit_id' => $unit->id,
                 'sumber_type' => PengajuanAnggaran::class,
                 'sumber_id' => $pengajuan->id,
-                'status' => JournalEntryStatus::Posted->value,
+                'status' => JournalEntryStatus::Draft->value,
                 'keterangan' => "Pencairan Pengajuan {$pengajuan->no_surat}",
                 'created_by' => $postedById,
-                'posted_by' => $postedById,
-                'posted_at' => now(),
             ]);
 
             $entry->items()->createMany([
@@ -183,7 +179,7 @@ class LedgerService
 
             ActivityLog::log(
                 $entry,
-                'journal_entry_posted',
+                'journal_entry_created',
                 null,
                 ['sumber' => 'pengajuan_paid', 'pengajuan_id' => $pengajuan->id, 'jumlah' => $jumlah],
                 $postedById,
@@ -236,9 +232,8 @@ class LedgerService
                 'unit_id' => $unit->id,
                 'sumber_type' => Penerimaan::class,
                 'sumber_id' => $penerimaan->id,
-                'status' => JournalEntryStatus::Posted->value,
+                'status' => JournalEntryStatus::Draft->value,
                 'keterangan' => "Penerimaan {$penerimaan->nama_penerimaan}",
-                'posted_at' => now(),
             ]);
 
             $entry->items()->createMany([
@@ -375,8 +370,9 @@ class LedgerService
 
     /**
      * Buat jurnal manual (penyesuaian) — divalidasi harus balance
-     * (total debit = total kredit) dan minimal 2 baris. Langsung
-     * berstatus posted (tidak ada alur draft/approval terpisah di MVP ini).
+     * (total debit = total kredit) dan minimal 2 baris. Dibuat berstatus
+     * draft dulu — perlu diposting terpisah lewat postEntry() sebelum
+     * ikut terhitung di laporan.
      *
      * @param  array<int, array{account_id: int, unit_id: int, debit: float, kredit: float, keterangan?: string|null}>  $items
      */
@@ -409,11 +405,9 @@ class LedgerService
                 'tanggal' => $tanggal,
                 'journal_id' => $journal?->id,
                 'unit_id' => $unitId,
-                'status' => JournalEntryStatus::Posted->value,
+                'status' => JournalEntryStatus::Draft->value,
                 'keterangan' => $keterangan,
                 'created_by' => $user->id,
-                'posted_by' => $user->id,
-                'posted_at' => now(),
             ]);
 
             foreach ($items as $item) {
@@ -428,7 +422,7 @@ class LedgerService
 
             ActivityLog::log(
                 $entry,
-                'journal_entry_posted',
+                'journal_entry_created',
                 null,
                 ['sumber' => 'manual', 'jumlah' => array_sum(array_column($items, 'debit'))],
                 $user->id,
@@ -436,6 +430,38 @@ class LedgerService
 
             return $entry;
         });
+    }
+
+    /**
+     * Posting jurnal berstatus draft menjadi posted — aksi manual oleh user
+     * berwenang, dilakukan setelah entry dibuat (postFromLpj/postFromPengajuanPaid/
+     * postFromPenerimaan/createManualEntry semuanya membuat entry berstatus
+     * draft dulu). Hanya setelah diposting entry ikut terhitung di laporan
+     * (lihat filter status di getAccountMutations).
+     */
+    public function postEntry(JournalEntry $entry, User $user): JournalEntry
+    {
+        if ($entry->status !== JournalEntryStatus::Draft) {
+            throw new \RuntimeException('Hanya jurnal berstatus draft yang dapat diposting.');
+        }
+
+        DB::transaction(function () use ($entry, $user) {
+            $entry->update([
+                'status' => JournalEntryStatus::Posted->value,
+                'posted_by' => $user->id,
+                'posted_at' => now(),
+            ]);
+
+            ActivityLog::log(
+                $entry,
+                'journal_entry_posted',
+                null,
+                ['posted_by' => $user->id],
+                $user->id,
+            );
+        });
+
+        return $entry->fresh();
     }
 
     /**
