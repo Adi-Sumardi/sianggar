@@ -9,6 +9,7 @@ import {
     Trash2,
     Pencil,
     Undo2,
+    Redo2,
     CheckCircle2,
     Wallet,
     Scale,
@@ -36,6 +37,7 @@ import {
     useJournalEntries,
     useReverseJournalEntry,
     usePostJournalEntry,
+    useCancelReversal,
     useCreateManualEntry,
     useGeneralLedger,
     useUnitLedger,
@@ -376,6 +378,7 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
     const [showManualForm, setShowManualForm] = useState(false);
     const reverseMutation = useReverseJournalEntry();
     const postMutation = usePostJournalEntry();
+    const cancelReversalMutation = useCancelReversal();
 
     const { data, isLoading } = useJournalEntries({ unit_id: unitId, status });
     const entries = data?.data ?? [];
@@ -394,6 +397,13 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
         postMutation.mutate(entry.id, {
             onSuccess: () => toast.success('Jurnal berhasil diposting'),
             onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal memposting jurnal'),
+        });
+    };
+
+    const handleCancelReversal = (entry: JournalEntry) => {
+        cancelReversalMutation.mutate(entry.id, {
+            onSuccess: () => toast.success('Pembalikan jurnal berhasil dibatalkan, status kembali Terposting'),
+            onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal membatalkan pembalikan jurnal'),
         });
     };
 
@@ -452,6 +462,18 @@ function JurnalUmumTab({ canManage }: { canManage: boolean }) {
                                           title="Balik jurnal"
                                       >
                                           <Undo2 className="h-4 w-4" />
+                                      </button>
+                                  )}
+                                  {row.original.status === 'reversed' && (
+                                      <button
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleCancelReversal(row.original);
+                                          }}
+                                          className="flex items-center gap-1 rounded p-1.5 text-emerald-600 hover:bg-emerald-50"
+                                          title="Batalkan pembalikan (kembali ke Terposting)"
+                                      >
+                                          <Redo2 className="h-4 w-4" />
                                       </button>
                                   )}
                               </div>

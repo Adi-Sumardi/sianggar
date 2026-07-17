@@ -299,6 +299,41 @@ class LedgerService
     }
 
     /**
+     * Batalkan pembalikan: hapus jurnal pembalik yang dibuat reverseEntry(),
+     * lalu kembalikan status jurnal asal ke posted. Dipakai kalau reverse
+     * dilakukan keliru dan perlu dikembalikan seperti semula.
+     */
+    public function cancelReversal(JournalEntry $entry, User $user): JournalEntry
+    {
+        if ($entry->status !== JournalEntryStatus::Reversed) {
+            throw new \RuntimeException('Hanya jurnal berstatus dibalik yang dapat dibatalkan pembalikannya.');
+        }
+
+        $reversalEntry = $entry->reversals()->latest('id')->first();
+
+        if (! $reversalEntry) {
+            throw new \RuntimeException('Jurnal pembalik tidak ditemukan.');
+        }
+
+        return DB::transaction(function () use ($entry, $reversalEntry, $user) {
+            ActivityLog::log(
+                $entry,
+                'journal_entry_reversal_cancelled',
+                ['reversal_entry_id' => $reversalEntry->id],
+                null,
+                $user->id,
+            );
+
+            $reversalEntry->items()->delete();
+            $reversalEntry->delete();
+
+            $entry->update(['status' => JournalEntryStatus::Posted->value]);
+
+            return $entry->fresh();
+        });
+    }
+
+    /**
      * Saldo awal (debit) akun Dana Unit untuk sebuah tahun = total APBS unit
      * tsb, dihitung LIVE dari SUM(detail_mata_anggarans.anggaran_awal),
      * pola yang sama dengan ApbsController::applyLiveTotals.

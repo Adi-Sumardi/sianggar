@@ -97,6 +97,11 @@ export async function postJournalEntry(id: number | string): Promise<JournalEntr
     return data.data;
 }
 
+export async function cancelReversal(id: number | string): Promise<JournalEntry> {
+    const { data } = await api.post<ApiResponse<JournalEntry>>(`/ledger/journal-entries/${id}/cancel-reversal`);
+    return data.data;
+}
+
 export interface ManualEntryItemDTO {
     account_id: number;
     unit_id: number;

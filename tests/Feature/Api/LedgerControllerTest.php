@@ -180,6 +180,69 @@ describe('Ledger API', function () {
         });
     });
 
+    describe('POST /api/v1/ledger/journal-entries/{id}/cancel-reversal', function () {
+        it('cancels a reversal and returns the original entry to posted', function () {
+            $user = User::factory()->admin()->create();
+            $user->givePermissionTo('manage-budget');
+            $user->givePermissionTo('view-budget');
+
+            $unit = Unit::factory()->create();
+            $kas = Account::create(['kode' => '1904', 'nama' => 'Kas Test', 'tipe' => 'aset', 'saldo_normal' => 'debit']);
+            $beban = Account::create(['kode' => '5904', 'nama' => 'Beban Test', 'tipe' => 'beban', 'saldo_normal' => 'debit']);
+
+            $createResponse = $this->actingAs($user)->postJson('/api/v1/ledger/journal-entries', [
+                'tanggal' => now()->toDateString(),
+                'unit_id' => $unit->id,
+                'items' => [
+                    ['account_id' => $beban->id, 'unit_id' => $unit->id, 'debit' => 75000, 'kredit' => 0],
+                    ['account_id' => $kas->id, 'unit_id' => $unit->id, 'debit' => 0, 'kredit' => 75000],
+                ],
+            ]);
+            $entryId = $createResponse->json('data.id');
+
+            $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/post")->assertOk();
+
+            $reverseResponse = $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/reverse");
+            $reverseResponse->assertCreated();
+            $reversalId = $reverseResponse->json('data.id');
+
+            // Entry asal sekarang reversed.
+            $entryAfterReverse = $this->actingAs($user)->getJson("/api/v1/ledger/journal-entries/{$entryId}");
+            $entryAfterReverse->assertJsonPath('data.status', 'reversed');
+
+            $cancelResponse = $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/cancel-reversal");
+            $cancelResponse->assertOk()->assertJsonPath('data.status', 'posted');
+
+            // Jurnal pembalik sudah dihapus.
+            $reversalCheck = $this->actingAs($user)->getJson("/api/v1/ledger/journal-entries/{$reversalId}");
+            $reversalCheck->assertNotFound();
+        });
+
+        it('returns 422 when cancelling reversal on an entry that was never reversed', function () {
+            $user = User::factory()->admin()->create();
+            $user->givePermissionTo('manage-budget');
+
+            $unit = Unit::factory()->create();
+            $kas = Account::create(['kode' => '1905', 'nama' => 'Kas Test', 'tipe' => 'aset', 'saldo_normal' => 'debit']);
+            $beban = Account::create(['kode' => '5905', 'nama' => 'Beban Test', 'tipe' => 'beban', 'saldo_normal' => 'debit']);
+
+            $createResponse = $this->actingAs($user)->postJson('/api/v1/ledger/journal-entries', [
+                'tanggal' => now()->toDateString(),
+                'unit_id' => $unit->id,
+                'items' => [
+                    ['account_id' => $beban->id, 'unit_id' => $unit->id, 'debit' => 30000, 'kredit' => 0],
+                    ['account_id' => $kas->id, 'unit_id' => $unit->id, 'debit' => 0, 'kredit' => 30000],
+                ],
+            ]);
+            $entryId = $createResponse->json('data.id');
+            $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/post")->assertOk();
+
+            $cancelResponse = $this->actingAs($user)->postJson("/api/v1/ledger/journal-entries/{$entryId}/cancel-reversal");
+            $cancelResponse->assertUnprocessable()
+                ->assertJsonPath('message', 'Hanya jurnal berstatus dibalik yang dapat dibatalkan pembalikannya.');
+        });
+    });
+
     describe('GET /api/v1/ledger/unit-ledger', function () {
         it('computes saldo_awal live from APBS total (anggaran_awal)', function () {
             $user = User::factory()->admin()->create();

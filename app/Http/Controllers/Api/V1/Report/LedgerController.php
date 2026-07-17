@@ -200,6 +200,25 @@ class LedgerController extends Controller
         ]);
     }
 
+    /**
+     * Batalkan pembalikan jurnal yang berstatus reversed, kembalikan ke posted.
+     */
+    public function cancelReversal(Request $request, JournalEntry $journalEntry): JsonResponse
+    {
+        try {
+            $entry = $this->ledgerService->cancelReversal($journalEntry, $request->user());
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        $entry->load(['journal', 'unit', 'items.account']);
+
+        return response()->json([
+            'message' => 'Pembalikan jurnal berhasil dibatalkan.',
+            'data' => new JournalEntryResource($entry),
+        ]);
+    }
+
     // =========================================================================
     // General Ledger (Buku Besar) Report
     // =========================================================================

@@ -217,6 +217,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('ledger/accounts/{account}', [LedgerController::class, 'destroyAccount']);
             Route::post('ledger/journal-entries/{journalEntry}/reverse', [LedgerController::class, 'reverseJournalEntry']);
             Route::post('ledger/journal-entries/{journalEntry}/post', [LedgerController::class, 'postJournalEntry']);
+            Route::post('ledger/journal-entries/{journalEntry}/cancel-reversal', [LedgerController::class, 'cancelReversal']);
             Route::post('ledger/journal-entries', [LedgerController::class, 'storeManualEntry']);
         });
 
