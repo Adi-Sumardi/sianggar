@@ -99,7 +99,7 @@ class LaporanController extends Controller
 
         $pengajuans = PengajuanAnggaran::where('unit_id', $unitId)
             ->where('tahun', $tahun)
-            ->where('status_proses', 'approved')
+            ->where('status_proses', 'paid')
             ->get();
 
         $realisasi = RealisasiAnggaran::where('unit_id', $unitId)
@@ -157,7 +157,7 @@ class LaporanController extends Controller
 
             $totalPengajuan = PengajuanAnggaran::where('unit_id', $unit->id)
                 ->where('tahun', $tahun)
-                ->where('status_proses', 'approved')
+                ->where('status_proses', 'paid')
                 ->sum('jumlah_pengajuan_total');
 
             $totalRealisasi = RealisasiAnggaran::where('unit_id', $unit->id)

@@ -24,8 +24,10 @@ class RealisasiAnggaran extends Model
      */
     protected $fillable = [
         'unit_id',
+        'lpj_id',
         'tahun',
         'bulan',
+        'mata_anggaran',
         'jumlah_anggaran',
         'jumlah_realisasi',
         'sisa',
@@ -55,5 +57,10 @@ class RealisasiAnggaran extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function lpj(): BelongsTo
+    {
+        return $this->belongsTo(Lpj::class);
     }
 }
