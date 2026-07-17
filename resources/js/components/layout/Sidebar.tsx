@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { sidebarVariants } from '@/lib/animations';
-import { getRoleLabel, UserRole } from '@/types/enums';
+import { getRoleLabel, isSubstansiRole, isUnitRole, UserRole } from '@/types/enums';
 import { Permission } from '@/types/permissions';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { History, Printer as PrinterIcon } from 'lucide-react';
@@ -49,6 +49,8 @@ interface NavItem {
     label: string;
     to: string;
     icon: LucideIcon;
+    /** Sembunyikan item ini dari role Unit & Substansi (mis. Buku Besar). */
+    hiddenForUnitSubstansi?: boolean;
 }
 
 interface NavGroup {
@@ -100,7 +102,7 @@ const navigationGroups: NavGroup[] = [
             { label: 'Laporan Pengajuan', to: '/laporan/pengajuan', icon: BarChart3 },
             { label: 'Laporan Semester', to: '/laporan/semester', icon: Calendar },
             { label: 'Laporan Akuntansi', to: '/laporan/accounting', icon: Calculator },
-            { label: 'Buku Besar', to: '/laporan/buku-besar', icon: BookOpen },
+            { label: 'Buku Besar', to: '/laporan/buku-besar', icon: BookOpen, hiddenForUnitSubstansi: true },
         ],
     },
     {
@@ -187,6 +189,7 @@ export function Sidebar() {
     const userPermissions = user?.permissions ?? [];
     const isKasir = user?.role === UserRole.Kasir;
     const isPayment = user?.role === UserRole.Payment;
+    const isUnitOrSubstansi = !!user?.role && (isUnitRole(user.role as UserRole) || isSubstansiRole(user.role as UserRole));
 
     // Filter groups by permission - use role-specific nav for Kasir/Payment
     const visibleGroups = useMemo(
@@ -200,9 +203,14 @@ export function Sidebar() {
                     if (!group.permission) return true;
                     return userPermissions.includes(group.permission);
                 })
-;
+                .map((group) => ({
+                    ...group,
+                    items: isUnitOrSubstansi
+                        ? group.items.filter((item) => !item.hiddenForUnitSubstansi)
+                        : group.items,
+                }));
         },
-        [userPermissions, isKasir, isPayment],
+        [userPermissions, isKasir, isPayment, isUnitOrSubstansi],
     );
 
     // Collect all nav paths so prefix matching skips sibling menu items
@@ -506,6 +514,7 @@ export function MobileSidebar() {
     const isKasir = user?.role === UserRole.Kasir;
     const isPayment = user?.role === UserRole.Payment;
     const isAdmin = user?.role === UserRole.Admin;
+    const isUnitOrSubstansi = !!user?.role && (isUnitRole(user.role as UserRole) || isSubstansiRole(user.role as UserRole));
 
     const visibleGroups = useMemo(
         () => {
@@ -518,9 +527,14 @@ export function MobileSidebar() {
                     if (!group.permission) return true;
                     return userPermissions.includes(group.permission);
                 })
-;
+                .map((group) => ({
+                    ...group,
+                    items: isUnitOrSubstansi
+                        ? group.items.filter((item) => !item.hiddenForUnitSubstansi)
+                        : group.items,
+                }));
         },
-        [userPermissions, isKasir, isPayment],
+        [userPermissions, isKasir, isPayment, isUnitOrSubstansi],
     );
 
     // Collect all nav paths so prefix matching skips sibling menu items
