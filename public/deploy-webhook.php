@@ -196,16 +196,27 @@ if ($allSuccess && file_exists($appPath . '/vendor/autoload.php')) {
         $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
 
+        // Daftar (bukan asosiatif) karena beberapa command sama ('db:seed')
+        // dipanggil lebih dari sekali dengan --class berbeda.
+        //
+        // HANYA seeder idempotent (pakai firstOrCreate, aman dijalankan
+        // berulang) yang boleh masuk sini. JANGAN tambahkan db:seed tanpa
+        // --class / DatabaseSeeder penuh - seeder lain (PengajuanSeeder,
+        // LpjSeeder, RapbsSeeder, dst) berisi data contoh yang akan
+        // ter-duplikasi tiap deploy kalau dijalankan ulang.
         $commands = [
-            'migrate'     => ['--force' => true],
-            'config:cache' => [],
-            'route:cache'  => [],
-            'view:cache'   => [],
-            'event:cache'  => [],
+            ['migrate', ['--force' => true]],
+            ['db:seed', ['--class' => 'JournalSeeder', '--force' => true]],
+            ['db:seed', ['--class' => 'AccountSeeder', '--force' => true]],
+            ['config:cache', []],
+            ['route:cache', []],
+            ['view:cache', []],
+            ['event:cache', []],
         ];
 
-        foreach ($commands as $cmd => $params) {
-            echo "    php artisan {$cmd}... ";
+        foreach ($commands as [$cmd, $params]) {
+            $label = $cmd . (isset($params['--class']) ? " --class={$params['--class']}" : '');
+            echo "    php artisan {$label}... ";
             try {
                 $exitCode = \Illuminate\Support\Facades\Artisan::call($cmd, $params);
                 $output = \Illuminate\Support\Facades\Artisan::output();
