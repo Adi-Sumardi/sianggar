@@ -160,16 +160,20 @@ Route::prefix('v1')->group(function () {
             Route::get('coa/export/excel', [AccountingController::class, 'exportCoaExcel']);
             Route::get('coa/export/pdf', [AccountingController::class, 'exportCoaPdf']);
 
-            // Buku Besar (General Ledger) - read
-            Route::get('ledger/accounts', [LedgerController::class, 'accounts']);
-            Route::get('ledger/journals', [LedgerController::class, 'journals']);
-            Route::get('ledger/journal-entries', [LedgerController::class, 'journalEntries']);
-            Route::get('ledger/journal-entries/{journalEntry}', [LedgerController::class, 'showJournalEntry']);
-            Route::get('ledger/general-ledger', [LedgerController::class, 'generalLedger']);
-            Route::get('ledger/unit-ledger', [LedgerController::class, 'unitLedger']);
-            Route::get('ledger/trial-balance', [LedgerController::class, 'trialBalance']);
-            Route::get('ledger/income-statement', [LedgerController::class, 'incomeStatement']);
-            Route::get('ledger/balance-sheet', [LedgerController::class, 'balanceSheet']);
+            // Buku Besar (General Ledger) - read. Diblokir total utk Unit &
+            // Substansi (beda dari fitur budget lain di grup ini yang tetap
+            // boleh mereka akses), lihat EnsureNotUnitOrSubstansi.
+            Route::middleware('not-unit-substansi')->group(function () {
+                Route::get('ledger/accounts', [LedgerController::class, 'accounts']);
+                Route::get('ledger/journals', [LedgerController::class, 'journals']);
+                Route::get('ledger/journal-entries', [LedgerController::class, 'journalEntries']);
+                Route::get('ledger/journal-entries/{journalEntry}', [LedgerController::class, 'showJournalEntry']);
+                Route::get('ledger/general-ledger', [LedgerController::class, 'generalLedger']);
+                Route::get('ledger/unit-ledger', [LedgerController::class, 'unitLedger']);
+                Route::get('ledger/trial-balance', [LedgerController::class, 'trialBalance']);
+                Route::get('ledger/income-statement', [LedgerController::class, 'incomeStatement']);
+                Route::get('ledger/balance-sheet', [LedgerController::class, 'balanceSheet']);
+            });
         });
 
         Route::middleware('permission:manage-budget')->group(function () {
@@ -211,13 +215,16 @@ Route::prefix('v1')->group(function () {
             Route::put('coa/realisasi/{realisasi}', [AccountingController::class, 'updateRealisasi']);
             Route::delete('coa/realisasi/{realisasi}', [AccountingController::class, 'destroyRealisasi']);
 
-            // Buku Besar (General Ledger) - manage Chart of Accounts & reversal
-            Route::post('ledger/accounts', [LedgerController::class, 'storeAccount']);
-            Route::put('ledger/accounts/{account}', [LedgerController::class, 'updateAccount']);
-            Route::delete('ledger/accounts/{account}', [LedgerController::class, 'destroyAccount']);
-            Route::post('ledger/journal-entries/{journalEntry}/reverse', [LedgerController::class, 'reverseJournalEntry']);
-            Route::post('ledger/journal-entries/{journalEntry}/cancel-reversal', [LedgerController::class, 'cancelReversal']);
-            Route::post('ledger/journal-entries', [LedgerController::class, 'storeManualEntry']);
+            // Buku Besar (General Ledger) - manage Chart of Accounts & reversal.
+            // Diblokir total utk Unit & Substansi, lihat EnsureNotUnitOrSubstansi.
+            Route::middleware('not-unit-substansi')->group(function () {
+                Route::post('ledger/accounts', [LedgerController::class, 'storeAccount']);
+                Route::put('ledger/accounts/{account}', [LedgerController::class, 'updateAccount']);
+                Route::delete('ledger/accounts/{account}', [LedgerController::class, 'destroyAccount']);
+                Route::post('ledger/journal-entries/{journalEntry}/reverse', [LedgerController::class, 'reverseJournalEntry']);
+                Route::post('ledger/journal-entries/{journalEntry}/cancel-reversal', [LedgerController::class, 'cancelReversal']);
+                Route::post('ledger/journal-entries', [LedgerController::class, 'storeManualEntry']);
+            });
         });
 
         // ---------------------------------------------------------------------

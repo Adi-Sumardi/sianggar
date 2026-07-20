@@ -37,6 +37,24 @@ describe('Ledger API', function () {
             $response->assertOk();
             expect(count($response->json('data')))->toBe(1);
         });
+
+        it('returns 403 for Unit role even with view-budget permission', function () {
+            $user = User::factory()->unit('sd')->create();
+            $user->givePermissionTo('view-budget');
+
+            $response = $this->actingAs($user)->getJson('/api/v1/ledger/accounts');
+
+            $response->assertForbidden();
+        });
+
+        it('returns 403 for Substansi role even with view-budget permission', function () {
+            $user = User::factory()->substansi('asrama')->create();
+            $user->givePermissionTo('view-budget');
+
+            $response = $this->actingAs($user)->getJson('/api/v1/ledger/accounts');
+
+            $response->assertForbidden();
+        });
     });
 
     describe('POST /api/v1/ledger/accounts', function () {

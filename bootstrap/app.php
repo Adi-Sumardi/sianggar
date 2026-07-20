@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'yapinet.auth' => \App\Http\Middleware\EnsureYapinetApiKey::class,
+            'not-unit-substansi' => \App\Http\Middleware\EnsureNotUnitOrSubstansi::class,
         ]);
         $middleware->statefulApi();
 
