@@ -60,7 +60,8 @@ class LpjPolicy
     /**
      * Determine whether the user can create LPJs.
      *
-     * Allowed for: admin or unit roles.
+     * Allowed for: admin, unit, atau substansi roles (siapa pun yang boleh
+     * mengajukan pengajuan anggaran, boleh juga LPJ-kan pengajuannya).
      */
     public function create(User $user): bool
     {

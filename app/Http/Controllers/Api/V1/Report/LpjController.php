@@ -113,7 +113,13 @@ class LpjController extends Controller
             ], 422);
         }
 
-        $this->approvalService->submit($lpj, $user);
+        try {
+            $this->approvalService->submit($lpj, $user);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         $lpj->load(['pengajuanAnggaran', 'approvals.approver']);
 

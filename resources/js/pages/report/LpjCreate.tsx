@@ -75,8 +75,8 @@ export default function LpjCreate() {
 
             toast.success('LPJ berhasil disimpan sebagai draft');
             navigate(`/lpj/${lpj.ulid ?? lpj.id}`);
-        } catch (error) {
-            toast.error('Gagal menyimpan LPJ');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Gagal menyimpan LPJ');
             console.error(error);
         }
     };
@@ -117,8 +117,8 @@ export default function LpjCreate() {
 
             toast.success('LPJ berhasil diajukan untuk persetujuan');
             navigate('/lpj');
-        } catch (error) {
-            toast.error('Gagal mengajukan LPJ');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Gagal mengajukan LPJ');
             console.error(error);
         }
     };

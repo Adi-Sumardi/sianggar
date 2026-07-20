@@ -99,9 +99,12 @@ describe('UserRole Enum', function () {
             expect(UserRole::SMP12->canCreateLpj())->toBeTrue();
         });
 
-        it('returns false for substansi roles', function () {
-            expect(UserRole::Asrama->canCreateLpj())->toBeFalse();
-            expect(UserRole::Laz->canCreateLpj())->toBeFalse();
+        it('returns true for substansi roles', function () {
+            // Substansi boleh LPJ-kan pengajuannya sendiri, sama seperti
+            // mereka boleh membuat pengajuan (canCreateProposal) - kalau
+            // bisa terima dana, harus bisa mempertanggungjawabkannya juga.
+            expect(UserRole::Asrama->canCreateLpj())->toBeTrue();
+            expect(UserRole::Laz->canCreateLpj())->toBeTrue();
         });
 
         it('returns false for approver roles', function () {

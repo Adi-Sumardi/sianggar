@@ -133,6 +133,39 @@ describe('LPJ API', function () {
                 ->assertJsonPath('data.proses', LpjStatus::Draft->value);
         });
 
+        it('allows Substansi role to create and submit an LPJ', function () {
+            // Regresi: canCreateLpj() sempat salah menolak role Substansi
+            // (Asrama/Laz/dst) padahal mereka juga boleh mengajukan
+            // pengajuan anggaran (canCreateProposal) - kalau bisa terima
+            // dana, harus bisa mempertanggungjawabkannya via LPJ juga.
+            $user = User::factory()->substansi('asrama')->create();
+            $user->givePermissionTo('create-lpj');
+
+            $pengajuan = PengajuanAnggaran::factory()->approved()->needsLpj()->create([
+                'user_id' => $user->id,
+            ]);
+
+            $data = [
+                'pengajuan_anggaran_id' => $pengajuan->id,
+                'perihal' => 'LPJ Test Event',
+                'deskripsi_singkat' => 'Event description',
+                'tgl_kegiatan' => '2025-01-15',
+                'input_realisasi' => 4500000,
+                'unit' => 'Asrama',
+                'jumlah_pengajuan_total' => 5000000,
+                'tahun' => '2025',
+            ];
+
+            $createResponse = $this->actingAs($user)->postJson('/api/v1/lpj', $data);
+            $createResponse->assertCreated();
+
+            $lpjId = $createResponse->json('data.id');
+
+            $submitResponse = $this->actingAs($user)->postJson("/api/v1/lpj/{$lpjId}/submit");
+            $submitResponse->assertOk()
+                ->assertJsonPath('data.proses', LpjStatus::Submitted->value);
+        });
+
         it('validates required fields', function () {
             $user = User::factory()->unit('sd')->create();
             $user->givePermissionTo('create-lpj');

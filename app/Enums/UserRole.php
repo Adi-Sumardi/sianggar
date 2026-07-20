@@ -132,7 +132,7 @@ enum UserRole: string
 
     public function canCreateLpj(): bool
     {
-        return $this === self::Admin || $this->isUnit();
+        return $this === self::Admin || $this->isUnit() || $this->isSubstansi();
     }
 
     public function dashboardType(): string
