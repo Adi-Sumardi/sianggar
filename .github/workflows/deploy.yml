@@ -69,7 +69,7 @@ jobs:
             local local_file="$1"
             local remote_name="$2"
             echo ">> Uploading $local_file → $remote_name"
-            curl --ftp-pasv --insecure \
+            curl --ftp-pasv --insecure --fail \
               --user "$FTP_USER:$FTP_PASS" \
               --connect-timeout 30 \
               --max-time 600 \
@@ -78,6 +78,11 @@ jobs:
               --retry-connrefused \
               -T "$local_file" \
               "ftp://$FTP_HOST/$remote_name"
+            local exit_code=$?
+            if [ $exit_code -ne 0 ]; then
+              echo "!! Upload FAILED for $remote_name (curl exit $exit_code)"
+              exit $exit_code
+            fi
           }
 
           upload "public/deploy-webhook.php" "deploy-webhook.php"

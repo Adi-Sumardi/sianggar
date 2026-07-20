@@ -110,7 +110,11 @@ if (file_exists($appArchive)) {
         $allSuccess = false;
     }
 } else {
-    echo "==> WARNING: deploy-app.tar.gz not found, skipping.\n\n";
+    // Arsip hilang = deploy TIDAK LENGKAP, bukan cuma peringatan - kalau
+    // dibiarkan jadi warning senyap, webhook tetap balas HTTP 200 padahal
+    // kode server tidak pernah ter-update (pernah kejadian nyata, 2026-07-20).
+    echo "==> ERROR: deploy-app.tar.gz not found - upload FTP gagal/salah lokasi.\n\n";
+    $allSuccess = false;
 }
 
 // Step 2: Extract public archive
@@ -125,7 +129,8 @@ if (file_exists($publicArchive)) {
         $allSuccess = false;
     }
 } else {
-    echo "==> WARNING: deploy-public.tar.gz not found, skipping.\n\n";
+    echo "==> ERROR: deploy-public.tar.gz not found - upload FTP gagal/salah lokasi.\n\n";
+    $allSuccess = false;
 }
 
 // Step 3: Create storage link if not exists
