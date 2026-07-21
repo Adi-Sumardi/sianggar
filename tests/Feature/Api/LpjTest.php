@@ -428,6 +428,56 @@ describe('LPJ Approval API', function () {
                 ->and($lpj->current_approval_stage)->toBe(LpjApprovalStage::Direktur);
         });
 
+        it('allows re-validating a resubmitted LPJ (proses stays revised after resubmit)', function () {
+            // Regresi: resubmit() SENGAJA membiarkan proses tetap 'revised'
+            // (bukan balik ke 'submitted'), tapi LpjPolicy::approve() cuma
+            // mengizinkan proses submitted/validated/approved-by-middle -
+            // approver kena 403 "This action is unauthorized" waktu mau
+            // validasi/approve ulang LPJ yang baru saja di-resubmit.
+            $unitUser = User::factory()->unit('sd')->create();
+            $unitUser->givePermissionTo('create-lpj');
+            $staffKeuangan = User::factory()->staffKeuangan()->create();
+            $staffKeuangan->givePermissionTo('approve-proposals');
+            $direktur = User::factory()->direktur()->create();
+            $direktur->givePermissionTo('approve-proposals');
+
+            $lpjService = new LpjApprovalService();
+
+            $pengajuan = PengajuanAnggaran::factory()->create(['user_id' => $unitUser->id]);
+            $lpj = Lpj::factory()->draft()->create([
+                'pengajuan_anggaran_id' => $pengajuan->id,
+            ]);
+
+            $lpjService->submit($lpj, $unitUser);
+            $lpjService->validate($lpj->fresh(), $staffKeuangan, [
+                'has_activity_identity' => true,
+                'has_cover_letter' => true,
+                'has_narrative_report' => true,
+                'has_financial_report' => true,
+                'has_receipts' => true,
+                'reference_type' => ReferenceType::Education->value,
+            ]);
+            $lpjService->revise($lpj->fresh(), $direktur, 'Perbaiki data');
+
+            $lpj->refresh();
+            expect($lpj->proses)->toBe(LpjStatus::Revised);
+
+            // Pembuat mengedit lalu mengajukan kembali via endpoint baru.
+            $resubmitResponse = $this->actingAs($unitUser)
+                ->postJson("/api/v1/lpj/{$lpj->id}/resubmit");
+            $resubmitResponse->assertOk();
+
+            $lpj->refresh();
+            expect($lpj->proses)->toBe(LpjStatus::Revised)
+                ->and($lpj->current_approval_stage)->toBe(LpjApprovalStage::Direktur);
+
+            // Direktur (stage yang minta revisi) mencoba approve lagi - harus BOLEH.
+            $approveResponse = $this->actingAs($direktur)
+                ->postJson("/api/v1/lpj/{$lpj->id}/approve", ['notes' => 'Sudah sesuai']);
+
+            $approveResponse->assertOk();
+        });
+
         it('returns error when checklist is incomplete', function () {
             $staffKeuangan = User::factory()->staffKeuangan()->create();
             $staffKeuangan->givePermissionTo('approve-proposals');

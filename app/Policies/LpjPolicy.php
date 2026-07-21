@@ -127,11 +127,15 @@ class LpjPolicy
             return true;
         }
 
-        // LPJ must be in a reviewable state
+        // LPJ must be in a reviewable state. Revised termasuk di sini karena
+        // resubmit() SENGAJA membiarkan proses tetap 'revised' (bukan balik ke
+        // 'submitted') - pola yang sama dengan ApprovalService::resubmit()
+        // milik PengajuanAnggaran, lihat approval-detail-fragile-patterns.
         if (! in_array($lpj->proses, [
             LpjStatus::Submitted,
             LpjStatus::Validated,
             LpjStatus::ApprovedByMiddle,
+            LpjStatus::Revised,
         ], true)) {
             return false;
         }
