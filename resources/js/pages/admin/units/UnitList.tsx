@@ -256,6 +256,7 @@ export default function UnitList() {
                         columns={columns}
                         data={units}
                         isLoading={isLoading}
+                        showSearch={false}
                         onRowClick={openEdit}
                         emptyTitle="Belum ada unit"
                         emptyDescription="Klik 'Tambah Unit' untuk menambahkan unit baru."

@@ -36,6 +36,7 @@ export default function PerubahanAnggaranList() {
     const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
         item: PerubahanAnggaran | null;
@@ -52,10 +53,23 @@ export default function PerubahanAnggaranList() {
         error,
         refetch,
     } = usePerubahanAnggarans({
+        page,
+        per_page: 15,
         search: searchQuery || undefined,
         tahun: filterValues.tahun || undefined,
         status: filterValues.status || undefined,
     });
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     const deleteMutation = useDeletePerubahanAnggaran();
 
@@ -284,8 +298,8 @@ export default function PerubahanAnggaranList() {
                     <SearchFilter
                         filters={filters}
                         values={filterValues}
-                        onChange={setFilterValues}
-                        onSearch={setSearchQuery}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
                         searchPlaceholder="Cari nomor atau perihal..."
                     />
                 </motion.div>
@@ -295,7 +309,21 @@ export default function PerubahanAnggaranList() {
                     <DataTable
                         columns={columns}
                         data={perubahanData}
-                        emptyMessage="Belum ada data perubahan anggaran"
+                        isLoading={isLoading}
+                        showSearch={false}
+                        emptyTitle="Belum ada data perubahan anggaran"
+                        emptyDescription={
+                            searchQuery || filterValues.tahun || filterValues.status
+                                ? 'Tidak ada perubahan anggaran yang cocok dengan pencarian/filter saat ini.'
+                                : 'Belum ada permohonan geser anggaran yang dibuat.'
+                        }
+                        pagination={perubahanResponse?.meta ? {
+                            pageIndex: perubahanResponse.meta.current_page - 1,
+                            pageSize: perubahanResponse.meta.per_page,
+                            pageCount: perubahanResponse.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
                     />
                 </motion.div>
 

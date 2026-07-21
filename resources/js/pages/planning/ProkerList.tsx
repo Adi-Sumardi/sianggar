@@ -47,7 +47,9 @@ export default function ProkerList() {
     const { user } = useAuth();
     const canViewAllUnits = user?.role === UserRole.Admin || (user?.role != null && isApproverRole(user.role));
 
+    const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editItem, setEditItem] = useState<ProkerRow | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: ProkerRow | null }>({ open: false, item: null });
@@ -66,12 +68,25 @@ export default function ProkerList() {
     });
     const { data: prokersData, isLoading, isError } = useProkers({
         unit_id: filterValues.unit ? Number(filterValues.unit) : undefined,
-        per_page: 500,
+        page,
+        per_page: 15,
+        search: searchQuery || undefined,
     });
     const createProker = useCreateProker();
     const updateProker = useUpdateProker();
     const deleteProker = useDeleteProker();
     const importProkers = useImportProkers();
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     // Build options for filters and form
     const strategyOptions = useMemo(() => {
@@ -255,14 +270,37 @@ export default function ProkerList() {
                     />
                 </motion.div>
 
-                {filters.length > 0 && (
-                    <motion.div variants={staggerItem}>
-                        <SearchFilter filters={filters} values={filterValues} onChange={setFilterValues} className="mb-4" />
-                    </motion.div>
-                )}
+                <motion.div variants={staggerItem}>
+                    <SearchFilter
+                        filters={filters}
+                        values={filterValues}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
+                        searchPlaceholder="Cari program kerja..."
+                        className="mb-4"
+                    />
+                </motion.div>
 
                 <motion.div variants={staggerItem}>
-                    <DataTable columns={columns} data={tableData} searchPlaceholder="Cari program kerja..." emptyMessage="Belum ada program kerja. Klik 'Tambah Proker' untuk menambahkan." />
+                    <DataTable
+                        columns={columns}
+                        data={tableData}
+                        isLoading={isLoading}
+                        showSearch={false}
+                        emptyTitle="Belum ada program kerja"
+                        emptyDescription={
+                            searchQuery || filterValues.unit
+                                ? 'Tidak ada program kerja yang cocok dengan pencarian/filter saat ini.'
+                                : "Klik 'Tambah Proker' untuk menambahkan."
+                        }
+                        pagination={prokersData?.meta ? {
+                            pageIndex: prokersData.meta.current_page - 1,
+                            pageSize: prokersData.meta.per_page,
+                            pageCount: prokersData.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
+                    />
                 </motion.div>
             </motion.div>
 

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type ColumnDef } from '@tanstack/react-table';
 import { motion } from 'motion/react';
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import * as Tooltip from '@radix-ui/react-tooltip';
 
@@ -126,14 +126,28 @@ export default function PktList() {
     const isAdmin = user?.role === UserRole.Admin;
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: Pkt | null }>({ open: false, item: null });
 
     // API Queries
     const { data: pktsData, isLoading: pktsLoading } = usePkts({
         tahun: filterValues.tahun || undefined,
         unit_id: filterValues.unit_id || undefined,
-        per_page: 500,
+        search: searchQuery || undefined,
+        page,
+        per_page: 15,
     });
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
     const { data: unitsData } = useUnitsList();
 
     // Check if unit's RAPBS is locked (not draft/rejected)
@@ -176,16 +190,6 @@ export default function PktList() {
     ];
 
     const pkts = pktsData?.data ?? [];
-
-    const filteredData = useMemo(() => {
-        if (!searchQuery) return pkts;
-        const q = searchQuery.toLowerCase();
-        return pkts.filter((row) =>
-            row.kegiatan?.nama?.toLowerCase().includes(q) ||
-            row.proker?.nama?.toLowerCase().includes(q) ||
-            row.deskripsi_kegiatan?.toLowerCase().includes(q)
-        );
-    }, [pkts, searchQuery]);
 
     const handleDelete = async () => {
         if (!deleteDialog.item) return;
@@ -288,9 +292,11 @@ export default function PktList() {
         },
     ];
 
+    // Catatan: total saldo hanya menjumlahkan item di halaman yang sedang
+    // ditampilkan (server-side pagination), bukan seluruh hasil filter.
     const totalSaldo = useMemo(() => {
-        return filteredData.reduce((s, r) => s + (r.saldo_anggaran || 0), 0);
-    }, [filteredData]);
+        return pkts.reduce((s, r) => s + (r.saldo_anggaran || 0), 0);
+    }, [pkts]);
 
     return (
         <PageTransition>
@@ -327,25 +333,29 @@ export default function PktList() {
                     <SearchFilter
                         filters={filters}
                         values={filterValues}
-                        onChange={setFilterValues}
-                        onSearch={setSearchQuery}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
                         searchPlaceholder="Cari PKT..."
                         className="mb-4"
                     />
                 </motion.div>
 
                 <motion.div variants={staggerItem}>
-                    {pktsLoading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                        </div>
-                    ) : (
-                        <DataTable
-                            columns={columns}
-                            data={filteredData}
-                            emptyMessage="Belum ada PKT. Klik 'Tambah PKT' untuk menambahkan program kerja tahunan."
-                        />
-                    )}
+                    <DataTable
+                        columns={columns}
+                        data={pkts}
+                        isLoading={pktsLoading}
+                        showSearch={false}
+                        emptyTitle="Belum ada PKT"
+                        emptyDescription="Klik 'Tambah PKT' untuk menambahkan program kerja tahunan."
+                        pagination={pktsData?.meta ? {
+                            pageIndex: pktsData.meta.current_page - 1,
+                            pageSize: pktsData.meta.per_page,
+                            pageCount: pktsData.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
+                    />
                 </motion.div>
 
                 {/* Summary */}
@@ -353,10 +363,10 @@ export default function PktList() {
                     <div className="flex items-center gap-6">
                         <div>
                             <p className="text-xs font-medium text-blue-600">Total PKT</p>
-                            <p className="text-lg font-bold text-blue-700">{filteredData.length} item</p>
+                            <p className="text-lg font-bold text-blue-700">{pktsData?.meta?.total ?? pkts.length} item</p>
                         </div>
                         <div>
-                            <p className="text-xs font-medium text-blue-600">Total Nilai Anggaran Awal</p>
+                            <p className="text-xs font-medium text-blue-600">Total Nilai Anggaran Awal (halaman ini)</p>
                             <p className="text-lg font-bold text-blue-700">{formatRupiah(totalSaldo)}</p>
                         </div>
                     </div>

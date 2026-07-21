@@ -286,6 +286,7 @@ export default function PermissionList() {
                                     columns={columns}
                                     data={group.permissions}
                                     isLoading={isLoading}
+                                    showSearch={false}
                                     onRowClick={(row) => {
                                         if (!CORE_PERMISSIONS.includes(row.name)) {
                                             openEdit(row);

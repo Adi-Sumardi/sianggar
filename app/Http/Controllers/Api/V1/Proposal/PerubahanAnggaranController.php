@@ -53,6 +53,14 @@ class PerubahanAnggaranController extends Controller
             $query->where('status', $request->query('status'));
         }
 
+        if ($request->filled('search')) {
+            $search = $request->query('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('perihal', 'like', "%{$search}%")
+                  ->orWhere('nomor_perubahan', 'like', "%{$search}%");
+            });
+        }
+
         $perPage = (int) $request->query('per_page', '15');
         $items = $query->orderByDesc('created_at')->paginate($perPage);
 

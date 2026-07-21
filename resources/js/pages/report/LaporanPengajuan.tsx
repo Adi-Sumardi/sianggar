@@ -258,7 +258,7 @@ export default function LaporanPengajuan() {
                         <DataTable
                             columns={columns}
                             data={filteredData}
-                            searchValue={searchQuery}
+                            showSearch={false}
                             emptyTitle="Tidak ada data"
                             emptyDescription="Tidak ditemukan pengajuan yang sesuai dengan filter."
                         />

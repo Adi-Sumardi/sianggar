@@ -33,14 +33,27 @@ export default function UserList() {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [deleteUserData, setDeleteUserData] = useState<User | null>(null);
 
     // Fetch users from API
     const { data: usersResponse, isLoading, isError, error } = useUsers({
+        page,
+        per_page: 15,
         search: searchQuery || undefined,
         role: filterValues.role || undefined,
-        per_page: 100,
     });
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     const deleteUserMutation = useDeleteUser();
 
@@ -218,8 +231,8 @@ export default function UserList() {
                             },
                         ]}
                         values={filterValues}
-                        onChange={setFilterValues}
-                        onSearch={setSearchQuery}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
                         searchPlaceholder="Cari nama atau email..."
                     />
                 </motion.div>
@@ -230,7 +243,7 @@ export default function UserList() {
                         <Users className="h-4 w-4" />
                     </div>
                     <span className="text-sm text-slate-600">
-                        <span className="font-semibold text-slate-900">{users.length}</span> pengguna ditemukan
+                        <span className="font-semibold text-slate-900">{usersResponse?.meta.total ?? users.length}</span> pengguna ditemukan
                     </span>
                 </motion.div>
 
@@ -239,9 +252,22 @@ export default function UserList() {
                     <DataTable
                         columns={columns}
                         data={users}
+                        isLoading={isLoading}
+                        showSearch={false}
                         onRowClick={(user) => navigate(`/admin/users/${user.id}/edit`)}
-                        searchPlaceholder="Cari pengguna..."
-                        emptyMessage="Tidak ada pengguna ditemukan"
+                        emptyTitle="Tidak ada pengguna ditemukan"
+                        emptyDescription={
+                            searchQuery || filterValues.role
+                                ? 'Tidak ada pengguna yang cocok dengan pencarian/filter saat ini.'
+                                : "Klik 'Tambah Pengguna' untuk membuat akun pengguna baru."
+                        }
+                        pagination={usersResponse?.meta ? {
+                            pageIndex: usersResponse.meta.current_page - 1,
+                            pageSize: usersResponse.meta.per_page,
+                            pageCount: usersResponse.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
                     />
                 </motion.div>
 

@@ -31,6 +31,7 @@ export interface PerubahanListParams {
     page?: number;
     per_page?: number;
     tahun?: string;
+    search?: string;
 }
 
 export interface PaginatedResponse<T> {

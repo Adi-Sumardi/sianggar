@@ -51,7 +51,9 @@ export default function ActivityList() {
     const { user } = useAuth();
     const canViewAllUnits = user?.role === UserRole.Admin || (user?.role != null && isApproverRole(user.role));
 
+    const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editItem, setEditItem] = useState<ActivityRow | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: ActivityRow | null }>({ open: false, item: null });
@@ -79,8 +81,21 @@ export default function ActivityList() {
     const { data: kegiatansData, isLoading: loadingKegiatans, error: kegiatansError } = useKegiatans({
         unit_id: filterValues.unit ? Number(filterValues.unit) : undefined,
         jenis_kegiatan: filterValues.jenis || undefined,
-        per_page: 500,
+        search: searchQuery || undefined,
+        page,
+        per_page: 15,
     });
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     // Mutations
     const createKegiatan = useCreateKegiatan();
@@ -333,11 +348,32 @@ export default function ActivityList() {
                 </motion.div>
 
                 <motion.div variants={staggerItem}>
-                    <SearchFilter filters={filters} values={filterValues} onChange={setFilterValues} className="mb-4" />
+                    <SearchFilter
+                        filters={filters}
+                        values={filterValues}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
+                        searchPlaceholder="Cari kegiatan..."
+                        className="mb-4"
+                    />
                 </motion.div>
 
                 <motion.div variants={staggerItem}>
-                    <DataTable columns={columns} data={tableData} searchPlaceholder="Cari kegiatan..." emptyMessage="Belum ada kegiatan. Klik 'Tambah Kegiatan' untuk menambahkan." />
+                    <DataTable
+                        columns={columns}
+                        data={tableData}
+                        isLoading={loadingKegiatans}
+                        showSearch={false}
+                        emptyTitle="Belum ada kegiatan"
+                        emptyDescription="Klik 'Tambah Kegiatan' untuk menambahkan."
+                        pagination={kegiatansData?.meta ? {
+                            pageIndex: kegiatansData.meta.current_page - 1,
+                            pageSize: kegiatansData.meta.per_page,
+                            pageCount: kegiatansData.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
+                    />
                 </motion.div>
             </motion.div>
 

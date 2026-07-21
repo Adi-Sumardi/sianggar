@@ -26,6 +26,7 @@ export default function LpjList() {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: Lpj | null }>({
         open: false,
         item: null,
@@ -33,11 +34,24 @@ export default function LpjList() {
 
     // Fetch data from API - backend automatically filters by user's unit_id
     const { data: lpjResponse, isLoading, isError, error } = useLpjList({
+        page,
+        per_page: 15,
         search: searchQuery || undefined,
         tahun: filterValues.tahun || undefined,
         status: filterValues.status || undefined,
         // Note: unit_id filter is handled automatically by backend based on user role
     });
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     // Fetch LPJ stats
     const { data: stats } = useLpjStats();
@@ -325,8 +339,8 @@ export default function LpjList() {
                     <SearchFilter
                         filters={filters}
                         values={filterValues}
-                        onChange={setFilterValues}
-                        onSearch={setSearchQuery}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
                         searchPlaceholder="Cari LPJ..."
                         className="mb-4"
                     />
@@ -336,10 +350,22 @@ export default function LpjList() {
                     <DataTable
                         columns={columns}
                         data={lpjData}
-                        searchValue={searchQuery}
+                        isLoading={isLoading}
+                        showSearch={false}
                         onRowClick={(row) => navigate(`/lpj/${row.ulid ?? row.id}`)}
                         emptyTitle="Belum ada LPJ"
-                        emptyDescription="Klik 'Buat LPJ' untuk membuat laporan pertanggungjawaban baru."
+                        emptyDescription={
+                            searchQuery || filterValues.tahun || filterValues.status
+                                ? 'Tidak ada LPJ yang cocok dengan pencarian/filter saat ini.'
+                                : "Klik 'Buat LPJ' untuk membuat laporan pertanggungjawaban baru."
+                        }
+                        pagination={lpjResponse?.meta ? {
+                            pageIndex: lpjResponse.meta.current_page - 1,
+                            pageSize: lpjResponse.meta.per_page,
+                            pageCount: lpjResponse.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
                     />
                 </motion.div>
             </motion.div>

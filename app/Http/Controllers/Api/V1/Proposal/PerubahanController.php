@@ -36,6 +36,14 @@ class PerubahanController extends Controller
             $query->where('tahun', $request->query('tahun'));
         }
 
+        if ($request->filled('search')) {
+            $search = $request->query('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_pengajuan', 'like', "%{$search}%")
+                  ->orWhere('unit', 'like', "%{$search}%");
+            });
+        }
+
         $perPage = (int) $request->query('per_page', '15');
         $items = $query->orderByDesc('date_revisi')->paginate($perPage);
 

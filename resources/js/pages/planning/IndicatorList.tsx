@@ -42,6 +42,7 @@ export default function IndicatorList() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editItem, setEditItem] = useState<IndicatorRow | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: IndicatorRow | null }>({
@@ -56,11 +57,24 @@ export default function IndicatorList() {
     const { data: strategiesData } = useStrategies();
     const { data: indikatorsData, isLoading, isError } = useIndikators({
         strategy_id: filterValues.strategy ? Number(filterValues.strategy) : undefined,
-        per_page: 500,
+        search: searchQuery || undefined,
+        page,
+        per_page: 15,
     });
     const createIndikator = useCreateIndikator();
     const updateIndikator = useUpdateIndikator();
     const deleteIndikator = useDeleteIndikator();
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     // Build strategy options for filter and form
     const strategyOptions = useMemo(() => {
@@ -245,8 +259,8 @@ export default function IndicatorList() {
                     <SearchFilter
                         filters={filters}
                         values={filterValues}
-                        onChange={setFilterValues}
-                        onSearch={setSearchQuery}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
                         searchPlaceholder="Cari indikator..."
                         className="mb-4"
                     />
@@ -256,9 +270,17 @@ export default function IndicatorList() {
                     <DataTable
                         columns={columns}
                         data={tableData}
-                        searchValue={searchQuery}
+                        isLoading={isLoading}
+                        showSearch={false}
                         emptyTitle="Belum ada indikator"
                         emptyDescription="Klik 'Tambah Indikator' untuk menambahkan indikator kinerja utama."
+                        pagination={indikatorsData?.meta ? {
+                            pageIndex: indikatorsData.meta.current_page - 1,
+                            pageSize: indikatorsData.meta.per_page,
+                            pageCount: indikatorsData.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
                     />
                 </motion.div>
             </motion.div>

@@ -579,6 +579,7 @@ export interface PerubahanAnggaranFilterParams extends PaginationParams {
     status?: string;
     unit_id?: number;
     tahun?: string;
+    search?: string;
 }
 
 // ---------------------------------------------------------------------------

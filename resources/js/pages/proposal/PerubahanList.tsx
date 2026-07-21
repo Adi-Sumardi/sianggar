@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type ColumnDef } from '@tanstack/react-table';
 import { motion } from 'motion/react';
@@ -32,8 +32,20 @@ export default function PerubahanList() {
     const { data, isLoading, isError } = usePerubahanList({
         page,
         per_page: 15,
+        search: searchQuery || undefined,
         tahun: filterValues.tahun || undefined,
     });
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     const deleteMutation = useDeletePerubahan();
 
@@ -54,18 +66,6 @@ export default function PerubahanList() {
             ],
         },
     ];
-
-    // Filter data by search query
-    const filteredData = useMemo(() => {
-        if (!data?.data) return [];
-        if (!searchQuery) return data.data;
-
-        const query = searchQuery.toLowerCase();
-        return data.data.filter((row) =>
-            row.nama_pengajuan?.toLowerCase().includes(query) ||
-            row.unit?.toLowerCase().includes(query)
-        );
-    }, [data?.data, searchQuery]);
 
     const handleDelete = (id: number, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -195,8 +195,8 @@ export default function PerubahanList() {
                     <SearchFilter
                         filters={filters}
                         values={filterValues}
-                        onChange={setFilterValues}
-                        onSearch={setSearchQuery}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
                         searchPlaceholder="Cari perubahan anggaran..."
                         className="mb-4"
                     />
@@ -205,11 +205,16 @@ export default function PerubahanList() {
                 <motion.div variants={staggerItem}>
                     <DataTable
                         columns={columns}
-                        data={filteredData}
-                        searchValue={searchQuery}
+                        data={data?.data ?? []}
+                        isLoading={isLoading}
+                        showSearch={false}
                         onRowClick={(row) => navigate(`/pengajuan/${row.ulid ?? row.id}`)}
                         emptyTitle="Belum ada perubahan anggaran"
-                        emptyDescription="Belum ada pengajuan yang ditandai sebagai perubahan."
+                        emptyDescription={
+                            searchQuery || filterValues.tahun
+                                ? 'Tidak ada perubahan anggaran yang cocok dengan pencarian/filter saat ini.'
+                                : 'Belum ada pengajuan yang ditandai sebagai perubahan.'
+                        }
                         pagination={data?.meta ? {
                             pageIndex: data.meta.current_page - 1,
                             pageSize: data.meta.per_page ?? 15,
