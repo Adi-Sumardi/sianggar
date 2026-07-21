@@ -29,6 +29,7 @@ export default function PengajuanList() {
     const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState(1);
     const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; item: PengajuanAnggaran | null }>({
         open: false,
         item: null,
@@ -43,10 +44,23 @@ export default function PengajuanList() {
 
     // Fetch data from API - backend automatically filters by user's unit_id
     const { data: pengajuanResponse, isLoading, isError, error } = usePengajuanList({
+        page,
+        per_page: 15,
         search: searchQuery || undefined,
         tahun: filterValues.tahun || undefined,
         status: filterValues.status || undefined,
     });
+
+    // Balik ke halaman 1 tiap kali search/filter berubah, supaya tidak
+    // "nyangkut" di halaman kosong dari hasil pencarian sebelumnya.
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        setPage(1);
+    };
+    const handleFilterChange = (values: Record<string, string>) => {
+        setFilterValues(values);
+        setPage(1);
+    };
 
     const deleteMutation = useDeletePengajuan();
     const withdrawMutation = useWithdrawPengajuan();
@@ -351,8 +365,8 @@ export default function PengajuanList() {
                     <SearchFilter
                         filters={filters}
                         values={filterValues}
-                        onChange={setFilterValues}
-                        onSearch={setSearchQuery}
+                        onChange={handleFilterChange}
+                        onSearch={handleSearch}
                         searchPlaceholder="Cari pengajuan..."
                         className="mb-4"
                     />
@@ -362,10 +376,22 @@ export default function PengajuanList() {
                     <DataTable
                         columns={columns}
                         data={pengajuanData}
-                        searchValue={searchQuery}
+                        isLoading={isLoading}
+                        showSearch={false}
                         onRowClick={(row) => navigate(`/pengajuan/${row.ulid ?? row.id}`)}
                         emptyTitle="Belum ada pengajuan"
-                        emptyDescription="Klik 'Buat Pengajuan' untuk membuat pengajuan anggaran baru."
+                        emptyDescription={
+                            searchQuery || filterValues.tahun || filterValues.status
+                                ? 'Tidak ada pengajuan yang cocok dengan pencarian/filter saat ini.'
+                                : "Klik 'Buat Pengajuan' untuk membuat pengajuan anggaran baru."
+                        }
+                        pagination={pengajuanResponse?.meta ? {
+                            pageIndex: pengajuanResponse.meta.current_page - 1,
+                            pageSize: pengajuanResponse.meta.per_page,
+                            pageCount: pengajuanResponse.meta.last_page,
+                            onPageChange: (p) => setPage(p + 1),
+                            onPageSizeChange: () => {},
+                        } : undefined}
                     />
                 </motion.div>
             </motion.div>

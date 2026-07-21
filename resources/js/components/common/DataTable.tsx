@@ -72,6 +72,15 @@ interface DataTableProps<TData, TValue> {
     emptyDescription?: string;
     searchValue?: string;
     className?: string;
+    /**
+     * Tampilkan search box bawaan DataTable (client-side, cuma nyari di
+     * baris yang sudah di-fetch). Set `false` kalau halaman sudah punya
+     * search box sendiri yang mengirim query ke server (mis. via
+     * `SearchFilter`) - dua search box tumpang tindih bikin bingung &
+     * search box internal ini bisa "tidak nemu" data yang sebenarnya ada
+     * di halaman/batch lain. Default `true` (kompatibel dgn perilaku lama).
+     */
+    showSearch?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -87,7 +96,10 @@ export function DataTable<TData, TValue>({
     onRowClick,
     pagination: externalPagination,
     emptyMessage = 'Data tidak ditemukan',
+    emptyTitle,
+    emptyDescription,
     className,
+    showSearch = true,
 }: DataTableProps<TData, TValue>) {
     // Internal state
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -190,28 +202,30 @@ export function DataTable<TData, TValue>({
     return (
         <div className={cn('overflow-hidden rounded-lg border border-slate-200 bg-white', className)}>
             {/* Search bar */}
-            <div className="border-b border-slate-100 px-4 py-3">
-                <div className="relative max-w-xs">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        value={searchInput}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        placeholder={searchPlaceholder}
-                        className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
-                    {searchInput && (
-                        <button
-                            type="button"
-                            onClick={() => handleSearchChange('')}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
-                            aria-label="Hapus pencarian"
-                        >
-                            <X className="h-3.5 w-3.5" />
-                        </button>
-                    )}
+            {showSearch && (
+                <div className="border-b border-slate-100 px-4 py-3">
+                    <div className="relative max-w-xs">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={(e) => handleSearchChange(e.target.value)}
+                            placeholder={searchPlaceholder}
+                            className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                        {searchInput && (
+                            <button
+                                type="button"
+                                onClick={() => handleSearchChange('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+                                aria-label="Hapus pencarian"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Desktop table */}
             <div className="hidden overflow-x-auto sm:block">
@@ -256,8 +270,8 @@ export function DataTable<TData, TValue>({
                             <tr>
                                 <td colSpan={columns.length}>
                                     <EmptyState
-                                        title={emptyMessage}
-                                        description="Belum ada data yang tersedia."
+                                        title={emptyTitle ?? emptyMessage}
+                                        description={emptyDescription ?? 'Belum ada data yang tersedia.'}
                                     />
                                 </td>
                             </tr>
