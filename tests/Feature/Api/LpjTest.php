@@ -303,6 +303,35 @@ describe('LPJ API', function () {
 
             $response->assertForbidden();
         });
+
+        it('allows editing deskripsi_singkat on a revised LPJ then resubmitting', function () {
+            // Regresi: LPJ yang dikembalikan untuk revisi harus bisa diedit
+            // (deskripsi & realisasi) lalu diajukan ulang, sama seperti
+            // Pengajuan Anggaran.
+            $user = User::factory()->unit('sd')->create();
+            $user->givePermissionTo('create-lpj');
+
+            $pengajuan = PengajuanAnggaran::factory()->create(['user_id' => $user->id]);
+            $lpj = Lpj::factory()->revised()->create([
+                'pengajuan_anggaran_id' => $pengajuan->id,
+                'deskripsi_singkat' => 'Deskripsi lama',
+            ]);
+
+            $updateResponse = $this->actingAs($user)
+                ->putJson("/api/v1/lpj/{$lpj->id}", [
+                    'deskripsi_singkat' => 'Deskripsi sudah diperbaiki',
+                    'input_realisasi' => 4200000,
+                ]);
+
+            $updateResponse->assertOk()
+                ->assertJsonPath('data.deskripsi_singkat', 'Deskripsi sudah diperbaiki');
+
+            $resubmitResponse = $this->actingAs($user)
+                ->postJson("/api/v1/lpj/{$lpj->id}/resubmit");
+
+            $resubmitResponse->assertOk()
+                ->assertJsonPath('data.proses', LpjStatus::Submitted->value);
+        });
     });
 
     describe('POST /api/v1/lpj/{id}/submit', function () {

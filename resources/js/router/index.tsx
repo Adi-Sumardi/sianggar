@@ -71,6 +71,7 @@ const PerubahanAnggaranDetail = lazy(() => import('@/pages/perubahan-anggaran/Pe
 const LpjList = lazy(() => import('@/pages/report/LpjList'));
 const LpjCreate = lazy(() => import('@/pages/report/LpjCreate'));
 const LpjDetail = lazy(() => import('@/pages/report/LpjDetail'));
+const LpjEdit = lazy(() => import('@/pages/report/LpjEdit'));
 const LaporanPengajuan = lazy(() => import('@/pages/report/LaporanPengajuan'));
 const LaporanSemester = lazy(() => import('@/pages/report/LaporanSemester'));
 const LaporanAccounting = lazy(() => import('@/pages/report/LaporanAccounting'));
@@ -403,6 +404,14 @@ export function AppRouter() {
                         element={
                             <PermissionGuard permissions={[Permission.CREATE_LPJ]}>
                                 <LpjCreate />
+                            </PermissionGuard>
+                        }
+                    />
+                    <Route
+                        path="lpj/:id/edit"
+                        element={
+                            <PermissionGuard permissions={[Permission.CREATE_LPJ]}>
+                                <LpjEdit />
                             </PermissionGuard>
                         }
                     />

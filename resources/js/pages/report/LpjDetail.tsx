@@ -11,6 +11,7 @@ import {
     XCircle,
     RotateCcw,
     ClipboardCheck,
+    Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -82,6 +83,9 @@ export default function LpjDetail() {
         const allowedStages = roleStageMapping[user.role] || [];
         return allowedStages.includes(currentStage);
     };
+
+    const isCreator = lpj?.pengajuan_anggaran?.user_id === user?.id;
+    const canEdit = !!lpj?.is_editable && isCreator;
 
     const isStaffKeuanganStage = lpj?.current_approval_stage === LpjApprovalStage.StaffKeuangan;
 
@@ -201,14 +205,26 @@ export default function LpjDetail() {
                     <PageHeader
                         title="Detail LPJ"
                         actions={
-                            <button
-                                type="button"
-                                onClick={() => navigate('/lpj')}
-                                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Kembali
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {canEdit && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate(`/lpj/${lpj.ulid ?? lpj.id}/edit`)}
+                                        className="inline-flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100"
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                        Edit
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/lpj')}
+                                    className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    Kembali
+                                </button>
+                            </div>
                         }
                     />
                 </motion.div>
