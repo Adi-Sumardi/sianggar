@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
     ArrowLeft,
     Download,
     FileText,
+    FileImage,
+    File,
+    Eye,
+    X,
     Printer,
     Loader2,
     CheckCircle2,
@@ -24,12 +28,123 @@ import { LpjApprovalTimeline } from '@/components/lpj/LpjApprovalTimeline';
 import { LpjValidationDialog } from '@/components/lpj/LpjValidationDialog';
 import { formatRupiah } from '@/lib/currency';
 import { formatDate } from '@/lib/date';
+import { getFileUrl } from '@/lib/fileUrl';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { LpjApprovalStage, LpjStatus } from '@/types/enums';
 import { useAuth } from '@/hooks/useAuth';
 import { useLpj, useValidateLpj, useApproveLpj, useReviseLpj, useRejectLpj } from '@/hooks/useLpj';
 import type { ValidateLpjDTO, ReviseLpjDTO, RejectLpjDTO } from '@/types/api';
+import type { Attachment } from '@/types/models';
+
+// ---------------------------------------------------------------------------
+// File preview helpers
+// ---------------------------------------------------------------------------
+
+function getFileIcon(mimeType: string) {
+    if (mimeType.startsWith('image/')) return FileImage;
+    if (mimeType === 'application/pdf') return FileText;
+    return File;
+}
+
+function isPreviewable(mimeType: string): boolean {
+    return mimeType.startsWith('image/') || mimeType === 'application/pdf';
+}
+
+interface FilePreviewModalProps {
+    file: Attachment | null;
+    onClose: () => void;
+}
+
+function FilePreviewModal({ file, onClose }: FilePreviewModalProps) {
+    if (!file) return null;
+
+    const fileUrl = getFileUrl(file.path);
+    const isPdf = file.mime_type === 'application/pdf';
+    const isImage = file.mime_type.startsWith('image/');
+
+    return (
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+                onClick={onClose}
+            >
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-blue-500" />
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-900">{file.nama}</h3>
+                                <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <a
+                                href={fileUrl}
+                                download
+                                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                                title="Download"
+                            >
+                                <Download className="h-5 w-5" />
+                            </a>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="max-h-[calc(90vh-60px)] overflow-auto bg-slate-100 p-4">
+                        {isPdf && (
+                            <iframe
+                                src={fileUrl}
+                                className="h-[70vh] w-full rounded-lg border border-slate-200 bg-white"
+                                title={file.nama}
+                            />
+                        )}
+                        {isImage && (
+                            <div className="flex items-center justify-center">
+                                <img
+                                    src={fileUrl}
+                                    alt={file.nama}
+                                    className="max-h-[70vh] rounded-lg object-contain shadow-lg"
+                                />
+                            </div>
+                        )}
+                        {!isPdf && !isImage && (
+                            <div className="flex flex-col items-center justify-center py-16 text-center">
+                                <File className="mb-4 h-16 w-16 text-slate-300" />
+                                <p className="text-sm text-slate-500">
+                                    Preview tidak tersedia untuk tipe file ini.
+                                </p>
+                                <a
+                                    href={fileUrl}
+                                    download
+                                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                                >
+                                    <Download className="h-4 w-4" />
+                                    Download File
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
+    );
+}
 
 // ---------------------------------------------------------------------------
 // Tab types
@@ -55,6 +170,7 @@ export default function LpjDetail() {
     const [reviseNotes, setReviseNotes] = useState('');
     const [rejectNotes, setRejectNotes] = useState('');
     const [approveNotes, setApproveNotes] = useState('');
+    const [previewFile, setPreviewFile] = useState<Attachment | null>(null);
 
     // Fetch LPJ data
     const lpjId = id ?? null;
@@ -381,30 +497,49 @@ export default function LpjDetail() {
                             </h3>
                             {lpj.attachments && lpj.attachments.length > 0 ? (
                                 <div className="space-y-2">
-                                    {lpj.attachments.map((file) => (
-                                        <div
-                                            key={file.id}
-                                            className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-3"
-                                        >
-                                            <FileText className="h-5 w-5 shrink-0 text-blue-500" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium text-slate-700">
-                                                    {file.nama}
-                                                </p>
-                                                <p className="text-xs text-slate-400">
-                                                    {(file.size / 1024).toFixed(1)} KB
-                                                </p>
-                                            </div>
-                                            <a
-                                                href={file.path}
-                                                download
-                                                className="rounded p-1.5 text-blue-500 transition-colors hover:bg-blue-50"
-                                                title="Download"
+                                    {lpj.attachments.map((file) => {
+                                        const IconComponent = getFileIcon(file.mime_type);
+                                        const canPreview = isPreviewable(file.mime_type);
+                                        const fileUrl = getFileUrl(file.path);
+
+                                        return (
+                                            <div
+                                                key={file.id}
+                                                className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-3"
                                             >
-                                                <Download className="h-4 w-4" />
-                                            </a>
-                                        </div>
-                                    ))}
+                                                <IconComponent className="h-5 w-5 shrink-0 text-blue-500" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium text-slate-700">
+                                                        {file.nama}
+                                                    </p>
+                                                    <p className="text-xs text-slate-400">
+                                                        {(file.size / 1024).toFixed(1)} KB
+                                                        {canPreview && (
+                                                            <span className="ml-2 text-green-600">• Dapat dipreview</span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPreviewFile(file)}
+                                                        className="rounded p-1.5 text-slate-500 transition-colors hover:bg-white hover:text-blue-600"
+                                                        title="Lihat"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </button>
+                                                    <a
+                                                        href={fileUrl}
+                                                        download
+                                                        className="rounded p-1.5 text-blue-500 transition-colors hover:bg-blue-50"
+                                                        title="Download"
+                                                    >
+                                                        <Download className="h-4 w-4" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <p className="text-sm text-slate-500">Tidak ada lampiran.</p>
@@ -548,6 +683,13 @@ export default function LpjDetail() {
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
             </ConfirmDialog>
+
+            {previewFile && (
+                <FilePreviewModal
+                    file={previewFile}
+                    onClose={() => setPreviewFile(null)}
+                />
+            )}
         </PageTransition>
     );
 }
