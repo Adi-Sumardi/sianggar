@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\DetailMataAnggaranResource;
 use App\Models\DetailMataAnggaran;
 use App\Models\MataAnggaran;
+use App\Models\Unit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -36,7 +37,21 @@ class DetailMataAnggaranController extends Controller
 
         // Filter by unit_id if provided
         if ($request->filled('unit_id')) {
-            $query->where('unit_id', $request->query('unit_id'));
+            $unitId = (int) $request->query('unit_id');
+
+            $query->where(function ($q) use ($unitId) {
+                $q->where('unit_id', $unitId);
+
+                // Kasus khusus: PT YAPI Talent Academy belum punya anggaran
+                // sendiri di APBS - dananya nempel di Bagian Umum > Rencana
+                // Pembangunan dan Pengembangan Investasi Besar > Tambahan
+                // Modal YTA (kode 695-11-17). Item itu perlu tetap tampil di
+                // picker unit ini supaya mereka bisa mengajukan.
+                $unit = Unit::find($unitId);
+                if ($unit && mb_strtolower(trim($unit->nama)) === 'pt yapi talent academy') {
+                    $q->orWhere('kode', '695-11-17');
+                }
+            });
         }
 
         // Filter by tahun if provided
