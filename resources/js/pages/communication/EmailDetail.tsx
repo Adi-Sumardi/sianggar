@@ -65,8 +65,8 @@ export default function EmailDetail() {
             await archiveEmail.mutateAsync(emailId);
             toast.success('Surat berhasil diarsipkan');
             navigate('/emails');
-        } catch {
-            toast.error('Gagal mengarsipkan surat');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Gagal mengarsipkan surat');
         }
     };
 

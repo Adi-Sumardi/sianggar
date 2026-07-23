@@ -176,7 +176,7 @@ class EmailController extends Controller
      */
     public function archive(Request $request, Email $email): JsonResponse
     {
-        $this->authorize('update', $email);
+        $this->authorize('archive', $email);
 
         $email->update([
             'status' => 'archived',

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\EmailStatus;
+use App\Enums\UserRole;
 use App\Models\Email;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -204,6 +205,44 @@ describe('Email API', function () {
 
             $email->refresh();
             expect($email->status)->toBe(EmailStatus::Archived);
+        });
+
+        it('allows the recipient (not just the sender) to archive an email', function () {
+            // Regresi: EmailController::archive() dulu authorize('update', ...)
+            // yang cuma izinkan pengirim asli - penerima yang sudah boleh
+            // membalas surat (view policy) malah 403 saat mengarsipkan.
+            $sender = User::factory()->create();
+            $recipient = User::factory()->withRole(UserRole::StaffDirektur)->create();
+            $recipient->givePermissionTo('view-emails');
+
+            $email = Email::factory()->sent()->create([
+                'user_id' => $sender->id,
+                'ditujukan' => UserRole::StaffDirektur->value,
+            ]);
+
+            $response = $this->actingAs($recipient)
+                ->postJson("/api/v1/emails/{$email->id}/archive");
+
+            $response->assertOk();
+
+            $email->refresh();
+            expect($email->status)->toBe(EmailStatus::Archived);
+        });
+
+        it('forbids a user unrelated to the email from archiving it', function () {
+            $sender = User::factory()->create();
+            $stranger = User::factory()->withRole(UserRole::Umum)->create();
+            $stranger->givePermissionTo('view-emails');
+
+            $email = Email::factory()->sent()->create([
+                'user_id' => $sender->id,
+                'ditujukan' => UserRole::StaffDirektur->value,
+            ]);
+
+            $response = $this->actingAs($stranger)
+                ->postJson("/api/v1/emails/{$email->id}/archive");
+
+            $response->assertForbidden();
         });
     });
 });

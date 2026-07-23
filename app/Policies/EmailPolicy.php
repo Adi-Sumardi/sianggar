@@ -97,6 +97,20 @@ class EmailPolicy
     }
 
     /**
+     * Determine whether the user can archive the email.
+     *
+     * Allowed untuk siapa pun yang boleh melihat surat itu (pengirim ATAU
+     * penerima) - beda dari update() yang cuma untuk edit isi surat draft
+     * (sengaja sender-only). Arsip cuma menyembunyikan dari daftar aktif,
+     * bukan mengubah konten, jadi wajar kalau penerima yang sudah membalas
+     * juga boleh mengarsipkannya.
+     */
+    public function archive(User $user, Email $email): bool
+    {
+        return $this->view($user, $email);
+    }
+
+    /**
      * Determine whether the user can delete the email.
      *
      * Allowed for: sender only.
