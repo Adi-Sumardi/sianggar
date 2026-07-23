@@ -152,13 +152,59 @@ class EmailController extends Controller
     /**
      * Display the specified email.
      */
-    public function show(Email $email): JsonResponse
+    public function show(Request $request, Email $email): JsonResponse
     {
         $email->load(['user', 'replies.user', 'replies.attachments', 'attachments', 'recipients.user']);
+
+        $this->markAsReadFor($request->user(), $email);
 
         return response()->json([
             'data' => new EmailResource($email),
         ]);
+    }
+
+    /**
+     * Tandai surat sebagai telah dibaca oleh user penerima yang sedang login.
+     *
+     * Pengirim tidak dihitung sebagai "pembaca". Kalau user cocok sebagai
+     * penerima cuma lewat role (recipient role row atau field `ditujukan`
+     * legacy) tanpa baris EmailRecipient khusus dirinya, buatkan baris baru
+     * agar status baca per-orang bisa dilacak tanpa mengubah baris role yang
+     * dipakai bersama penerima lain dengan role sama.
+     */
+    protected function markAsReadFor(User $user, Email $email): void
+    {
+        if ($user->id === $email->user_id) {
+            return;
+        }
+
+        $recipient = $email->recipients->firstWhere('user_id', $user->id);
+
+        if ($recipient) {
+            if (! $recipient->is_read) {
+                $recipient->update(['is_read' => true, 'read_at' => now()]);
+            }
+
+            return;
+        }
+
+        $qualifiesByRole = $email->recipients->contains(fn ($r) => $r->role === $user->role->value)
+            || ($email->ditujukan !== null && (
+                UserRole::tryFrom($email->ditujukan) === $user->role
+                || mb_strtolower($email->ditujukan) === $user->role->value
+            ));
+
+        if ($qualifiesByRole) {
+            EmailRecipient::create([
+                'email_id' => $email->id,
+                'user_id' => $user->id,
+                'role' => null,
+                'is_read' => true,
+                'read_at' => now(),
+            ]);
+
+            $email->load('recipients.user');
+        }
     }
 
     /**

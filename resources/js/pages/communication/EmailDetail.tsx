@@ -16,6 +16,8 @@ import {
     Eye,
     Paperclip,
     X,
+    CheckCheck,
+    Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,6 +27,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { EmptyState } from '@/components/common/EmptyState';
 import { formatDate, formatDateTime } from '@/lib/date';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { useAuth } from '@/hooks/useAuth';
 import { useEmail, useArchiveEmail, useCreateEmailReply } from '@/hooks/useEmails';
 import { FilePreviewModal } from '@/components/common/FilePreviewModal';
 import type { Email, Attachment } from '@/types/models';
@@ -40,6 +43,15 @@ function getRecipientsDisplay(email: Email): string {
     return email.ditujukan || '-';
 }
 
+/**
+ * Cuma baris recipient dengan user_id spesifik yang layak dianggap "pembaca
+ * individu" - baris berbasis role (user_id null) adalah daftar distribusi,
+ * bukan status baca satu orang.
+ */
+function getIndividualReaders(email: Email) {
+    return (email.recipients ?? []).filter((r) => r.user_id !== null);
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -53,6 +65,7 @@ export default function EmailDetail() {
     const [replyFiles, setReplyFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const { user: currentUser } = useAuth();
     const emailId = id ?? null;
     const { data: email, isLoading, isError } = useEmail(emailId);
     const archiveEmail = useArchiveEmail();
@@ -216,6 +229,44 @@ export default function EmailDetail() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Read receipt - only visible to the sender */}
+                    {currentUser?.id === email.user_id && (
+                        <div className="border-b border-slate-100 px-6 py-3">
+                            <p className="mb-1.5 text-xs font-medium text-slate-500">
+                                Status Dibaca
+                            </p>
+                            {getIndividualReaders(email).length > 0 ? (
+                                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                                    {getIndividualReaders(email).map((r) => (
+                                        <span
+                                            key={r.id}
+                                            className="inline-flex items-center gap-1.5 text-sm"
+                                        >
+                                            {r.is_read ? (
+                                                <CheckCheck className="h-3.5 w-3.5 text-blue-500" />
+                                            ) : (
+                                                <Check className="h-3.5 w-3.5 text-slate-400" />
+                                            )}
+                                            <span className="font-medium text-slate-700">
+                                                {r.display_name}
+                                            </span>
+                                            <span className="text-slate-400">
+                                                {r.is_read && r.read_at
+                                                    ? `dibaca ${formatDateTime(r.read_at)}`
+                                                    : 'belum dibaca'}
+                                            </span>
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 text-sm text-slate-400">
+                                    <Check className="h-3.5 w-3.5" />
+                                    Belum dibaca
+                                </span>
+                            )}
+                        </div>
+                    )}
 
                     {/* Content */}
                     <div className="px-6 py-6">
