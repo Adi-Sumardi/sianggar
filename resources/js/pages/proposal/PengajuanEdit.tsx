@@ -24,7 +24,7 @@ import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { formatRupiah } from '@/lib/currency';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { cn } from '@/lib/utils';
-import { usePengajuan, useUpdatePengajuan, useResubmitPengajuan, useUploadPengajuanAttachment } from '@/hooks/useProposals';
+import { usePengajuan, useUpdatePengajuan, useSubmitPengajuan, useResubmitPengajuan, useUploadPengajuanAttachment } from '@/hooks/useProposals';
 import { useMataAnggarans, useSubMataAnggarans, useDetailMataAnggarans } from '@/hooks/useBudget';
 import { getFileUrl } from '@/lib/fileUrl';
 import { useAuthStore } from '@/stores/authStore';
@@ -78,8 +78,14 @@ export default function PengajuanEdit() {
 
     // Mutations
     const updateMutation = useUpdatePengajuan();
+    const submitMutation = useSubmitPengajuan();
     const resubmitMutation = useResubmitPengajuan();
     const uploadMutation = useUploadPengajuanAttachment();
+
+    // Determine status string for logic checks
+    const proposalStatus = pengajuan
+        ? (typeof pengajuan.status_proses === 'string' ? pengajuan.status_proses : (pengajuan.status_proses as { value?: string })?.value ?? '')
+        : '';
 
     // Fetch budget data
     const { data: mataAnggaranData, isLoading: isLoadingMA } = useMataAnggarans();
@@ -296,18 +302,23 @@ export default function PengajuanEdit() {
                 await uploadMutation.mutateAsync({ pengajuanId, file });
             }
 
-            // Then resubmit for approval
-            await resubmitMutation.mutateAsync(pengajuanId);
+            // Draft → submit (first time), revision-required → resubmit (return to approver)
+            if (proposalStatus === 'draft') {
+                await submitMutation.mutateAsync(pengajuanId);
+                toast.success('Pengajuan berhasil diajukan untuk persetujuan');
+            } else {
+                await resubmitMutation.mutateAsync(pengajuanId);
+                toast.success('Pengajuan berhasil diajukan kembali untuk persetujuan');
+            }
 
-            toast.success('Pengajuan berhasil diajukan kembali untuk persetujuan');
             navigate('/pengajuan');
         } catch (error) {
-            toast.error('Gagal mengajukan kembali pengajuan');
+            toast.error('Gagal mengajukan pengajuan');
             console.error(error);
         }
     };
 
-    const isSubmitting = updateMutation.isPending || resubmitMutation.isPending || uploadMutation.isPending;
+    const isSubmitting = updateMutation.isPending || submitMutation.isPending || resubmitMutation.isPending || uploadMutation.isPending;
 
     // Existing files from pengajuan
     const existingFiles = useMemo(() => {
@@ -721,7 +732,7 @@ export default function PengajuanEdit() {
                                             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-50"
                                         >
                                             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                                            Ajukan Kembali
+                                            {proposalStatus === 'draft' ? 'Ajukan' : 'Ajukan Kembali'}
                                         </button>
                                     </>
                                 ) : (
